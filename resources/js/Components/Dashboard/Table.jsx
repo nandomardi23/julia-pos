@@ -11,17 +11,17 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
         }
     }
 
-    const style = 'p-1 text-sm border rounded-md bg-white text-gray-500 hover:bg-gray-100 dark:bg-gray-950 dark:text-gray-400 dark:hover:bg-gray-900 dark:border-gray-800'
-
     return (
-        <div className='rounded-lg border bg-white dark:bg-gray-950 dark:border-gray-800 overflow-hidden'>
+        <div className='rounded-xl border bg-white dark:bg-gray-950 dark:border-gray-800 overflow-hidden shadow-sm'>
             {/* Header */}
-            <div className={`px-4 py-3 border-b ${className} bg-gray-50 dark:bg-gray-900 dark:border-gray-800`}>
-                <div className='flex items-center gap-2 font-semibold text-sm text-gray-700 dark:text-gray-200'>
-                    {icon}
-                    {title}
+            {title && (
+                <div className={`px-5 py-4 border-b ${className} bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800`}>
+                    <div className='flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100'>
+                        {icon}
+                        <span>{title}</span>
+                    </div>
                 </div>
-            </div>
+            )}
             
             {/* Body */}
             <div>
@@ -30,22 +30,22 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
 
             {/* Footer with Pagination */}
             {links && links.length > 3 && (
-                <div className='px-4 py-3 border-t bg-gray-50 dark:bg-gray-900 dark:border-gray-800'>
-                    <div className='flex flex-col sm:flex-row justify-between items-center gap-3'>
+                <div className='px-5 py-4 border-t bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800'>
+                    <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
                         {/* Info & Per Page Selector */}
-                        <div className='flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400'>
+                        <div className='flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400'>
                             {meta && (
-                                <span>
-                                    Menampilkan {meta.from || 0} - {meta.to || 0} dari {meta.total || 0} data
+                                <span className='hidden sm:inline'>
+                                    Menampilkan <span className='font-medium text-gray-900 dark:text-white'>{meta.from || 0}</span> - <span className='font-medium text-gray-900 dark:text-white'>{meta.to || 0}</span> dari <span className='font-medium text-gray-900 dark:text-white'>{meta.total || 0}</span> data
                                 </span>
                             )}
                             {url && (
                                 <div className='flex items-center gap-2'>
-                                    <span>Per halaman:</span>
+                                    <span className='text-gray-500 dark:text-gray-400'>Per halaman:</span>
                                     <select
                                         value={meta?.per_page || 10}
                                         onChange={handlePerPageChange}
-                                        className='px-2 py-1 text-sm border rounded-md bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                                        className='px-3 py-1.5 text-sm border rounded-lg bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer'
                                     >
                                         {perPageOptions.map(option => (
                                             <option key={option} value={option}>{option}</option>
@@ -58,25 +58,37 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                         {/* Pagination Links */}
                         <ul className='flex items-center gap-1'>
                             {links.map((item, i) => {
-                                return item.url != null ? (
-                                    item.label.includes('Previous') ? (
-                                        <Link className={style} key={i} href={item.url}>
-                                            <IconChevronLeft size={'20'} strokeWidth={'1.5'} />
-                                        </Link>
-                                    ) : item.label.includes('Next') ? (
-                                        <Link className={style} key={i} href={item.url}>
-                                            <IconChevronRight size={'20'} strokeWidth={'1.5'} />
-                                        </Link>
-                                    ) : (
-                                        <Link 
-                                            className={`px-2 py-1 text-sm border rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 dark:border-gray-700 ${item.active ? 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600 dark:text-white' : 'bg-white dark:bg-gray-950'}`} 
-                                            key={i} 
-                                            href={item.url}
-                                        >
-                                            {item.label}
+                                if (item.url == null) return null;
+                                
+                                const baseStyle = 'flex items-center justify-center min-w-[32px] h-8 px-2 text-sm border rounded-lg transition-colors'
+                                const activeStyle = 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
+                                const inactiveStyle = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                
+                                if (item.label.includes('Previous')) {
+                                    return (
+                                        <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
+                                            <IconChevronLeft size={16} strokeWidth={2} />
                                         </Link>
                                     )
-                                ) : null;
+                                }
+                                
+                                if (item.label.includes('Next')) {
+                                    return (
+                                        <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
+                                            <IconChevronRight size={16} strokeWidth={2} />
+                                        </Link>
+                                    )
+                                }
+                                
+                                return (
+                                    <Link 
+                                        className={`${baseStyle} ${item.active ? activeStyle : inactiveStyle}`} 
+                                        key={i} 
+                                        href={item.url}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                )
                             })}
                         </ul>
                     </div>
@@ -98,7 +110,9 @@ const Table = ({ children }) => {
 
 const Thead = ({ className, children }) => {
     return (
-        <thead className={`${className} border-b bg-gray-50 dark:border-gray-800 dark:bg-gray-900`}>{children}</thead>
+        <thead className={`${className} border-b bg-gray-50/80 dark:border-gray-800 dark:bg-gray-900/80`}>
+            {children}
+        </thead>
     );
 };
 
@@ -114,7 +128,7 @@ const Td = ({ className, children, colSpan }) => {
     return (
         <td
             colSpan={colSpan}
-            className={`${className} whitespace-nowrap p-4 align-middle text-gray-700 dark:text-gray-400`}
+            className={`${className} whitespace-nowrap px-4 py-3 align-middle text-gray-700 dark:text-gray-300`}
         >
             {children}
         </td>
@@ -125,7 +139,7 @@ const Th = ({ className, children }) => {
     return (
         <th
             scope="col"
-            className={`${className} h-12 px-4 text-left align-middle font-medium text-gray-700 dark:text-gray-400`}
+            className={`${className} h-12 px-4 text-left align-middle font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider`}
         >
             {children}
         </th>
@@ -136,10 +150,10 @@ const Empty = ({ colSpan, message, children }) => {
     return (
         <tr>
             <td colSpan={colSpan}>
-                <div className="flex items-center justify-center h-96">
+                <div className="flex items-center justify-center py-16">
                     <div className="text-center">
                         {children}
-                        <div className="mt-5 text-gray-500 dark:text-gray-400">
+                        <div className="mt-3 text-gray-500 dark:text-gray-400">
                             {message}
                         </div>
                     </div>

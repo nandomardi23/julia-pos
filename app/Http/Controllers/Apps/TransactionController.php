@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Apps;
 use App\Models\Cart;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\Product;
-use App\Models\Customer;
 use App\Models\Transaction;
 use App\Models\PaymentSetting;
 use App\Models\Display;
@@ -31,16 +30,9 @@ class TransactionController extends Controller
         //get cart
         $carts = Cart::with('product')->where('cashier_id', auth()->user()->id)->latest()->get();
 
-        //get all customers
-        $customers = Customer::latest()->get();
-
         $paymentSetting = PaymentSetting::first();
 
-        $carts_total = 0;
-        foreach ($carts as $cart) {
-            $carts_total += $cart->price * $cart->qty; // Assuming your quantity column is named 'quantity'
-        }
-
+        $carts_total = $carts->sum(fn($cart) => $cart->price * $cart->qty);
 
         $defaultGateway = $paymentSetting?->default_gateway ?? 'cash';
         if (
@@ -53,7 +45,6 @@ class TransactionController extends Controller
         return Inertia::render('Dashboard/Transactions/Index', [
             'carts' => $carts,
             'carts_total' => $carts_total,
-            'customers' => $customers,
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
         ]);
@@ -198,7 +189,6 @@ class TransactionController extends Controller
         ) {
             $transaction = Transaction::create([
                 'cashier_id' => auth()->user()->id,
-                'customer_id' => $request->customer_id,
                 'invoice' => $invoice,
                 'cash' => $cashAmount,
                 'change' => $changeAmount,
@@ -249,12 +239,43 @@ class TransactionController extends Controller
                             'user_id' => auth()->id(),
                         ]);
                     }
+
+                    // Deduct ingredient stocks for recipe products
+                    $product = $cart->product;
+                    if ($product->is_recipe) {
+                        $product->load('ingredients.ingredient');
+                        
+                        foreach ($product->ingredients as $recipeIngredient) {
+                            $ingredientQty = $recipeIngredient->quantity * $cart->qty;
+                            
+                            // Find display stock for the ingredient
+                            $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
+                                ->where('product_id', $recipeIngredient->ingredient_id)
+                                ->first();
+                            
+                            if ($ingredientDisplayStock) {
+                                $ingredientDisplayStock->decrement('quantity', $ingredientQty);
+                                
+                                // Create stock movement for ingredient deduction
+                                StockMovement::create([
+                                    'product_id' => $recipeIngredient->ingredient_id,
+                                    'from_type' => StockMovement::TYPE_DISPLAY,
+                                    'from_id' => $display->id,
+                                    'to_type' => StockMovement::TYPE_TRANSACTION,
+                                    'to_id' => $transaction->id,
+                                    'quantity' => $ingredientQty,
+                                    'note' => 'Bahan resep: ' . $product->title . ' x' . $cart->qty,
+                                    'user_id' => auth()->id(),
+                                ]);
+                            }
+                        }
+                    }
                 }
             }
 
             Cart::where('cashier_id', auth()->user()->id)->delete();
 
-            return $transaction->fresh(['customer']);
+            return $transaction->fresh();
         });
 
         if ($paymentGateway) {
@@ -278,7 +299,7 @@ class TransactionController extends Controller
     public function print($invoice)
     {
         //get transaction
-        $transaction = Transaction::with('details.product', 'cashier', 'customer')->where('invoice', $invoice)->firstOrFail();
+        $transaction = Transaction::with('details.product', 'cashier')->where('invoice', $invoice)->firstOrFail();
 
         return Inertia::render('Dashboard/Transactions/Print', [
             'transaction' => $transaction
@@ -297,7 +318,7 @@ class TransactionController extends Controller
         ];
 
         $query = Transaction::query() 
-            ->with(['cashier:id,name', 'customer:id,name'])
+            ->with(['cashier:id,name'])
             ->withSum('details as total_items', 'qty')
             ->withSum('profits as total_profit', 'total')
             ->orderByDesc('created_at');

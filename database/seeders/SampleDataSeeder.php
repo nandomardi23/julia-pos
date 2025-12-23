@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Cart;
 use App\Models\Category;
-use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Profit;
 use App\Models\Transaction;
@@ -31,17 +30,15 @@ class SampleDataSeeder extends Seeder
         Transaction::truncate();
         Product::truncate();
         Category::truncate();
-        Customer::truncate();
 
         Schema::enableForeignKeyConstraints();
 
         $placeholders = $this->ensurePlaceholderImages();
 
-        $customers = $this->seedCustomers();
         $categories = $this->seedCategories($placeholders['category']);
         $products = $this->seedProducts($categories, $placeholders['product']);
 
-        $this->seedTransactions($customers, $products);
+        $this->seedTransactions($products);
     }
 
     /**
@@ -71,63 +68,59 @@ class SampleDataSeeder extends Seeder
     }
 
     /**
-     * Seed master customers.
-     */
-    private function seedCustomers(): Collection
-    {
-        $customers = collect([
-            ['name' => 'Andi Nugraha', 'no_telp' => '6281211111111', 'address' => 'Jl. Melati No. 21, Bandung'],
-            ['name' => 'Bunga Maharani', 'no_telp' => '6281312345678', 'address' => 'Jl. Mawar No. 5, Jakarta'],
-            ['name' => 'Cici Amelia', 'no_telp' => '6281512340000', 'address' => 'Jl. Anggrek No. 17, Surabaya'],
-            ['name' => 'Davin Pradipta', 'no_telp' => '6285612349911', 'address' => 'Jl. Kenanga No. 2, Yogyakarta'],
-            ['name' => 'Eko Saputra', 'no_telp' => '6287712348822', 'address' => 'Jl. Cemara No. 45, Semarang'],
-            ['name' => 'Fitri Lestari', 'no_telp' => '6282213345566', 'address' => 'Jl. Sakura No. 7, Medan'],
-        ]);
-
-        return $customers
-            ->map(fn ($customer) => Customer::create($customer))
-            ->keyBy('name');
-    }
-
-    /**
      * Seed master categories.
      */
     private function seedCategories(string $image): Collection
     {
         $categories = collect([
-            ['name' => 'Beverages', 'description' => 'Aneka minuman kemasan dingin dan panas'],
-            ['name' => 'Snacks', 'description' => 'Camilan kemasan siap saji'],
-            ['name' => 'Fresh Produce', 'description' => 'Buah dan sayuran segar pilihan'],
-            ['name' => 'Household', 'description' => 'Kebutuhan rumah tangga harian'],
-            ['name' => 'Personal Care', 'description' => 'Produk kebersihan dan perawatan diri'],
+            ['name' => 'Beverages'],
+            ['name' => 'Snacks'],
+            ['name' => 'Fresh Produce'],
+            ['name' => 'Household'],
+            ['name' => 'Personal Care'],
         ]);
 
         return $categories
             ->map(fn ($category) => Category::create([
                 'name' => $category['name'],
-                'description' => $category['description'],
                 'image' => $image,
             ]))
             ->keyBy('name');
     }
 
     /**
-     * Seed products mapped to categories.
+     * Seed master products.
      */
     private function seedProducts(Collection $categories, string $image): Collection
     {
         $products = collect([
-            ['category' => 'Beverages', 'barcode' => 'BRG-0001', 'title' => 'Cold Brew Coffee 250ml', 'description' => 'Kopi Arabica rumahan dengan rasa manis alami.', 'buy_price' => 25000, 'sell_price' => 35000, 'stock' => 80],
-            ['category' => 'Beverages', 'barcode' => 'BRG-0002', 'title' => 'Thai Tea Literan', 'description' => 'Thai tea original dengan susu kental manis.', 'buy_price' => 30000, 'sell_price' => 42000, 'stock' => 60],
-            ['category' => 'Snacks', 'barcode' => 'BRG-0003', 'title' => 'Keripik Singkong Balado', 'description' => 'Keripik singkong renyah rasa balado pedas manis.', 'buy_price' => 12000, 'sell_price' => 18000, 'stock' => 150],
-            ['category' => 'Snacks', 'barcode' => 'BRG-0004', 'title' => 'Granola Bar Cokelat', 'description' => 'Granola bar sehat dengan kacang-kacangan premium.', 'buy_price' => 15000, 'sell_price' => 22000, 'stock' => 100],
-            ['category' => 'Fresh Produce', 'barcode' => 'BRG-0005', 'title' => 'Paket Salad Buah', 'description' => 'Campuran buah segar potong siap saji.', 'buy_price' => 20000, 'sell_price' => 32000, 'stock' => 70],
-            ['category' => 'Fresh Produce', 'barcode' => 'BRG-0006', 'title' => 'Sayur Organik Mix', 'description' => 'Paket kangkung, bayam, dan selada organik.', 'buy_price' => 18000, 'sell_price' => 27000, 'stock' => 90],
-            ['category' => 'Household', 'barcode' => 'BRG-0007', 'title' => 'Sabun Cair Lemon 1L', 'description' => 'Sabun cair anti bakteri aroma lemon segar.', 'buy_price' => 22000, 'sell_price' => 32000, 'stock' => 110],
-            ['category' => 'Household', 'barcode' => 'BRG-0008', 'title' => 'Tisu Dapur 2 Ply', 'description' => 'Tisu dapur serbaguna dua lapis.', 'buy_price' => 9000, 'sell_price' => 15000, 'stock' => 200],
-            ['category' => 'Personal Care', 'barcode' => 'BRG-0009', 'title' => 'Hand Sanitizer 250ml', 'description' => 'Hand sanitizer food grade non lengket.', 'buy_price' => 17000, 'sell_price' => 25000, 'stock' => 140],
-            ['category' => 'Personal Care', 'barcode' => 'BRG-0010', 'title' => 'Shampoo Botani 500ml', 'description' => 'Shampoo botani untuk semua jenis rambut.', 'buy_price' => 28000, 'sell_price' => 40000, 'stock' => 95],
+            ['category' => 'Beverages', 'barcode' => 'BRG-0001', 'title' => 'Cold Brew Coffee 250ml', 'description' => 'Kopi Arabica rumahan dengan rasa manis alami.', 'buy_price' => 25000, 'sell_price' => 35000],
+            ['category' => 'Beverages', 'barcode' => 'BRG-0002', 'title' => 'Thai Tea Literan', 'description' => 'Thai tea original dengan susu kental manis.', 'buy_price' => 30000, 'sell_price' => 42000],
+            ['category' => 'Snacks', 'barcode' => 'BRG-0003', 'title' => 'Keripik Singkong Balado', 'description' => 'Keripik singkong renyah rasa balado pedas manis.', 'buy_price' => 12000, 'sell_price' => 18000],
+            ['category' => 'Snacks', 'barcode' => 'BRG-0004', 'title' => 'Granola Bar Cokelat', 'description' => 'Granola bar sehat dengan kacang-kacangan premium.', 'buy_price' => 15000, 'sell_price' => 22000],
+            ['category' => 'Fresh Produce', 'barcode' => 'BRG-0005', 'title' => 'Paket Salad Buah', 'description' => 'Campuran buah segar potong siap saji.', 'buy_price' => 20000, 'sell_price' => 32000],
+            ['category' => 'Fresh Produce', 'barcode' => 'BRG-0006', 'title' => 'Sayur Organik Mix', 'description' => 'Paket kangkung, bayam, dan selada organik.', 'buy_price' => 18000, 'sell_price' => 27000],
+            ['category' => 'Household', 'barcode' => 'BRG-0007', 'title' => 'Sabun Cair Lemon 1L', 'description' => 'Sabun cair anti bakteri aroma lemon segar.', 'buy_price' => 22000, 'sell_price' => 32000],
+            ['category' => 'Household', 'barcode' => 'BRG-0008', 'title' => 'Tisu Dapur 2 Ply', 'description' => 'Tisu dapur serbaguna dua lapis.', 'buy_price' => 9000, 'sell_price' => 15000],
+            ['category' => 'Personal Care', 'barcode' => 'BRG-0009', 'title' => 'Hand Sanitizer 250ml', 'description' => 'Hand sanitizer food grade non lengket.', 'buy_price' => 17000, 'sell_price' => 25000],
+            ['category' => 'Personal Care', 'barcode' => 'BRG-0010', 'title' => 'Shampoo Botani 500ml', 'description' => 'Shampoo botani untuk semua jenis rambut.', 'buy_price' => 28000, 'sell_price' => 40000],
+            // Supplies
+            ['category' => 'Supplies', 'barcode' => 'SUP-0001', 'title' => 'Cup Plastik 16oz', 'description' => 'Cup plastik untuk minuman dingin.', 'buy_price' => 500, 'sell_price' => 0, 'is_supply' => true],
+            ['category' => 'Supplies', 'barcode' => 'SUP-0002', 'title' => 'Pipet/Sedotan', 'description' => 'Sedotan plastik standar.', 'buy_price' => 100, 'sell_price' => 0, 'is_supply' => true],
+            ['category' => 'Supplies', 'barcode' => 'SUP-0003', 'title' => 'Kantong Plastik Kecil', 'description' => 'Kantong plastik ukuran kecil.', 'buy_price' => 200, 'sell_price' => 0, 'is_supply' => true],
+            // Ingredients
+            ['category' => 'Fresh Produce', 'barcode' => 'ING-0001', 'title' => 'Apel Fuji (per kg)', 'description' => 'Apel fuji segar untuk jus.', 'buy_price' => 35000, 'sell_price' => 0, 'is_ingredient' => true, 'unit' => 'kg'],
+            ['category' => 'Fresh Produce', 'barcode' => 'ING-0002', 'title' => 'Jeruk Manis (per kg)', 'description' => 'Jeruk manis segar untuk jus.', 'buy_price' => 25000, 'sell_price' => 0, 'is_ingredient' => true, 'unit' => 'kg'],
+            // Recipe
+            ['category' => 'Beverages', 'barcode' => 'RCP-0001', 'title' => 'Jus Mix Spesial', 'description' => 'Jus campuran apel dan jeruk segar.', 'buy_price' => 0, 'sell_price' => 25000, 'is_recipe' => true],
         ]);
+
+        // Create Supplies category if not exists
+        $suppliesCategory = \App\Models\Category::firstOrCreate(
+            ['name' => 'Supplies'],
+            ['image' => $image]
+        );
+        $categories->put('Supplies', $suppliesCategory);
 
         return $products
             ->map(function ($product) use ($categories, $image) {
@@ -141,16 +134,19 @@ class SampleDataSeeder extends Seeder
                     'description' => $product['description'],
                     'buy_price' => $product['buy_price'],
                     'sell_price' => $product['sell_price'],
-                    'stock' => $product['stock'],
+                    'unit' => $product['unit'] ?? 'pcs',
+                    'is_recipe' => $product['is_recipe'] ?? false,
+                    'is_supply' => $product['is_supply'] ?? false,
+                    'is_ingredient' => $product['is_ingredient'] ?? false,
                 ]);
             })
             ->keyBy('barcode');
     }
 
     /**
-     * Seed historical transactions, transaction details, and profits.
+     * Seed sample transactions.
      */
-    private function seedTransactions(Collection $customers, Collection $products): void
+    private function seedTransactions(Collection $products): void
     {
         $cashier = User::where('email', 'cashier@gmail.com')->first() ?? User::first();
 
@@ -160,7 +156,6 @@ class SampleDataSeeder extends Seeder
 
         $blueprints = [
             [
-                'customer' => 'Andi Nugraha',
                 'discount' => 5000,
                 'cash' => 200000,
                 'items' => [
@@ -169,7 +164,6 @@ class SampleDataSeeder extends Seeder
                 ],
             ],
             [
-                'customer' => 'Bunga Maharani',
                 'discount' => 0,
                 'cash' => 150000,
                 'items' => [
@@ -178,7 +172,6 @@ class SampleDataSeeder extends Seeder
                 ],
             ],
             [
-                'customer' => 'Fitri Lestari',
                 'discount' => 10000,
                 'cash' => 180000,
                 'items' => [
@@ -187,22 +180,9 @@ class SampleDataSeeder extends Seeder
                     ['barcode' => 'BRG-0010', 'qty' => 1],
                 ],
             ],
-            [
-                'customer' => null,
-                'discount' => 0,
-                'cash' => 75000,
-                'items' => [
-                    ['barcode' => 'BRG-0004', 'qty' => 1],
-                    ['barcode' => 'BRG-0006', 'qty' => 1],
-                ],
-            ],
         ];
 
         foreach ($blueprints as $blueprint) {
-            $customer = $blueprint['customer']
-                ? $customers->get($blueprint['customer'])
-                : null;
-
             $items = collect($blueprint['items'])
                 ->map(function ($item) use ($products) {
                     $product = $products->get($item['barcode']);
@@ -234,7 +214,6 @@ class SampleDataSeeder extends Seeder
 
             $transaction = Transaction::create([
                 'cashier_id' => $cashier->id,
-                'customer_id' => $customer?->id,
                 'invoice' => 'TRX-' . Str::upper(Str::random(8)),
                 'cash' => $cashPaid,
                 'change' => $change,
@@ -252,8 +231,6 @@ class SampleDataSeeder extends Seeder
                 $transaction->profits()->create([
                     'total' => $item['profit'],
                 ]);
-
-                $item['product']->decrement('stock', $item['qty']);
             }
         }
     }

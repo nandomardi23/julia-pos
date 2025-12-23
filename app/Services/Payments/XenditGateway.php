@@ -14,17 +14,14 @@ class XenditGateway
             throw new PaymentGatewayException('Xendit tidak aktif atau belum dikonfigurasi.');
         }
 
-        $customer = $transaction->customer;
-
         $response = Http::withBasicAuth($config['secret_key'], '')
             ->post('https://api.xendit.co/v2/invoices', [
                 'external_id' => $transaction->invoice,
                 'amount' => (int) $transaction->grand_total,
                 'description' => 'Pembayaran transaksi #' . $transaction->invoice,
                 'customer' => [
-                    'given_names' => optional($customer)->name ?? 'Customer',
-                    'email' => optional($customer)->email ?? config('mail.from.address'),
-                    'mobile_number' => optional($customer)->no_telp,
+                    'given_names' => 'Customer',
+                    'email' => config('mail.from.address'),
                 ],
                 'success_redirect_url' => route('transactions.print', $transaction->invoice),
             ]);

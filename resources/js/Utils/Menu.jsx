@@ -1,76 +1,72 @@
 import { usePage } from "@inertiajs/react";
 import {
-    IconBooks,
     IconBox,
-    IconCategory,
-    IconChartArrowsVertical,
-    IconChartBarPopular,
-    IconChartInfographic,
-    IconCirclePlus,
-    IconClockHour6,
-    IconCreditCard,
-    IconFileCertificate,
-    IconFileDescription,
     IconFolder,
     IconLayout2,
-    IconSchool,
     IconShoppingCart,
-    IconTable,
-    IconUserBolt,
-    IconUserShield,
-    IconUserSquare,
     IconUsers,
+    IconUserShield,
+    IconUserBolt,
     IconUsersPlus,
-    IconBuildingWarehouse,
     IconTruck,
+    IconBuildingWarehouse,
     IconLayoutList,
     IconArrowsExchange,
+    IconCirclePlus,
     IconMinus,
+    IconClockHour6,
+    IconChartArrowsVertical,
+    IconChartBarPopular,
+    IconCreditCard,
+    IconSettings,
+    IconReceipt,
+    IconPackage,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
 
 export default function Menu() {
-    // define use page
     const { url } = usePage();
 
-    // define menu navigations
     const menuNavigation = [
+        // ===== DASHBOARD =====
         {
-            title: "Overview",
+            title: "Menu Utama",
             details: [
                 {
                     title: "Dashboard",
                     href: route("dashboard"),
-                    active: url === "/dashboard" ? true : false, // Update comparison here
+                    active: url === "/dashboard",
                     icon: <IconLayout2 size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["dashboard-access"]),
                 },
+                {
+                    title: "POS / Kasir",
+                    href: route("pos.index"),
+                    active: url === "/dashboard/pos",
+                    icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
             ],
         },
+
+        // ===== MASTER DATA =====
         {
-            title: "Data Management",
+            title: "Master Data",
             details: [
                 {
                     title: "Kategori",
                     href: route("categories.index"),
-                    active: url === "/dashboard/categories" ? true : false, // Update comparison here
+                    active: url === "/dashboard/categories",
                     icon: <IconFolder size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["categories-access"]),
                 },
                 {
                     title: "Produk",
                     href: route("products.index"),
-                    active: url === "/dashboard/products" ? true : false, // Update comparison here
+                    active: url.startsWith("/dashboard/products"),
                     icon: <IconBox size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["products-access"]),
-                },
-                {
-                    title: "Pelanggan",
-                    href: route("customers.index"),
-                    active: url === "/dashboard/customers" ? true : false, // Update comparison here
-                    icon: <IconUsersPlus size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["customers-access"]),
                 },
                 {
                     title: "Supplier",
@@ -81,8 +77,10 @@ export default function Menu() {
                 },
             ],
         },
+
+        // ===== INVENTORY =====
         {
-            title: "Manajemen Stok",
+            title: "Inventory",
             details: [
                 {
                     title: "Gudang",
@@ -99,17 +97,17 @@ export default function Menu() {
                     permissions: hasAnyPermission(["displays-access"]),
                 },
                 {
-                    title: "Transfer Stok",
-                    href: route("stock-movements.transfer"),
-                    active: url === "/dashboard/stock-movements/transfer",
-                    icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["stock-movements-create"]),
-                },
-                {
                     title: "Barang Masuk",
                     href: route("stock-movements.create"),
                     active: url === "/dashboard/stock-movements/create",
                     icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-create"]),
+                },
+                {
+                    title: "Transfer Stok",
+                    href: route("stock-movements.transfer"),
+                    active: url === "/dashboard/stock-movements/transfer",
+                    icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-movements-create"]),
                 },
                 {
@@ -128,39 +126,34 @@ export default function Menu() {
                 },
             ],
         },
+
+        // ===== TRANSAKSI =====
         {
             title: "Transaksi",
             details: [
                 {
-                    title: "POS",
-                    href: route("pos.index"),
-                    active: url === "/dashboard/pos" ? true : false,
-                    icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["transactions-access"]),
-                },
-                {
                     title: "Riwayat Transaksi",
                     href: route("transactions.history"),
-                    active: url === "/dashboard/transactions/history" ? true : false,
-                    icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
+                    active: url === "/dashboard/transactions/history",
+                    icon: <IconReceipt size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["transactions-access"]),
                 },
             ],
         },
+
+        // ===== LAPORAN =====
         {
             title: "Laporan",
             details: [
                 {
-                    title: "Laporan Penjualan",
+                    title: "Penjualan",
                     href: route("reports.sales.index"),
                     active: url.startsWith("/dashboard/reports/sales"),
-                    icon: (
-                        <IconChartArrowsVertical size={20} strokeWidth={1.5} />
-                    ),
+                    icon: <IconChartArrowsVertical size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["reports-access"]),
                 },
                 {
-                    title: "Laporan Keuntungan",
+                    title: "Keuntungan",
                     href: route("reports.profits.index"),
                     active: url.startsWith("/dashboard/reports/profits"),
                     icon: <IconChartBarPopular size={20} strokeWidth={1.5} />,
@@ -168,54 +161,32 @@ export default function Menu() {
                 },
             ],
         },
+
+        // ===== PENGATURAN =====
         {
-            title: "User Management",
+            title: "Pengaturan",
             details: [
                 {
-                    title: "Hak Akses",
-                    href: route("permissions.index"),
-                    active: url === "/dashboard/permissions" ? true : false, // Update comparison here
-                    icon: <IconUserBolt size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["permissions-access"]),
+                    title: "Pengguna",
+                    href: route("users.index"),
+                    active: url.startsWith("/dashboard/users"),
+                    icon: <IconUsers size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["users-access"]),
                 },
                 {
                     title: "Akses Group",
                     href: route("roles.index"),
-                    active: url === "/dashboard/roles" ? true : false, // Update comparison here
+                    active: url === "/dashboard/roles",
                     icon: <IconUserShield size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["roles-access"]),
                 },
                 {
-                    title: "Pengguna",
-                    icon: <IconUsers size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["users-access"]),
-                    subdetails: [
-                        {
-                            title: "Data Pengguna",
-                            href: route("users.index"),
-                            icon: <IconTable size={20} strokeWidth={1.5} />,
-                            active: url === "/dashboard/users" ? true : false,
-                            permissions: hasAnyPermission(["users-access"]),
-                        },
-                        {
-                            title: "Tambah Data Pengguna",
-                            href: route("users.create"),
-                            icon: (
-                                <IconCirclePlus size={20} strokeWidth={1.5} />
-                            ),
-                            active:
-                                url === "/dashboard/users/create"
-                                    ? true
-                                    : false,
-                            permissions: hasAnyPermission(["users-create"]),
-                        },
-                    ],
+                    title: "Hak Akses",
+                    href: route("permissions.index"),
+                    active: url === "/dashboard/permissions",
+                    icon: <IconUserBolt size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["permissions-access"]),
                 },
-            ],
-        },
-        {
-            title: "Pengaturan",
-            details: [
                 {
                     title: "Payment Gateway",
                     href: route("settings.payments.edit"),
@@ -229,4 +200,3 @@ export default function Menu() {
 
     return menuNavigation;
 }
-

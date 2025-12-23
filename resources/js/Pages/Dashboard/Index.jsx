@@ -10,6 +10,8 @@ import {
     IconUsers,
     IconCoin,
     IconReceipt,
+    IconAlertTriangle,
+    IconTrendingUp,
 } from "@tabler/icons-react";
 
 const formatCurrency = (value = 0) =>
@@ -20,18 +22,19 @@ const formatCurrency = (value = 0) =>
     }).format(value);
 
 export default function Dashboard({
-    totalCategories,
-    totalProducts,
-    totalTransactions,
-    totalUsers,
-    revenueTrend,
-    totalRevenue,
-    totalProfit,
-    averageOrder,
-    todayTransactions,
+    totalCategories = 0,
+    totalProducts = 0,
+    totalTransactions = 0,
+    totalUsers = 0,
+    todayTransactions = 0,
+    todayRevenue = 0,
+    todayProfit = 0,
+    totalRevenue = 0,
+    totalProfit = 0,
+    revenueTrend = [],
     topProducts = [],
     recentTransactions = [],
-    topCustomers = [],
+    lowStockProducts = [],
 }) {
     const chartRef = useRef(null);
     const chartInstance = useRef(null);
@@ -46,9 +49,7 @@ export default function Dashboard({
             chartInstance.current = null;
         }
 
-        if (!chartData.length) {
-            return;
-        }
+        if (!chartData.length) return;
 
         const labels = chartData.map((item) => item.label);
         const totals = chartData.map((item) => item.total);
@@ -57,263 +58,203 @@ export default function Dashboard({
             type: "line",
             data: {
                 labels,
-                datasets: [
-                    {
-                        label: "Pendapatan",
-                        data: totals,
-                        borderColor: "#4f46e5",
-                        backgroundColor: "rgba(79,70,229,0.2)",
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointBackgroundColor: "#4f46e5",
-                    },
-                ],
+                datasets: [{
+                    label: "Pendapatan",
+                    data: totals,
+                    borderColor: "#4f46e5",
+                    backgroundColor: "rgba(79,70,229,0.2)",
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: "#4f46e5",
+                }],
             },
             options: {
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         ticks: {
-                            callback: (value) =>
-                                new Intl.NumberFormat("id-ID", {
-                                    style: "currency",
-                                    currency: "IDR",
-                                    maximumFractionDigits: 0,
-                                }).format(value),
+                            callback: (value) => formatCurrency(value),
                         },
-                        grid: {
-                            color: "rgba(148, 163, 184, 0.2)",
-                        },
+                        grid: { color: "rgba(148, 163, 184, 0.2)" },
                     },
-                    x: {
-                        grid: {
-                            display: false,
-                        },
-                    },
+                    x: { grid: { display: false } },
                 },
             },
         });
 
-        return () => {
-            chartInstance.current?.destroy();
-        };
+        return () => chartInstance.current?.destroy();
     }, [chartData]);
 
     return (
         <>
             <Head title="Dashboard" />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Low Stock Alert */}
+            {lowStockProducts.length > 0 && (
+                <div className="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-900 dark:bg-orange-950">
+                    <div className="flex items-center gap-2 mb-3">
+                        <IconAlertTriangle className="text-orange-500" size={20} />
+                        <h3 className="font-semibold text-orange-700 dark:text-orange-400">
+                            Peringatan Stok Menipis
+                        </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                        {lowStockProducts.map((item, index) => (
+                            <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-2 text-sm">
+                                <p className="font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
+                                <p className="text-orange-600 dark:text-orange-400">
+                                    Sisa: {item.stock} {item.unit} (min: {item.min_stock})
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Today Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4 dark:border-blue-900 dark:from-blue-950 dark:to-blue-900">
+                    <div className="flex items-center gap-2 mb-2">
+                        <IconTrendingUp className="text-blue-500" size={20} />
+                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Transaksi Hari Ini</p>
+                    </div>
+                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{todayTransactions}</p>
+                </div>
+                <div className="rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 p-4 dark:border-green-900 dark:from-green-950 dark:to-green-900">
+                    <div className="flex items-center gap-2 mb-2">
+                        <IconCoin className="text-green-500" size={20} />
+                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">Pendapatan Hari Ini</p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatCurrency(todayRevenue)}</p>
+                </div>
+                <div className="rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 p-4 dark:border-purple-900 dark:from-purple-950 dark:to-purple-900">
+                    <div className="flex items-center gap-2 mb-2">
+                        <IconMoneybag className="text-purple-500" size={20} />
+                        <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Profit Hari Ini</p>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{formatCurrency(todayProfit)}</p>
+                </div>
+            </div>
+
+            {/* Overview Widgets */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Widget
                     title="Kategori"
-                    subtitle="Total Kategori"
+                    subtitle="Total"
                     color="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     icon={<IconCategory size={20} strokeWidth={1.5} />}
                     total={totalCategories}
                 />
-
                 <Widget
                     title="Produk"
-                    subtitle="Total Produk"
+                    subtitle="Total"
                     color="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     icon={<IconBox size={20} strokeWidth={1.5} />}
                     total={totalProducts}
                 />
-
                 <Widget
                     title="Transaksi"
-                    subtitle="Total Transaksi"
+                    subtitle="Total"
                     color="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                    icon={<IconMoneybag size={20} strokeWidth={1.5} />}
+                    icon={<IconReceipt size={20} strokeWidth={1.5} />}
                     total={totalTransactions}
                 />
-
                 <Widget
                     title="Pengguna"
-                    subtitle="Total Pengguna"
+                    subtitle="Total"
                     color="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     icon={<IconUsers size={20} strokeWidth={1.5} />}
                     total={totalUsers}
                 />
             </div>
 
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Total Pendapatan</p>
-                    <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(totalRevenue)}
-                    </p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1 mt-2">
-                        <IconCoin size={16} /> Akumulasi seluruh transaksi
-                    </p>
+            {/* Financial Summary */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+                    <p className="text-sm text-gray-500">Total Pendapatan (All-time)</p>
+                    <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
                 </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Total Profit</p>
-                    <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(totalProfit)}
-                    </p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1 mt-2">
-                        <IconMoneybag size={16} /> Profit bersih tercatat
-                    </p>
-                </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Rata-Rata Order</p>
-                    <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(averageOrder)}
-                    </p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1 mt-2">
-                        <IconReceipt size={16} /> Per transaksi
-                    </p>
-                </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Transaksi Hari Ini</p>
-                    <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                        {todayTransactions}
-                    </p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1 mt-2">
-                        <IconUsers size={16} /> Update harian
-                    </p>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+                    <p className="text-sm text-gray-500">Total Profit (All-time)</p>
+                    <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(totalProfit)}</p>
                 </div>
             </div>
 
+            {/* Charts & Lists */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-900 dark:bg-gray-950">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                Tren Pendapatan
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                12 data transaksi terakhir
-                            </p>
-                        </div>
-                    </div>
+                {/* Revenue Trend Chart */}
+                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        Tren Pendapatan (7 Hari)
+                    </h3>
                     <div className="mt-4">
                         {chartData.length ? (
-                            <canvas ref={chartRef} height={200}></canvas>
+                            <canvas ref={chartRef} height={180}></canvas>
                         ) : (
-                            <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                                Belum ada data pendapatan untuk ditampilkan.
+                            <div className="flex h-32 items-center justify-center text-sm text-gray-500">
+                                Belum ada data pendapatan.
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-900 dark:bg-gray-950">
-                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        Top Produk Terlaris
+                {/* Top Products */}
+                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+                        Top 5 Produk Terlaris
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        Berdasarkan total penjualan sepanjang waktu
-                    </p>
                     {topProducts.length ? (
-                        <ul className="space-y-3">
+                        <ul className="space-y-2">
                             {topProducts.map((product, index) => (
-                                <li
-                                    key={index}
-                                    className="flex items-center justify-between text-sm"
-                                >
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">
-                                            {product.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {product.qty} item
-                                        </p>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                        {formatCurrency(product.total)}
-                                    </p>
+                                <li key={index} className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-700 dark:text-gray-300">{product.name}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{product.qty} terjual</span>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex h-32 items-center justify-center text-sm text-gray-500">
                             Belum ada data produk.
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-900 dark:bg-gray-950">
-                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        Transaksi Terbaru
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        5 transaksi terakhir
-                    </p>
-                    {recentTransactions.length ? (
-                        <div className="space-y-3">
-                            {recentTransactions.map((trx, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between text-sm"
-                                >
-                                    <div>
-                                        <p className="font-semibold text-gray-900 dark:text-white">
-                                            {trx.invoice}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {trx.date} • {trx.customer}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            Kasir: {trx.cashier}
-                                        </p>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                        {formatCurrency(trx.total)}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                            Belum ada transaksi.
-                        </div>
-                    )}
-                </div>
-
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-900 dark:bg-gray-950">
-                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        Pelanggan Terbaik
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        Berdasarkan nilai pembelian
-                    </p>
-                    {topCustomers.length ? (
-                        <ul className="space-y-3">
-                            {topCustomers.map((customer, index) => (
-                                <li
-                                    key={index}
-                                    className="flex items-center justify-between text-sm"
-                                >
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">
-                                            {customer.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {customer.orders} transaksi
-                                        </p>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                        {formatCurrency(customer.total)}
-                                    </p>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                            Belum ada data pelanggan.
-                        </div>
-                    )}
-                </div>
+            {/* Recent Transactions */}
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
+                    5 Transaksi Terakhir
+                </h3>
+                {recentTransactions.length ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-gray-500 border-b dark:border-gray-700">
+                                    <th className="pb-2">Invoice</th>
+                                    <th className="pb-2">Tanggal</th>
+                                    <th className="pb-2">Kasir</th>
+                                    <th className="pb-2 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {recentTransactions.map((trx, index) => (
+                                    <tr key={index} className="border-b dark:border-gray-800">
+                                        <td className="py-2 font-medium text-gray-900 dark:text-white">{trx.invoice}</td>
+                                        <td className="py-2 text-gray-600 dark:text-gray-400">{trx.date}</td>
+                                        <td className="py-2 text-gray-600 dark:text-gray-400">{trx.cashier}</td>
+                                        <td className="py-2 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(trx.total)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex h-24 items-center justify-center text-sm text-gray-500">
+                        Belum ada transaksi.
+                    </div>
+                )}
             </div>
         </>
     );

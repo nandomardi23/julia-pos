@@ -12,10 +12,19 @@ class PaymentSettingSeeder extends Seeder
      */
     public function run(): void
     {
-        PaymentSetting::firstOrCreate([], [
-            'default_gateway' => 'cash',
-            'midtrans_enabled' => false,
-            'xendit_enabled' => false,
-        ]);
+        $settings = [
+            ['key' => 'default_gateway', 'value' => 'cash', 'type' => 'string', 'description' => 'Default payment gateway'],
+            ['key' => 'midtrans_enabled', 'value' => '0', 'type' => 'boolean', 'description' => 'Enable Midtrans payment'],
+            ['key' => 'midtrans_server_key', 'value' => '', 'type' => 'string', 'description' => 'Midtrans Server Key'],
+            ['key' => 'midtrans_client_key', 'value' => '', 'type' => 'string', 'description' => 'Midtrans Client Key'],
+            ['key' => 'midtrans_is_production', 'value' => '0', 'type' => 'boolean', 'description' => 'Midtrans Production Mode'],
+        ];
+
+        foreach ($settings as $setting) {
+            PaymentSetting::firstOrCreate(
+                ['key' => $setting['key']],
+                $setting
+            );
+        }
     }
 }

@@ -133,7 +133,6 @@ const History = ({ transactions, filters }) => {
                                 <Table.Th>Invoice</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th>Pelanggan</Table.Th>
                                 <Table.Th className="text-center">
                                     Item
                                 </Table.Th>
@@ -169,9 +168,6 @@ const History = ({ transactions, filters }) => {
                                         <Table.Td>
                                             {transaction.cashier?.name ?? "-"}
                                         </Table.Td>
-                                        <Table.Td>
-                                            {transaction.customer?.name ?? "-"}
-                                        </Table.Td>
                                         <Table.Td className="text-center">
                                             {transaction.total_items ?? 0}
                                         </Table.Td>
@@ -194,7 +190,7 @@ const History = ({ transactions, filters }) => {
                                 ))
                             ) : (
                                 <Table.Empty
-                                    colSpan={9}
+                                    colSpan={8}
                                     message={
                                         <div className="text-gray-500">
                                             <IconDatabaseOff

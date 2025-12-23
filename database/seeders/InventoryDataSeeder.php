@@ -19,7 +19,6 @@ class InventoryDataSeeder extends Seeder
             ['name' => 'Gudang Utama'],
             [
                 'location' => 'Lokasi Utama',
-                'description' => 'Gudang penyimpanan utama untuk semua produk',
                 'is_active' => true,
             ]
         );
@@ -29,23 +28,31 @@ class InventoryDataSeeder extends Seeder
             ['name' => 'Display Utama'],
             [
                 'location' => 'Area Kasir',
-                'description' => 'Display utama untuk penjualan di kasir/POS',
                 'is_active' => true,
             ]
         );
 
-        // Create sample supplier (optional)
+        // Create sample suppliers
         Supplier::firstOrCreate(
-            ['name' => 'Supplier Umum'],
+            ['name' => 'Supplier Buah Segar'],
             [
-                'company' => null,
-                'email' => null,
-                'phone' => '-',
-                'address' => null,
-                'description' => 'Supplier default untuk produk tanpa supplier spesifik',
+                'company' => 'PT Buah Nusantara',
+                'email' => 'buah@supplier.com',
+                'phone' => '021-1234567',
+                'address' => 'Pasar Induk Jakarta',
             ]
         );
 
-        $this->command->info('Inventory data seeded: 1 Warehouse, 1 Display, 1 Sample Supplier');
+        Supplier::firstOrCreate(
+            ['name' => 'Supplier Perlengkapan'],
+            [
+                'company' => 'CV Plastik Jaya',
+                'email' => 'plastik@supplier.com',
+                'phone' => '021-7654321',
+                'address' => 'Kawasan Industri Tangerang',
+            ]
+        );
+
+        $this->command->info('Inventory data seeded: 1 Warehouse, 1 Display, 2 Suppliers');
     }
 }

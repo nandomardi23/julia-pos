@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Apps;
 
 use App\Models\Cart;
 use App\Models\Product;
-use App\Models\Customer;
 use App\Models\Category;
 use App\Models\Display;
 use App\Models\DisplayStock;
@@ -47,14 +46,8 @@ class POSController extends Controller
             ->latest()
             ->get();
 
-        // Get all customers
-        $customers = Customer::latest()->get();
-
         // Calculate cart total
-        $carts_total = 0;
-        foreach ($carts as $cart) {
-            $carts_total += $cart->price * $cart->qty;
-        }
+        $carts_total = $carts->sum(fn($cart) => $cart->price * $cart->qty);
 
         // Get payment settings
         $paymentSetting = PaymentSetting::first();
@@ -71,7 +64,6 @@ class POSController extends Controller
             'categories' => $categories,
             'carts' => $carts,
             'carts_total' => $carts_total,
-            'customers' => $customers,
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
             'display' => $display,

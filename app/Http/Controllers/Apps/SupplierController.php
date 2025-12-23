@@ -24,7 +24,7 @@ class SupplierController extends Controller
             })
             ->withCount('products')
             ->latest()
-            ->paginate(10)
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         return Inertia::render('Dashboard/Suppliers/Index', [

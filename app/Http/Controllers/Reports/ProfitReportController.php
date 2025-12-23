@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\Profit;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -20,12 +19,11 @@ class ProfitReportController extends Controller
             'end_date' => $request->input('end_date'),
             'invoice' => $request->input('invoice'),
             'cashier_id' => $request->input('cashier_id'),
-            'customer_id' => $request->input('customer_id'),
         ];
 
         $baseQuery = $this->applyFilters(
             Transaction::query()
-                ->with(['cashier:id,name', 'customer:id,name'])
+                ->with(['cashier:id,name'])
                 ->withSum('profits as total_profit', 'total')
                 ->withSum('details as total_items', 'qty'),
             $filters
@@ -67,7 +65,6 @@ class ProfitReportController extends Controller
             'summary' => $summary,
             'filters' => $filters,
             'cashiers' => User::select('id', 'name')->orderBy('name')->get(),
-            'customers' => Customer::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -76,7 +73,6 @@ class ProfitReportController extends Controller
         return $query
             ->when($filters['invoice'] ?? null, fn ($q, $invoice) => $q->where('invoice', 'like', '%' . $invoice . '%'))
             ->when($filters['cashier_id'] ?? null, fn ($q, $cashier) => $q->where('cashier_id', $cashier))
-            ->when($filters['customer_id'] ?? null, fn ($q, $customer) => $q->where('customer_id', $customer))
             ->when($filters['start_date'] ?? null, fn ($q, $start) => $q->whereDate('created_at', '>=', $start))
             ->when($filters['end_date'] ?? null, fn ($q, $end) => $q->whereDate('created_at', '<=', $end));
     }

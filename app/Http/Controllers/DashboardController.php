@@ -2,7 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Customer;
+use App\Models\DisplayStock;
 use App\Models\Profit;
 use App\Models\Product;
 use App\Models\Transaction;
@@ -16,86 +16,90 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Basic counts (lightweight)
         $totalCategories   = Category::count();
         $totalProducts     = Product::count();
         $totalTransactions = Transaction::count();
         $totalUsers        = User::count();
-        $totalRevenue      = Transaction::sum('grand_total');
-        $totalProfit       = Profit::sum('total');
-        $averageOrder      = Transaction::avg('grand_total') ?? 0;
-        $todayTransactions = Transaction::whereDate('created_at', Carbon::today())->count();
 
-        $revenueTrend      = Transaction::selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
+        // Today's stats (optimized single queries)
+        $today = Carbon::today();
+        $todayTransactions = Transaction::whereDate('created_at', $today)->count();
+        $todayRevenue = Transaction::whereDate('created_at', $today)->sum('grand_total');
+        
+        // Today's profit using join (efficient)
+        $todayProfit = DB::table('profits')
+            ->join('transactions', 'profits.transaction_id', '=', 'transactions.id')
+            ->whereDate('transactions.created_at', $today)
+            ->sum('profits.total');
+
+        // All-time totals
+        $totalRevenue = Transaction::sum('grand_total');
+        $totalProfit = Profit::sum('total');
+
+        // Revenue trend (last 7 days only for performance)
+        $revenueTrend = Transaction::selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
+            ->where('created_at', '>=', Carbon::now()->subDays(7))
             ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->take(12)
+            ->orderBy('date', 'asc')
             ->get()
-            ->map(function ($row) {
-                return [
-                    'date'  => $row->date,
-                    'label' => Carbon::parse($row->date)->format('d M'),
-                    'total' => (int) $row->total,
-                ];
-            })
-            ->reverse()
-            ->values();
+            ->map(fn($row) => [
+                'date'  => $row->date,
+                'label' => Carbon::parse($row->date)->format('d M'),
+                'total' => (int) $row->total,
+            ]);
 
-        $topProducts = TransactionDetail::select('product_id', DB::raw('SUM(qty) as qty'), DB::raw('SUM(price) as total'))
+        // Top 5 products (optimized)
+        $topProducts = TransactionDetail::select('product_id', DB::raw('SUM(qty) as qty'))
             ->with('product:id,title')
             ->groupBy('product_id')
             ->orderByDesc('qty')
             ->take(5)
             ->get()
-            ->map(function ($detail) {
-                return [
-                    'name'  => $detail->product?->title ?? 'Produk terhapus',
-                    'qty'   => (int) $detail->qty,
-                    'total' => (int) $detail->total,
-                ];
-            });
+            ->map(fn($d) => [
+                'name' => $d->product?->title ?? 'Produk terhapus',
+                'qty'  => (int) $d->qty,
+            ]);
 
-        $recentTransactions = Transaction::with('cashier:id,name', 'customer:id,name')
+        // Recent 5 transactions
+        $recentTransactions = Transaction::with('cashier:id,name')
             ->latest()
             ->take(5)
-            ->get()
-            ->map(function ($transaction) {
-                return [
-                    'invoice'  => $transaction->invoice,
-                    'date'     => Carbon::parse($transaction->created_at)->format('d M Y'),
-                    'customer' => $transaction->customer?->name ?? '-',
-                    'cashier'  => $transaction->cashier?->name ?? '-',
-                    'total'    => (int) $transaction->grand_total,
-                ];
-            });
+            ->get(['id', 'invoice', 'cashier_id', 'grand_total', 'created_at'])
+            ->map(fn($t) => [
+                'invoice'  => $t->invoice,
+                'date'     => Carbon::parse($t->created_at)->format('d M Y'),
+                'cashier'  => $t->cashier?->name ?? '-',
+                'total'    => (int) $t->grand_total,
+            ]);
 
-        $topCustomers = Transaction::select('customer_id', DB::raw('COUNT(*) as orders'), DB::raw('SUM(grand_total) as total'))
-            ->with('customer:id,name')
-            ->whereNotNull('customer_id')
-            ->groupBy('customer_id')
-            ->orderByDesc('total')
+        // Low stock alert (display stock below min_stock, limit 5)
+        $lowStockProducts = DisplayStock::where('quantity', '<=', DB::raw('min_stock'))
+            ->where('min_stock', '>', 0)
+            ->with('product:id,title,unit')
             ->take(5)
             ->get()
-            ->map(function ($row) {
-                return [
-                    'name'   => $row->customer?->name ?? 'Pelanggan',
-                    'orders' => (int) $row->orders,
-                    'total'  => (int) $row->total,
-                ];
-            });
+            ->map(fn($s) => [
+                'name' => $s->product?->title ?? 'Produk',
+                'unit' => $s->product?->unit ?? 'pcs',
+                'stock' => $s->quantity,
+                'min_stock' => $s->min_stock,
+            ]);
 
         return Inertia::render('Dashboard/Index', [
-            'totalCategories'   => $totalCategories,
-            'totalProducts'     => $totalProducts,
-            'totalTransactions' => $totalTransactions,
-            'totalUsers'        => $totalUsers,
-            'revenueTrend'      => $revenueTrend,
-            'totalRevenue'      => (int) $totalRevenue,
-            'totalProfit'       => (int) $totalProfit,
-            'averageOrder'      => (int) round($averageOrder),
-            'todayTransactions' => (int) $todayTransactions,
-            'topProducts'       => $topProducts,
-            'recentTransactions'=> $recentTransactions,
-            'topCustomers'      => $topCustomers,
+            'totalCategories'    => $totalCategories,
+            'totalProducts'      => $totalProducts,
+            'totalTransactions'  => $totalTransactions,
+            'totalUsers'         => $totalUsers,
+            'todayTransactions'  => (int) $todayTransactions,
+            'todayRevenue'       => (int) $todayRevenue,
+            'todayProfit'        => (int) $todayProfit,
+            'totalRevenue'       => (int) $totalRevenue,
+            'totalProfit'        => (int) $totalProfit,
+            'revenueTrend'       => $revenueTrend,
+            'topProducts'        => $topProducts,
+            'recentTransactions' => $recentTransactions,
+            'lowStockProducts'   => $lowStockProducts,
         ]);
     }
 }

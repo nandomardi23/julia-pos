@@ -18,7 +18,6 @@ class Product extends Model
     protected $fillable = [
         'image', 
         'barcode', 
-        'sku',
         'title', 
         'description', 
         'buy_price', 
@@ -26,8 +25,9 @@ class Product extends Model
         'category_id', 
         'supplier_id',
         'unit',
-        'min_stock',
-        'expiry_date',
+        'is_recipe',
+        'is_supply',
+        'is_ingredient',
     ];
 
     /**
@@ -36,7 +36,9 @@ class Product extends Model
      * @var array
      */
     protected $casts = [
-        'expiry_date' => 'date',
+        'is_recipe' => 'boolean',
+        'is_supply' => 'boolean',
+        'is_ingredient' => 'boolean',
     ];
 
     /**
@@ -107,12 +109,27 @@ class Product extends Model
     }
 
     /**
-     * Check if product is low on stock.
+     * Get ingredients (for recipe products)
      */
-    public function isLowStock()
+    public function ingredients()
     {
-        $totalStock = $this->warehouse_stock + $this->display_stock;
-        return $this->min_stock > 0 && $totalStock <= $this->min_stock;
+        return $this->hasMany(ProductIngredient::class);
+    }
+
+    /**
+     * Get products that use this product as ingredient
+     */
+    public function usedInRecipes()
+    {
+        return $this->hasMany(ProductIngredient::class, 'ingredient_id');
+    }
+
+    /**
+     * Check if product is a recipe/composite product
+     */
+    public function hasIngredients()
+    {
+        return $this->is_recipe && $this->ingredients()->count() > 0;
     }
 
     /**

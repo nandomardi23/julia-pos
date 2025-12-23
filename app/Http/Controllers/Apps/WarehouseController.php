@@ -27,7 +27,7 @@ class WarehouseController extends Controller
                 $query->where('quantity', '>', 0);
             }])
             ->latest()
-            ->paginate(10)
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         return Inertia::render('Dashboard/Warehouses/Index', [
@@ -81,7 +81,7 @@ class WarehouseController extends Controller
             })
             ->where('quantity', '>', 0)
             ->latest()
-            ->paginate(15)
+            ->paginate($request->input('per_page', 15))
             ->withQueryString();
 
         return Inertia::render('Dashboard/Warehouses/Show', [

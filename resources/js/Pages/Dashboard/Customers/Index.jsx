@@ -5,7 +5,6 @@ import Button from '@/Components/Dashboard/Button'
 import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
 import Search from '@/Components/Dashboard/Search'
 import Table from '@/Components/Dashboard/Table'
-import Pagination from '@/Components/Dashboard/Pagination'
 
 export default function Index({ customers }) {
     const { roles, permissions, errors, } = usePage().props;
@@ -30,7 +29,17 @@ export default function Index({ customers }) {
                     </div>
                 </div>
             </div>
-            <Table.Card title={'Data Pelanggan'}>
+            <Table.Card 
+                title={'Data Pelanggan'}
+                links={customers.links}
+                meta={{
+                    from: customers.from,
+                    to: customers.to,
+                    total: customers.total,
+                    per_page: customers.per_page
+                }}
+                url={route('customers.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>
@@ -81,7 +90,6 @@ export default function Index({ customers }) {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
-            {customers.last_page !== 1 && (<Pagination links={customers.links} />)}
         </>
     )
 }

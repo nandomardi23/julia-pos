@@ -5,7 +5,6 @@ import Button from '@/Components/Dashboard/Button'
 import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
 import Search from '@/Components/Dashboard/Search'
 import Table from '@/Components/Dashboard/Table'
-import Pagination from '@/Components/Dashboard/Pagination'
 
 export default function Index({ categories }) {
     const { roles, permissions, errors, } = usePage().props;
@@ -30,7 +29,17 @@ export default function Index({ categories }) {
                     </div>
                 </div>
             </div>
-            <Table.Card title={'Data Kategori'}>
+            <Table.Card 
+                title={'Data Kategori'}
+                links={categories.links}
+                meta={{
+                    from: categories.from,
+                    to: categories.to,
+                    total: categories.total,
+                    per_page: categories.per_page
+                }}
+                url={route('categories.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>
@@ -75,7 +84,7 @@ export default function Index({ categories }) {
                                     </Table.Td>
                                 </tr>
                             )) :
-                            <Table.Empty colSpan={4} message={
+                            <Table.Empty colSpan={5} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={24} strokeWidth={1.5} className='text-gray-500 dark:text-white' />
@@ -87,7 +96,6 @@ export default function Index({ categories }) {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
-            {categories.last_page !== 1 && (<Pagination links={categories.links} />)}
         </>
     )
 }

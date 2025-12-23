@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "start-all": "concurrently \"php artisan serve --host=192.168.1.16 --port=8000\" \"npm run dev\""
     },
     "devDependencies": {
         "@headlessui/react": "^1.4.2",
@@ -12,6 +13,7 @@
         "@vitejs/plugin-react": "^4.2.0",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.4",
+        "concurrently": "^9.2.1",
         "laravel-vite-plugin": "^1.0",
         "postcss": "^8.4.31",
         "react": "^18.2.0",
@@ -24,6 +26,7 @@
         "chart.js": "^4.5.1",
         "jsbarcode": "^3.11.6",
         "react-hot-toast": "^2.4.1",
+        "react-select": "^5.10.2",
         "sweetalert2": "^11.11.1"
     }
 }

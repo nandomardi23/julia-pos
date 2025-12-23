@@ -1,4 +1,3 @@
-import Pagination from '@/Components/Dashboard/Pagination';
 import Search from '@/Components/Dashboard/Search';
 import Table from '@/Components/Dashboard/Table'
 import DashboardLayout from '@/Layouts/DashboardLayout'
@@ -19,7 +18,17 @@ export default function Index() {
                     placeholder='Cari data berdasarkan nama hak akses...'
                 />
             </div>
-            <Table.Card title={'Data Hak Akses'}>
+            <Table.Card 
+                title={'Data Hak Akses'}
+                links={permissions.links}
+                meta={{
+                    from: permissions.from,
+                    to: permissions.to,
+                    total: permissions.total,
+                    per_page: permissions.per_page
+                }}
+                url={route('permissions.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>
@@ -51,7 +60,6 @@ export default function Index() {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
-            {permissions.last_page !== 1 && (<Pagination links={permissions.links} />)}
         </>
     )
 }

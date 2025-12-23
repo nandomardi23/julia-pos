@@ -61,5 +61,27 @@ class PermissionSeeder extends Seeder
 
         // payment settings
         Permission::create(['name' => 'payment-settings-access']);
+
+        // suppliers permissions
+        Permission::create(['name' => 'suppliers-access']);
+        Permission::create(['name' => 'suppliers-create']);
+        Permission::create(['name' => 'suppliers-edit']);
+        Permission::create(['name' => 'suppliers-delete']);
+
+        // warehouses permissions
+        Permission::create(['name' => 'warehouses-access']);
+        Permission::create(['name' => 'warehouses-create']);
+        Permission::create(['name' => 'warehouses-edit']);
+        Permission::create(['name' => 'warehouses-delete']);
+
+        // displays permissions
+        Permission::create(['name' => 'displays-access']);
+        Permission::create(['name' => 'displays-create']);
+        Permission::create(['name' => 'displays-edit']);
+        Permission::create(['name' => 'displays-delete']);
+
+        // stock movements permissions
+        Permission::create(['name' => 'stock-movements-access']);
+        Permission::create(['name' => 'stock-movements-create']);
     }
 }

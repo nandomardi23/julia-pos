@@ -208,6 +208,7 @@ export default function Print({ transaction }) {
                                                 Number(item.price) || 0;
                                             const unitPrice =
                                                 subtotal / quantity;
+                                            const unit = item.product?.unit || 'pcs';
 
                                             return (
                                                 <tr key={item.id ?? index}>
@@ -233,9 +234,10 @@ export default function Print({ transaction }) {
                                                     </td>
                                                     <td className="px-4 py-3 text-right">
                                                         {formatPrice(unitPrice)}
+                                                        <span className="text-xs text-gray-500">/{unit}</span>
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
-                                                        {quantity}
+                                                        {quantity} {unit}
                                                     </td>
                                                     <td className="px-4 py-3 text-right font-semibold text-gray-900">
                                                         {formatPrice(subtotal)}

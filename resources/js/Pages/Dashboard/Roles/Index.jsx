@@ -2,7 +2,6 @@ import Button from '@/Components/Dashboard/Button';
 import Input from '@/Components/Dashboard/Input';
 import ListBox from '@/Components/Dashboard/ListBox';
 import Modal from '@/Components/Dashboard/Modal';
-import Pagination from '@/Components/Dashboard/Pagination';
 import Search from '@/Components/Dashboard/Search';
 import Table from '@/Components/Dashboard/Table'
 import DashboardLayout from '@/Layouts/DashboardLayout'
@@ -131,7 +130,17 @@ export default function Index() {
                     />
                 </form>
             </Modal>
-            <Table.Card title={'Data Akses Group'}>
+            <Table.Card 
+                title={'Data Akses Group'}
+                links={roles.links}
+                meta={{
+                    from: roles.from,
+                    to: roles.to,
+                    total: roles.total,
+                    per_page: roles.per_page
+                }}
+                url={route('roles.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>
@@ -198,7 +207,6 @@ export default function Index() {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
-            {roles.last_page !== 1 && (<Pagination links={roles.links} />)}
         </>
     )
 }

@@ -173,7 +173,7 @@ export default function Index({
     };
 
     const handleAddToCart = (product) => {
-        if (product.stock < 1) {
+        if (product.display_qty < 1) {
             toast.error("Stok produk habis!");
             return;
         }
@@ -341,7 +341,7 @@ export default function Index({
                                         key={product.id}
                                         onClick={() => handleAddToCart(product)}
                                         className={`relative cursor-pointer rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02] ${
-                                            product.stock < 1
+                                            product.display_qty < 1
                                                 ? "opacity-50 cursor-not-allowed"
                                                 : ""
                                         }`}
@@ -367,23 +367,29 @@ export default function Index({
                                             <p className="text-xs text-gray-500 mb-2">
                                                 {product.category?.name ||
                                                     "Tanpa Kategori"}
+                                                {product.unit && product.unit !== 'pcs' && (
+                                                    <span className="ml-1 text-indigo-500">• {product.unit}</span>
+                                                )}
                                             </p>
                                             <div className="flex items-center justify-between">
                                                 <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                                                     {formatPrice(
                                                         product.sell_price
                                                     )}
+                                                    {product.unit && (
+                                                        <span className="text-xs font-normal text-gray-500">/{product.unit}</span>
+                                                    )}
                                                 </p>
                                                 <span
                                                     className={`text-xs px-2 py-0.5 rounded-full ${
-                                                        product.stock > 10
+                                                        product.display_qty > 10
                                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                                            : product.stock > 0
+                                                            : product.display_qty > 0
                                                             ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                                                             : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                                                     }`}
                                                 >
-                                                    Stok: {product.stock}
+                                                    Stok: {product.display_qty}
                                                 </span>
                                             </div>
                                         </div>
@@ -399,7 +405,7 @@ export default function Index({
                                         </div>
 
                                         {/* Out of Stock Badge */}
-                                        {product.stock < 1 && (
+                                        {product.display_qty < 1 && (
                                             <div className="absolute inset-0 bg-gray-900/50 flex items-center justify-center">
                                                 <span className="bg-rose-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                                                     Stok Habis
@@ -536,11 +542,14 @@ export default function Index({
                                                             item.product
                                                                 .sell_price
                                                         )}
+                                                        {item.product.unit && (
+                                                            <span>/{item.product.unit}</span>
+                                                        )}
                                                     </span>
                                                 </div>
                                             </Table.Td>
                                             <Table.Td className="text-center text-sm">
-                                                {item.qty}
+                                                {item.qty} {item.product.unit || 'pcs'}
                                             </Table.Td>
                                             <Table.Td className="text-right text-sm">
                                                 {formatPrice(

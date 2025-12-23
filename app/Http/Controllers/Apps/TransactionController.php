@@ -8,6 +8,9 @@ use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Transaction;
 use App\Models\PaymentSetting;
+use App\Models\Display;
+use App\Models\DisplayStock;
+use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -224,9 +227,29 @@ class TransactionController extends Controller
                     'total' => $profits,
                 ]);
 
-                $product = Product::find($cart->product_id);
-                $product->stock = $product->stock - $cart->qty;
-                $product->save();
+                // Deduct from display stock instead of product stock
+                $display = Display::active()->first();
+                if ($display) {
+                    $displayStock = DisplayStock::where('display_id', $display->id)
+                        ->where('product_id', $cart->product_id)
+                        ->first();
+                    
+                    if ($displayStock) {
+                        $displayStock->decrement('quantity', $cart->qty);
+                        
+                        // Create stock movement record
+                        StockMovement::create([
+                            'product_id' => $cart->product_id,
+                            'from_type' => StockMovement::TYPE_DISPLAY,
+                            'from_id' => $display->id,
+                            'to_type' => StockMovement::TYPE_TRANSACTION,
+                            'to_id' => $transaction->id,
+                            'quantity' => $cart->qty,
+                            'note' => 'Penjualan: ' . $transaction->invoice,
+                            'user_id' => auth()->id(),
+                        ]);
+                    }
+                }
             }
 
             Cart::where('cashier_id', auth()->user()->id)->delete();
@@ -273,7 +296,7 @@ class TransactionController extends Controller
             'end_date' => $request->input('end_date'),
         ];
 
-        $query = Transaction::query()
+        $query = Transaction::query() 
             ->with(['cashier:id,name', 'customer:id,name'])
             ->withSum('details as total_items', 'qty')
             ->withSum('profits as total_profit', 'total')

@@ -8,8 +8,29 @@ import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
 import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Dashboard/InputSelect'
+import Select from '@/Components/Dashboard/Select'
 
-export default function Create({ categories }) {
+// Daftar satuan yang tersedia
+const unitOptions = [
+    { value: 'pcs', label: 'Pcs (Pieces)' },
+    { value: 'cup', label: 'Cup' },
+    { value: 'botol', label: 'Botol' },
+    { value: 'gelas', label: 'Gelas' },
+    { value: 'kg', label: 'Kilogram (KG)' },
+    { value: 'gram', label: 'Gram' },
+    { value: 'liter', label: 'Liter' },
+    { value: 'ml', label: 'Mililiter (ML)' },
+    { value: 'pack', label: 'Pack' },
+    { value: 'dus', label: 'Dus' },
+    { value: 'box', label: 'Box' },
+    { value: 'sisir', label: 'Sisir' },
+    { value: 'buah', label: 'Buah' },
+    { value: 'porsi', label: 'Porsi' },
+    { value: 'lembar', label: 'Lembar' },
+    { value: 'pasang', label: 'Pasang' },
+]
+
+export default function Create({ categories, suppliers }) {
 
     const { errors } = usePage().props
 
@@ -18,17 +39,26 @@ export default function Create({ categories }) {
         barcode: '',
         title: '',
         category_id: '',
+        supplier_id: '',
         description: '',
         buy_price: '',
         sell_price: '',
-        stock: ''
+        unit: 'pcs'
     })
 
     const [selectedCategory, setSelectedCategory] = useState(null)
-    // Set gender
+    const [selectedSupplier, setSelectedSupplier] = useState(null)
+
+    // Set category
     const setSelectedCategoryHandler = (value) => {
         setSelectedCategory(value)
         setData('category_id', value.id)
+    }
+
+    // Set supplier
+    const setSelectedSupplierHandler = (value) => {
+        setSelectedSupplier(value)
+        setData('supplier_id', value ? value.id : '')
     }
 
 
@@ -105,6 +135,19 @@ export default function Create({ categories }) {
                         />
                     </div>
                     <div className='col-span-12'>
+                        <InputSelect
+                            label="Supplier (Opsional)"
+                            data={suppliers.map(s => ({ ...s, name: s.company ? `${s.name} (${s.company})` : s.name }))}
+                            selected={selectedSupplier}
+                            setSelected={setSelectedSupplierHandler}
+                            placeholder="Pilih supplier"
+                            errors={errors.supplier_id}
+                            multiple={false}
+                            searchable={true}
+                            displayKey='name'
+                        />
+                    </div>
+                    <div className='col-span-12'>
                         <Input
                             type={'text'}
                             label={'Kode Produk/Barcode'}
@@ -125,14 +168,18 @@ export default function Create({ categories }) {
                         />
                     </div>
                     <div className='col-span-6'>
-                        <Input
-                            type={'number'}
-                            label={'Stok'}
-                            value={data.stock}
-                            onChange={e => setData('stock', e.target.value)}
-                            errors={errors.stock}
-                            placeholder={'Stok tersedia'}
-                        />
+                        <Select
+                            label="Satuan"
+                            value={data.unit}
+                            onChange={e => setData('unit', e.target.value)}
+                            errors={errors.unit}
+                        >
+                            {unitOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Select>
                     </div>
                     <div className='col-span-12'>
                         <Textarea
@@ -166,71 +213,6 @@ export default function Create({ categories }) {
                         />
                     </div>
                 </div>
-                {/*
-                <div className='mb-4 flex flex-col md:flex-row justify-between gap-4'>
-                    <div className=''>
-                        <InputSelect
-                            label="Kategori"
-                            data={categories}
-                            selected={selectedCategory}
-                            setSelected={setSelectedCategoryHandler}
-                            placeholder="Pilih kategori"
-                            errors={errors.category_id}
-                            multiple={false}
-                            searchable={true}
-                            displayKey='name'
-                        />
-                    </div>
-                    <div className='w-full md:w-1/2'>
-                        <Input
-                            type={'text'}
-                            label={'Barcode'}
-                            value={data.barcode}
-                            onChange={e => setData('barcode', e.target.value)}
-                            errors={errors.barcode}
-                        />
-                    </div>
-                    <div className='w-full md:w-1/2'>
-                        <Input
-                            type={'text'}
-                            label={'Nama'}
-                            value={data.title}
-                            onChange={e => setData('title', e.target.value)}
-                            errors={errors.title}
-                        />
-                    </div>
-                </div>
-                <div className='mb-4 flex flex-col md:flex-row gap-4'>
-                    <div className='w-full md:w-1/2'>
-                        <Input
-                            type={'number'}
-                            label={'Harga Beli'}
-                            value={data.buy_price}
-                            onChange={e => setData('buy_price', e.target.value)}
-                            errors={errors.buy_price}
-                        />
-                    </div>
-                    <div className='w-full md:w-1/2'>
-                        <Input
-                            type={'number'}
-                            label={'Harga Jual'}
-                            value={data.sell_price}
-                            onChange={e => setData('sell_price', e.target.value)}
-                            errors={errors.sell_price}
-                        />
-                    </div>
-                </div>
-                <div className='mb-4 flex flex-col md:flex-row gap-4'>
-                    <div className='w-full md:w-1/2'>
-                        <Input
-                            type={'number'}
-                            label={'Stok'}
-                            value={data.stock}
-                            onChange={e => setData('stock', e.target.value)}
-                            errors={errors.stock}
-                        />
-                    </div>
-                </div> */}
             </Card>
         </>
     )

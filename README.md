@@ -85,3 +85,5 @@ Kalau repositori ini membantumu membangun POS lebih cepat, klik **Star**. Dukung
 ---
 
 Made with ❤️ menggunakan Laravel + React oleh komunitas Point of Sales.
+# 2. Seed permissions baru
+php artisan db:seed --class=InventoryPermissionSeeder

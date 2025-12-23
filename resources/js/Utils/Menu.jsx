@@ -21,6 +21,11 @@ import {
     IconUserSquare,
     IconUsers,
     IconUsersPlus,
+    IconBuildingWarehouse,
+    IconTruck,
+    IconLayoutList,
+    IconArrowsExchange,
+    IconMinus,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -67,6 +72,60 @@ export default function Menu() {
                     icon: <IconUsersPlus size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["customers-access"]),
                 },
+                {
+                    title: "Supplier",
+                    href: route("suppliers.index"),
+                    active: url.startsWith("/dashboard/suppliers"),
+                    icon: <IconTruck size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["suppliers-access"]),
+                },
+            ],
+        },
+        {
+            title: "Manajemen Stok",
+            details: [
+                {
+                    title: "Gudang",
+                    href: route("warehouses.index"),
+                    active: url.startsWith("/dashboard/warehouses"),
+                    icon: <IconBuildingWarehouse size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["warehouses-access"]),
+                },
+                {
+                    title: "Display",
+                    href: route("displays.index"),
+                    active: url.startsWith("/dashboard/displays"),
+                    icon: <IconLayoutList size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["displays-access"]),
+                },
+                {
+                    title: "Transfer Stok",
+                    href: route("stock-movements.transfer"),
+                    active: url === "/dashboard/stock-movements/transfer",
+                    icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-create"]),
+                },
+                {
+                    title: "Barang Masuk",
+                    href: route("stock-movements.create"),
+                    active: url === "/dashboard/stock-movements/create",
+                    icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-create"]),
+                },
+                {
+                    title: "Barang Keluar",
+                    href: route("stock-movements.stockOut"),
+                    active: url === "/dashboard/stock-movements/stock-out",
+                    icon: <IconMinus size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-create"]),
+                },
+                {
+                    title: "Riwayat Stok",
+                    href: route("stock-movements.index"),
+                    active: url === "/dashboard/stock-movements",
+                    icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-access"]),
+                },
             ],
         },
         {
@@ -76,13 +135,6 @@ export default function Menu() {
                     title: "POS",
                     href: route("pos.index"),
                     active: url === "/dashboard/pos" ? true : false,
-                    icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["transactions-access"]),
-                },
-                {
-                    title: "Transaksi (Barcode)",
-                    href: route("transactions.index"),
-                    active: url === "/dashboard/transactions" ? true : false, // Update comparison here
                     icon: <IconShoppingCart size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["transactions-access"]),
                 },
@@ -177,3 +229,4 @@ export default function Menu() {
 
     return menuNavigation;
 }
+

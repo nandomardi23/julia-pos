@@ -6,6 +6,10 @@ use App\Http\Controllers\Apps\ProductController;
 use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\Apps\POSController;
 use App\Http\Controllers\Apps\PaymentSettingController;
+use App\Http\Controllers\Apps\SupplierController;
+use App\Http\Controllers\Apps\WarehouseController;
+use App\Http\Controllers\Apps\DisplayController;
+use App\Http\Controllers\Apps\StockMovementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -62,8 +66,59 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middlewareFor(['create', 'store'], 'permission:customers-create')
         ->middlewareFor(['edit', 'update'], 'permission:customers-edit')
         ->middlewareFor('destroy', 'permission:customers-delete');
+
+    // Suppliers Routes
+    Route::resource('suppliers', SupplierController::class)
+        ->middlewareFor(['index', 'show'], 'permission:suppliers-access')
+        ->middlewareFor(['create', 'store'], 'permission:suppliers-create')
+        ->middlewareFor(['edit', 'update'], 'permission:suppliers-edit')
+        ->middlewareFor('destroy', 'permission:suppliers-delete');
+
+    // Warehouses Routes
+    Route::resource('warehouses', WarehouseController::class)
+        ->middlewareFor(['index', 'show'], 'permission:warehouses-access')
+        ->middlewareFor(['create', 'store'], 'permission:warehouses-create')
+        ->middlewareFor(['edit', 'update'], 'permission:warehouses-edit')
+        ->middlewareFor('destroy', 'permission:warehouses-delete');
+
+    // Displays Routes
+    Route::resource('displays', DisplayController::class)
+        ->middlewareFor(['index', 'show'], 'permission:displays-access')
+        ->middlewareFor(['create', 'store'], 'permission:displays-create')
+        ->middlewareFor(['edit', 'update'], 'permission:displays-edit')
+        ->middlewareFor('destroy', 'permission:displays-delete');
+
+    // Stock Movements Routes
+    Route::get('/stock-movements', [StockMovementController::class, 'index'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.index');
+    Route::get('/stock-movements/create', [StockMovementController::class, 'create'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.create');
+    Route::post('/stock-movements', [StockMovementController::class, 'store'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.store');
+    Route::get('/stock-movements/transfer', [StockMovementController::class, 'transfer'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.transfer');
+    Route::post('/stock-movements/transfer', [StockMovementController::class, 'storeTransfer'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.storeTransfer');
+    Route::get('/stock-movements/warehouse-stock', [StockMovementController::class, 'getWarehouseStock'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.warehouseStock');
+    Route::get('/stock-movements/display-stock', [StockMovementController::class, 'getDisplayStock'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.displayStock');
+    Route::get('/stock-movements/stock-out', [StockMovementController::class, 'stockOut'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.stockOut');
+    Route::post('/stock-movements/stock-out', [StockMovementController::class, 'storeStockOut'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.storeStockOut');
+
     //route transaction
-    Route::get('/transactions', [TransactionController::class, 'index'])->middleware('permission:transactions-access')->name('transactions.index');
+    // Route::get('/transactions', [TransactionController::class, 'index'])->middleware('permission:transactions-access')->name('transactions.index'); // Removed - using POS instead
 
     //route transaction searchProduct
     Route::post('/transactions/searchProduct', [TransactionController::class, 'searchProduct'])->middleware('permission:transactions-access')->name('transactions.searchProduct');
@@ -98,3 +153,4 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
 });
 
 require __DIR__ . '/auth.php';
+

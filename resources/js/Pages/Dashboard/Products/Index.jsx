@@ -5,7 +5,6 @@ import Button from '@/Components/Dashboard/Button'
 import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
 import Search from '@/Components/Dashboard/Search'
 import Table from '@/Components/Dashboard/Table'
-import Pagination from '@/Components/Dashboard/Pagination'
 import Barcode from '@/Components/Dashboard/Barcode'
 
 export default function Index({ products }) {
@@ -31,7 +30,17 @@ export default function Index({ products }) {
                     </div>
                 </div>
             </div>
-            <Table.Card title={'Data Produk'}>
+            <Table.Card 
+                title={'Data Produk'}
+                links={products.links}
+                meta={{
+                    from: products.from,
+                    to: products.to,
+                    total: products.total,
+                    per_page: products.per_page
+                }}
+                url={route('products.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>
@@ -39,9 +48,9 @@ export default function Index({ products }) {
                             <Table.Th >Kode</Table.Th>
                             <Table.Th >Kategori</Table.Th>
                             <Table.Th>Nama</Table.Th>
+                            <Table.Th>Satuan</Table.Th>
                             <Table.Th>Harga Beli</Table.Th>
                             <Table.Th>Harga Jual</Table.Th>
-                            <Table.Th>Stok</Table.Th>
                             <Table.Th></Table.Th>
                         </tr>
                     </Table.Thead>
@@ -61,11 +70,15 @@ export default function Index({ products }) {
                                             lineColor={'#000'}
                                         />
                                     </Table.Td>
-                                    <Table.Td>{product.category.name}</Table.Td>
-                                    <Table.Td>{product.description}</Table.Td>
-                                    <Table.Td>{product.buy_price}</Table.Td>
-                                    <Table.Td>{product.sell_price}</Table.Td>
-                                    <Table.Td>{product.stock}</Table.Td>
+                                    <Table.Td>{product.category?.name || '-'}</Table.Td>
+                                    <Table.Td>{product.title}</Table.Td>
+                                    <Table.Td>
+                                        <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-blue-900 dark:text-blue-300'>
+                                            {product.unit || 'pcs'}
+                                        </span>
+                                    </Table.Td>
+                                    <Table.Td>Rp {parseInt(product.buy_price).toLocaleString('id-ID')}</Table.Td>
+                                    <Table.Td>Rp {parseInt(product.sell_price).toLocaleString('id-ID')}</Table.Td>
                                     <Table.Td>
                                         <div className='flex gap-2'>
                                             <Button
@@ -84,7 +97,7 @@ export default function Index({ products }) {
                                     </Table.Td>
                                 </tr>
                             )) :
-                            <Table.Empty colSpan={7} message={
+                            <Table.Empty colSpan={8} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={24} strokeWidth={1.5} className='text-gray-500 dark:text-white' />
@@ -96,7 +109,6 @@ export default function Index({ products }) {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
-            {products.last_page !== 1 && (<Pagination links={products.links} />)}
         </>
     )
 }

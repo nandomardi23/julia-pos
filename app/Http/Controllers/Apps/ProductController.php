@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Apps;
 use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -38,10 +39,12 @@ class ProductController extends Controller
     {
         //get categories
         $categories = Category::all();
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
 
         //return inertia
         return Inertia::render('Dashboard/Products/Create', [
-            'categories' => $categories
+            'categories' => $categories,
+            'suppliers' => $suppliers,
         ]);
     }
 
@@ -61,9 +64,10 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
-            'stock' => 'required',
+            'unit' => 'required',
         ]);
         //upload image
         $image = $request->file('image');
@@ -76,14 +80,16 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'supplier_id' => $request->supplier_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
-            'stock' => $request->stock,
+            'unit' => $request->unit,
         ]);
 
         //redirect
         return to_route('products.index');
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -95,10 +101,12 @@ class ProductController extends Controller
     {
         //get categories
         $categories = Category::all();
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
 
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product,
-            'categories' => $categories
+            'categories' => $categories,
+            'suppliers' => $suppliers,
         ]);
     }
 
@@ -119,9 +127,10 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
-            'stock' => 'required',
+            'unit' => 'required',
         ]);
 
         //check image update
@@ -141,9 +150,10 @@ class ProductController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'category_id' => $request->category_id,
+                'supplier_id' => $request->supplier_id,
                 'buy_price' => $request->buy_price,
                 'sell_price' => $request->sell_price,
-                'stock' => $request->stock,
+                'unit' => $request->unit,
             ]);
 
         }
@@ -154,14 +164,16 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'supplier_id' => $request->supplier_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
-            'stock' => $request->stock,
+            'unit' => $request->unit,
         ]);
 
         //redirect
         return to_route('products.index');
     }
+
 
     /**
      * Remove the specified resource from storage.

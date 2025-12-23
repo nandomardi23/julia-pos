@@ -91,7 +91,17 @@ export default function Index() {
                     </div>
                 </div>
             </div>
-            <Table.Card title={'Data Pengguna'}>
+            <Table.Card 
+                title={'Data Pengguna'}
+                links={users.links}
+                meta={{
+                    from: users.from,
+                    to: users.to,
+                    total: users.total,
+                    per_page: users.per_page
+                }}
+                url={route('users.index')}
+            >
                 <Table>
                     <Table.Thead>
                         <tr>

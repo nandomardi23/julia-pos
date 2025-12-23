@@ -6,6 +6,8 @@ use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Category;
+use App\Models\Display;
+use App\Models\DisplayStock;
 use App\Models\PaymentSetting;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -18,11 +20,23 @@ class POSController extends Controller
      */
     public function index()
     {
-        // Get all products with category
-        $products = Product::with('category')
-            ->where('stock', '>', 0)
-            ->latest()
-            ->get();
+        // Get active display (since we use single display)
+        $display = Display::active()->first();
+
+        // Get products that have display stock
+        $products = collect();
+        if ($display) {
+            $displayStocks = DisplayStock::where('display_id', $display->id)
+                ->where('quantity', '>', 0)
+                ->with(['product.category'])
+                ->get();
+            
+            $products = $displayStocks->map(function ($stock) {
+                $product = $stock->product;
+                $product->display_qty = $stock->quantity;
+                return $product;
+            });
+        }
 
         // Get all categories for filter
         $categories = Category::orderBy('name')->get();
@@ -60,6 +74,7 @@ class POSController extends Controller
             'customers' => $customers,
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
+            'display' => $display,
         ]);
     }
 
@@ -74,22 +89,37 @@ class POSController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
-
-        // Check stock
-        if ($product->stock < $request->qty) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi!');
+        
+        // Get active display
+        $display = Display::active()->first();
+        if (!$display) {
+            return redirect()->back()->with('error', 'Display tidak tersedia!');
         }
 
-        // Check if product already in cart
-        $cart = Cart::where('product_id', $request->product_id)
-            ->where('cashier_id', auth()->user()->id)
+        // Get display stock for this product
+        $displayStock = DisplayStock::where('display_id', $display->id)
+            ->where('product_id', $request->product_id)
             ->first();
 
-        if ($cart) {
+        $availableQty = $displayStock ? $displayStock->quantity : 0;
+
+        // Check if product already in cart (to account for already added qty)
+        $existingCart = Cart::where('product_id', $request->product_id)
+            ->where('cashier_id', auth()->user()->id)
+            ->first();
+        
+        $totalQtyNeeded = $request->qty + ($existingCart ? $existingCart->qty : 0);
+
+        // Check stock
+        if ($availableQty < $totalQtyNeeded) {
+            return redirect()->back()->with('error', 'Stok display tidak mencukupi! (Tersedia: ' . $availableQty . ')');
+        }
+
+        if ($existingCart) {
             // Update quantity
-            $cart->increment('qty', $request->qty);
-            $cart->price = $product->sell_price;
-            $cart->save();
+            $existingCart->increment('qty', $request->qty);
+            $existingCart->price = $product->sell_price;
+            $existingCart->save();
         } else {
             // Create new cart item
             Cart::create([
@@ -138,9 +168,22 @@ class POSController extends Controller
             return redirect()->back()->with('error', 'Item keranjang tidak ditemukan!');
         }
 
+        // Get active display
+        $display = Display::active()->first();
+        if (!$display) {
+            return redirect()->back()->with('error', 'Display tidak tersedia!');
+        }
+
+        // Get display stock for this product
+        $displayStock = DisplayStock::where('display_id', $display->id)
+            ->where('product_id', $cart->product_id)
+            ->first();
+
+        $availableQty = $displayStock ? $displayStock->quantity : 0;
+
         // Check stock
-        if ($cart->product->stock < $request->qty) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi!');
+        if ($availableQty < $request->qty) {
+            return redirect()->back()->with('error', 'Stok display tidak mencukupi! (Tersedia: ' . $availableQty . ')');
         }
 
         $cart->qty = $request->qty;

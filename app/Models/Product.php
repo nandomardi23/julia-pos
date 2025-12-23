@@ -16,8 +16,35 @@ class Product extends Model
      * @var array
      */
     protected $fillable = [
-        'image', 'barcode', 'title', 'description', 'buy_price', 'sell_price', 'category_id', 'stock'
+        'image', 
+        'barcode', 
+        'sku',
+        'title', 
+        'description', 
+        'buy_price', 
+        'sell_price', 
+        'category_id', 
+        'supplier_id',
+        'unit',
+        'min_stock',
+        'expiry_date',
     ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'expiry_date' => 'date',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['warehouse_stock', 'display_stock'];
 
     /**
      * category
@@ -27,6 +54,65 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * supplier
+     *
+     * @return void
+     */
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Get warehouse stock records.
+     */
+    public function warehouseStocks()
+    {
+        return $this->hasMany(WarehouseStock::class);
+    }
+
+    /**
+     * Get display stock records.
+     */
+    public function displayStocks()
+    {
+        return $this->hasMany(DisplayStock::class);
+    }
+
+    /**
+     * Get stock movements for this product.
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * Get total warehouse stock.
+     */
+    public function getWarehouseStockAttribute()
+    {
+        return $this->warehouseStocks()->sum('quantity');
+    }
+
+    /**
+     * Get total display stock.
+     */
+    public function getDisplayStockAttribute()
+    {
+        return $this->displayStocks()->sum('quantity');
+    }
+
+    /**
+     * Check if product is low on stock.
+     */
+    public function isLowStock()
+    {
+        $totalStock = $this->warehouse_stock + $this->display_stock;
+        return $this->min_stock > 0 && $totalStock <= $this->min_stock;
     }
 
     /**

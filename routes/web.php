@@ -16,9 +16,7 @@ use App\Http\Controllers\Reports\ProfitReportController;
 use App\Http\Controllers\Reports\SalesReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -33,7 +31,7 @@ Route::get('/', function () {
 });
 
 Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
-    Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified', 'permission:dashboard-access'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
     Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permissions-access')->name('permissions.index');
     // roles route
     Route::resource('/roles', RoleController::class)
@@ -112,8 +110,6 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.storeStockOut');
 
-    //route transaction
-    // Route::get('/transactions', [TransactionController::class, 'index'])->middleware('permission:transactions-access')->name('transactions.index'); // Removed - using POS instead
 
     //route transaction searchProduct
     Route::post('/transactions/searchProduct', [TransactionController::class, 'searchProduct'])->middleware('permission:transactions-access')->name('transactions.searchProduct');

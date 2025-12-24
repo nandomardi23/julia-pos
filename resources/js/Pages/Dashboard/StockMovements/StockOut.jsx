@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconMinus, IconAlertTriangle } from '@tabler/icons-react'
+import { IconPencilPlus, IconMinus, IconAlertTriangle, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
 import Select from '@/Components/Dashboard/Select'
@@ -105,12 +105,21 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
                 title={'Barang Keluar (Non-Penjualan)'}
                 icon={<IconMinus size={20} strokeWidth={1.5} />}
                 footer={
-                    <Button
-                        type={'submit'}
-                        label={'Simpan'}
-                        icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-red-500 text-white hover:bg-red-600'}
-                    />
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'button'}
+                            label={'Kembali'}
+                            icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => router.visit(route('stock-movements.index'))}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={'Simpan'}
+                            icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-red-500 text-white hover:bg-red-600'}
+                        />
+                    </div>
                 }
                 form={submit}
             >

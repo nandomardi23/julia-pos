@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { usePage } from '@inertiajs/react';
-import { IconAlignLeft, IconMoon, IconSun } from '@tabler/icons-react'
+import { IconAlignLeft, IconMoon, IconSun, IconMenu2 } from '@tabler/icons-react'
 import AuthDropdown from '@/Components/Dashboard/AuthDropdown';
 import Menu from '@/Utils/Menu';
 import Notification from '@/Components/Dashboard/Notification';
 
-export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
+export default function Navbar({ toggleSidebar, toggleMobileSidebar, themeSwitcher, darkMode }) {
     // destruct auth from props
     const { auth } = usePage().props;
 
@@ -42,16 +42,20 @@ export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
     return (
         <div className='py-8 px-4 md:px-6 flex justify-between items-center min-w-full sticky top-0 z-20 h-16 border-b bg-white dark:border-gray-900 dark:bg-gray-950'>
             <div className='flex items-center gap-4'>
-                <button className='text-gray-700 dark:text-gray-400 hidden md:block' onClick={toggleSidebar}>
+                {/* Mobile hamburger button */}
+                <button 
+                    className='text-gray-700 dark:text-gray-400 lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800' 
+                    onClick={toggleMobileSidebar}
+                >
+                    <IconMenu2 size={22} strokeWidth={1.5} />
+                </button>
+                
+                {/* Desktop sidebar toggle */}
+                <button className='text-gray-700 dark:text-gray-400 hidden lg:block' onClick={toggleSidebar}>
                     <IconAlignLeft size={18} strokeWidth={1.5} />
                 </button>
+                
                 <div className='flex flex-row items-center gap-1 md:border-l-2 md:border-double md:px-4 dark:border-gray-900'>
-                    {/* {links.map((link, i) => (
-                        link.hasOwnProperty('subdetails') ?
-                            sublinks.map((sublink, x) => sublink.active === true && <span className='font-semibold text-sm md:text-base text-gray-700 dark:text-gray-400' key={x}>{sublink.title}</span>)
-                            :
-                            link.active === true && <span className='font-semibold text-sm md:text-base text-gray-700 dark:text-gray-400' key={i}>{link.title}</span>
-                    ))} */}
                     {links.map((link, i) => (
                         link.hasOwnProperty('subdetails') ?
                             sublinks.map((sublink, x) => sublink.active === true && <span className='font-semibold text-sm md:text-base text-gray-700 dark:text-gray-400' key={x}>{sublink.title}</span>)
@@ -60,9 +64,9 @@ export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
                     ))}
                 </div>
             </div>
-            <div className='flex items-center gap-4'>
-                <div className='flex flex-row items-center gap-1 border-r-2 border-double px-4 dark:border-gray-900'>
-                    <div className='flex flex-row gap-2'>
+            <div className='flex items-center gap-2 md:gap-4'>
+                <div className='flex flex-row items-center gap-1 md:border-r-2 md:border-double md:px-4 dark:border-gray-900'>
+                    <div className='flex flex-row gap-1 md:gap-2'>
                         <button className='p-2 rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 ' onClick={themeSwitcher}>
                             {darkMode ? <IconSun strokeWidth={1.5} size={18} /> : <IconMoon strokeWidth={1.5} size={18} />}
                         </button>

@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\PaymentSetting;
 use App\Models\Display;
 use App\Models\DisplayStock;
+use App\Models\WarehouseStock;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -119,7 +120,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+        return redirect()->route('pos.index')->with('success', 'Product Added Successfully!.');
     }
 
 
@@ -163,7 +164,7 @@ class TransactionController extends Controller
 
             if (!$paymentSetting || !$paymentSetting->isGatewayReady($paymentGateway)) {
                 return redirect()
-                    ->route('transactions.index')
+                    ->route('pos.index')
                     ->with('error', 'Gateway pembayaran belum dikonfigurasi.');
             }
         }
@@ -246,27 +247,51 @@ class TransactionController extends Controller
                         $product->load('ingredients.ingredient');
                         
                         foreach ($product->ingredients as $recipeIngredient) {
+                            $ingredient = $recipeIngredient->ingredient;
                             $ingredientQty = $recipeIngredient->quantity * $cart->qty;
                             
-                            // Find display stock for the ingredient
-                            $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
-                                ->where('product_id', $recipeIngredient->ingredient_id)
-                                ->first();
-                            
-                            if ($ingredientDisplayStock) {
-                                $ingredientDisplayStock->decrement('quantity', $ingredientQty);
+                            if ($ingredient->is_supply) {
+                                // SUPPLY → potong dari WAREHOUSE pertama yang punya stok
+                                $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)
+                                    ->where('quantity', '>=', $ingredientQty)
+                                    ->first();
                                 
-                                // Create stock movement for ingredient deduction
-                                StockMovement::create([
-                                    'product_id' => $recipeIngredient->ingredient_id,
-                                    'from_type' => StockMovement::TYPE_DISPLAY,
-                                    'from_id' => $display->id,
-                                    'to_type' => StockMovement::TYPE_TRANSACTION,
-                                    'to_id' => $transaction->id,
-                                    'quantity' => $ingredientQty,
-                                    'note' => 'Bahan resep: ' . $product->title . ' x' . $cart->qty,
-                                    'user_id' => auth()->id(),
-                                ]);
+                                if ($warehouseStock) {
+                                    $warehouseStock->decrement('quantity', $ingredientQty);
+                                    
+                                    // Create stock movement for supply deduction
+                                    StockMovement::create([
+                                        'product_id' => $ingredient->id,
+                                        'from_type' => StockMovement::TYPE_WAREHOUSE,
+                                        'from_id' => $warehouseStock->warehouse_id,
+                                        'to_type' => StockMovement::TYPE_TRANSACTION,
+                                        'to_id' => $transaction->id,
+                                        'quantity' => $ingredientQty,
+                                        'note' => 'Supply resep: ' . $product->title . ' x' . $cart->qty,
+                                        'user_id' => auth()->id(),
+                                    ]);
+                                }
+                            } else {
+                                // INGREDIENT BIASA → potong dari DISPLAY
+                                $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
+                                    ->where('product_id', $ingredient->id)
+                                    ->first();
+                                
+                                if ($ingredientDisplayStock) {
+                                    $ingredientDisplayStock->decrement('quantity', $ingredientQty);
+                                    
+                                    // Create stock movement for ingredient deduction
+                                    StockMovement::create([
+                                        'product_id' => $ingredient->id,
+                                        'from_type' => StockMovement::TYPE_DISPLAY,
+                                        'from_id' => $display->id,
+                                        'to_type' => StockMovement::TYPE_TRANSACTION,
+                                        'to_id' => $transaction->id,
+                                        'quantity' => $ingredientQty,
+                                        'note' => 'Bahan resep: ' . $product->title . ' x' . $cart->qty,
+                                        'user_id' => auth()->id(),
+                                    ]);
+                                }
                             }
                         }
                     }

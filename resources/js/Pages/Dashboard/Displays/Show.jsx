@@ -1,7 +1,7 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head } from '@inertiajs/react'
-import { IconLayoutList, IconBox, IconShoppingCart } from '@tabler/icons-react'
+import { Head, router } from '@inertiajs/react'
+import { IconLayoutList, IconBox, IconShoppingCart, IconArrowLeft } from '@tabler/icons-react'
 import Card from '@/Components/Dashboard/Card'
 import Table from '@/Components/Dashboard/Table'
 import Button from '@/Components/Dashboard/Button'
@@ -11,6 +11,15 @@ export default function Show({ display, stocks, filters }) {
     return (
         <>
             <Head title={`Display: ${display.name}`} />
+            <div className='mb-4'>
+                <Button
+                    type={'button'}
+                    label={'Kembali'}
+                    icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                    className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                    onClick={() => router.visit(route('displays.index'))}
+                />
+            </div>
             
             <div className='grid grid-cols-12 gap-4'>
                 {/* Display Info */}

@@ -1,9 +1,10 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head } from '@inertiajs/react'
-import { IconTruck, IconBox, IconShoppingCart, IconCurrencyDollar, IconPackage } from '@tabler/icons-react'
+import { Head, router } from '@inertiajs/react'
+import { IconTruck, IconBox, IconShoppingCart, IconCurrencyDollar, IconPackage, IconArrowLeft } from '@tabler/icons-react'
 import Card from '@/Components/Dashboard/Card'
 import Table from '@/Components/Dashboard/Table'
+import Button from '@/Components/Dashboard/Button'
 
 export default function Show({ supplier, purchases, stats, products }) {
     const formatDate = (dateString) => {
@@ -22,6 +23,15 @@ export default function Show({ supplier, purchases, stats, products }) {
     return (
         <>
             <Head title={`Supplier: ${supplier.name}`} />
+            <div className='mb-4'>
+                <Button
+                    type={'button'}
+                    label={'Kembali'}
+                    icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                    className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                    onClick={() => router.visit(route('suppliers.index'))}
+                />
+            </div>
             
             <div className='grid grid-cols-12 gap-4'>
                 {/* Supplier Info */}
@@ -30,34 +40,34 @@ export default function Show({ supplier, purchases, stats, products }) {
                         <div className='space-y-3'>
                             <div>
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
-                                <p className='font-medium dark:text-white'>{supplier.name}</p>
+                                <p className='font-medium text-gray-900 dark:text-white'>{supplier.name}</p>
                             </div>
                             {supplier.company && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Perusahaan</span>
-                                    <p className='font-medium dark:text-white'>{supplier.company}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{supplier.company}</p>
                                 </div>
                             )}
                             <div>
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Telepon</span>
-                                <p className='font-medium dark:text-white'>{supplier.phone}</p>
+                                <p className='font-medium text-gray-900 dark:text-white'>{supplier.phone}</p>
                             </div>
                             {supplier.email && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Email</span>
-                                    <p className='font-medium dark:text-white'>{supplier.email}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{supplier.email}</p>
                                 </div>
                             )}
                             {supplier.address && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Alamat</span>
-                                    <p className='font-medium dark:text-white'>{supplier.address}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{supplier.address}</p>
                                 </div>
                             )}
                             {supplier.description && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
-                                    <p className='font-medium dark:text-white'>{supplier.description}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{supplier.description}</p>
                                 </div>
                             )}
                             <div>
@@ -80,7 +90,7 @@ export default function Show({ supplier, purchases, stats, products }) {
                                 </div>
                                 <div>
                                     <p className='text-sm text-gray-500 dark:text-gray-400'>Total Pembelian</p>
-                                    <p className='text-lg font-semibold dark:text-white'>{stats.total_purchases}x</p>
+                                    <p className='text-lg font-semibold text-gray-900 dark:text-white'>{stats.total_purchases}x</p>
                                 </div>
                             </div>
                         </div>
@@ -91,7 +101,7 @@ export default function Show({ supplier, purchases, stats, products }) {
                                 </div>
                                 <div>
                                     <p className='text-sm text-gray-500 dark:text-gray-400'>Total Nilai Pembelian</p>
-                                    <p className='text-lg font-semibold dark:text-white'>Rp {formatCurrency(stats.total_spent)}</p>
+                                    <p className='text-lg font-semibold text-gray-900 dark:text-white'>Rp {formatCurrency(stats.total_spent)}</p>
                                 </div>
                             </div>
                         </div>
@@ -102,7 +112,7 @@ export default function Show({ supplier, purchases, stats, products }) {
                                 </div>
                                 <div>
                                     <p className='text-sm text-gray-500 dark:text-gray-400'>Total Barang Masuk</p>
-                                    <p className='text-lg font-semibold dark:text-white'>{formatCurrency(stats.total_items)} unit</p>
+                                    <p className='text-lg font-semibold text-gray-900 dark:text-white'>{formatCurrency(stats.total_items)} unit</p>
                                 </div>
                             </div>
                         </div>

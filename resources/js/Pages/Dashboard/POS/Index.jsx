@@ -18,7 +18,6 @@ import {
     IconShoppingCartPlus,
     IconTrash,
     IconUser,
-    IconFilter,
 } from "@tabler/icons-react";
 
 export default function Index({

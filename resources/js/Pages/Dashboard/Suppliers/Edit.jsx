@@ -1,15 +1,27 @@
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconTruck } from '@tabler/icons-react'
+import { IconPencilPlus, IconTruck, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
+import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 export default function Edit({ supplier }) {
     const { errors } = usePage().props
+    const [showConfirm, setShowConfirm] = useState(false)
+
+    // Simpan data original untuk perbandingan
+    const originalData = useMemo(() => ({
+        name: supplier.name || '',
+        company: supplier.company || '',
+        email: supplier.email || '',
+        phone: supplier.phone || '',
+        address: supplier.address || '',
+        description: supplier.description || '',
+    }), [supplier.id])
 
     const { data, setData, put, processing } = useForm({
         name: supplier.name || '',
@@ -20,10 +32,38 @@ export default function Edit({ supplier }) {
         description: supplier.description || ''
     })
 
-    const submit = (e) => {
+    // Cek apakah ada perubahan data
+    const hasChanges = () => {
+        return data.name !== originalData.name ||
+               data.company !== originalData.company ||
+               data.email !== originalData.email ||
+               data.phone !== originalData.phone ||
+               data.address !== originalData.address ||
+               data.description !== originalData.description
+    }
+
+    const handleSubmit = (e) => {
         e.preventDefault()
+        
+        if (!hasChanges()) {
+            toast('Tidak ada perubahan data', {
+                icon: 'ℹ️',
+                style: {
+                    borderRadius: '10px',
+                    background: '#3B82F6',
+                    color: '#fff',
+                },
+            })
+            return
+        }
+        
+        setShowConfirm(true)
+    }
+
+    const confirmUpdate = () => {
         put(route('suppliers.update', supplier.id), {
             onSuccess: () => {
+                setShowConfirm(false)
                 if (Object.keys(errors).length === 0) {
                     toast('Supplier berhasil diupdate', {
                         icon: '👏',
@@ -36,6 +76,7 @@ export default function Edit({ supplier }) {
                 }
             },
             onError: () => {
+                setShowConfirm(false)
                 toast('Terjadi kesalahan dalam penyimpanan data', {
                     style: {
                         borderRadius: '10px',
@@ -54,14 +95,23 @@ export default function Edit({ supplier }) {
                 title={'Edit Supplier'}
                 icon={<IconTruck size={20} strokeWidth={1.5} />}
                 footer={
-                    <Button
-                        type={'submit'}
-                        label={'Update'}
-                        icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
-                    />
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'button'}
+                            label={'Kembali'}
+                            icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => router.visit(route('suppliers.index'))}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={'Simpan Perubahan'}
+                            icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
+                        />
+                    </div>
                 }
-                form={submit}
+                form={handleSubmit}
             >
                 <div className='grid grid-cols-12 gap-4'>
                     <div className='col-span-6'>
@@ -130,6 +180,18 @@ export default function Edit({ supplier }) {
                     </div>
                 </div>
             </Card>
+
+            <ConfirmDialog
+                show={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={confirmUpdate}
+                title="Konfirmasi Perubahan"
+                message="Apakah Anda yakin ingin menyimpan perubahan data supplier ini?"
+                confirmLabel="Ya, Simpan"
+                cancelLabel="Batal"
+                type="warning"
+                processing={processing}
+            />
         </>
     )
 }

@@ -7,7 +7,6 @@ import {
     IconUsers,
     IconUserShield,
     IconUserBolt,
-    IconUsersPlus,
     IconTruck,
     IconBuildingWarehouse,
     IconLayoutList,
@@ -18,9 +17,7 @@ import {
     IconChartArrowsVertical,
     IconChartBarPopular,
     IconCreditCard,
-    IconSettings,
     IconReceipt,
-    IconPackage,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -38,7 +35,7 @@ export default function Menu() {
                     href: route("dashboard"),
                     active: url === "/dashboard",
                     icon: <IconLayout2 size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["dashboard-access"]),
+                    permissions: true, // Dashboard accessible by all authenticated users
                 },
                 {
                     title: "POS / Kasir",

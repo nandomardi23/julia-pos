@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconUsersPlus, IconPlus, IconTrash, IconChefHat } from '@tabler/icons-react'
+import { IconPencilPlus, IconBox, IconPlus, IconTrash, IconChefHat, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
+import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
 import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Dashboard/InputSelect'
 import Select from '@/Components/Dashboard/Select'
@@ -33,6 +34,26 @@ const unitOptions = [
 export default function Edit({ categories, product, suppliers, availableIngredients = [] }) {
 
     const { errors } = usePage().props
+    const [showConfirm, setShowConfirm] = useState(false)
+
+    // Simpan data original untuk perbandingan
+    const originalData = useMemo(() => ({
+        barcode: product.barcode || '',
+        title: product.title || '',
+        category_id: product.category_id || '',
+        supplier_id: product.supplier_id || '',
+        description: product.description || '',
+        buy_price: product.buy_price || 0,
+        sell_price: product.sell_price || 0,
+        unit: product.unit || 'pcs',
+        is_recipe: product.is_recipe || false,
+        is_supply: product.is_supply || false,
+        is_ingredient: product.is_ingredient || false,
+        ingredientsJson: JSON.stringify((product.ingredients || []).map(ing => ({
+            ingredient_id: ing.ingredient_id,
+            quantity: ing.quantity
+        })).sort((a, b) => a.ingredient_id - b.ingredient_id)),
+    }), [product.id])
 
     // Initialize ingredients from product
     const initialIngredients = product.ingredients?.map(ing => ({
@@ -57,6 +78,31 @@ export default function Edit({ categories, product, suppliers, availableIngredie
         ingredients: initialIngredients,
         _method: 'PUT'
     })
+
+    // Cek apakah ada perubahan data
+    const hasChanges = () => {
+        // Jika ada gambar baru, berarti ada perubahan
+        if (data.image) return true
+        // Bandingkan field-field utama
+        if (data.barcode !== originalData.barcode) return true
+        if (data.title !== originalData.title) return true
+        if (data.category_id !== originalData.category_id) return true
+        if ((data.supplier_id || '') !== (originalData.supplier_id || '')) return true
+        if ((data.description || '') !== (originalData.description || '')) return true
+        if (parseFloat(data.buy_price) !== parseFloat(originalData.buy_price)) return true
+        if (parseFloat(data.sell_price) !== parseFloat(originalData.sell_price)) return true
+        if (data.unit !== originalData.unit) return true
+        if (data.is_recipe !== originalData.is_recipe) return true
+        if (data.is_supply !== originalData.is_supply) return true
+        if (data.is_ingredient !== originalData.is_ingredient) return true
+        // Bandingkan ingredients
+        const currentIngJson = JSON.stringify(data.ingredients.map(ing => ({
+            ingredient_id: parseInt(ing.ingredient_id),
+            quantity: parseFloat(ing.quantity)
+        })).filter(i => i.ingredient_id).sort((a, b) => a.ingredient_id - b.ingredient_id))
+        if (currentIngJson !== originalData.ingredientsJson) return true
+        return false
+    }
 
     const [selectedCategory, setSelectedCategory] = useState(null)
     const [selectedSupplier, setSelectedSupplier] = useState(null)
@@ -109,10 +155,28 @@ export default function Edit({ categories, product, suppliers, availableIngredie
         setData('ingredients', newIngredients)
     }
 
-    const submit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault()
+        
+        if (!hasChanges()) {
+            toast('Tidak ada perubahan data', {
+                icon: 'ℹ️',
+                style: {
+                    borderRadius: '10px',
+                    background: '#3B82F6',
+                    color: '#fff',
+                },
+            })
+            return
+        }
+        
+        setShowConfirm(true)
+    }
+
+    const confirmUpdate = () => {
         post(route('products.update', product.id), {
             onSuccess: () => {
+                setShowConfirm(false)
                 if (Object.keys(errors).length === 0) {
                     toast('Data berhasil diubah', {
                         icon: '👏',
@@ -125,6 +189,7 @@ export default function Edit({ categories, product, suppliers, availableIngredie
                 }
             },
             onError: () => {
+                setShowConfirm(false)
                 toast('Terjadi kesalahan dalam penyimpanan data', {
                     style: {
                         borderRadius: '10px',
@@ -141,16 +206,25 @@ export default function Edit({ categories, product, suppliers, availableIngredie
             <Head title='Ubah Data Produk' />
             <Card
                 title={'Ubah Data Produk'}
-                icon={<IconUsersPlus size={20} strokeWidth={1.5} />}
+                icon={<IconBox size={20} strokeWidth={1.5} />}
                 footer={
-                    <Button
-                        type={'submit'}
-                        label={'Ubah'}
-                        icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
-                    />
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'button'}
+                            label={'Kembali'}
+                            icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => router.visit(route('products.index'))}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={'Simpan Perubahan'}
+                            icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
+                        />
+                    </div>
                 }
-                form={submit}
+                form={handleSubmit}
             >
 
                 <div className='grid grid-cols-12 gap-4'>
@@ -363,6 +437,18 @@ export default function Edit({ categories, product, suppliers, availableIngredie
                     )}
                 </div>
             </Card>
+
+            <ConfirmDialog
+                show={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={confirmUpdate}
+                title="Konfirmasi Perubahan"
+                message="Apakah Anda yakin ingin menyimpan perubahan data produk ini?"
+                confirmLabel="Ya, Simpan"
+                cancelLabel="Batal"
+                type="warning"
+                processing={processing}
+            />
         </>
     )
 }

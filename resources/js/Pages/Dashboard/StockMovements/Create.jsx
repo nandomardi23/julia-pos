@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconCirclePlus } from '@tabler/icons-react'
+import { IconPencilPlus, IconCirclePlus, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
 import Select from '@/Components/Dashboard/Select'
@@ -74,12 +74,21 @@ export default function Create({ warehouses, products, suppliers }) {
                 title={'Barang Masuk ke Gudang'}
                 icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
                 footer={
-                    <Button
-                        type={'submit'}
-                        label={'Simpan'}
-                        icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-green-500 text-white hover:bg-green-600'}
-                    />
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'button'}
+                            label={'Kembali'}
+                            icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => router.visit(route('stock-movements.index'))}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={'Simpan'}
+                            icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-green-500 text-white hover:bg-green-600'}
+                        />
+                    </div>
                 }
                 form={submit}
             >

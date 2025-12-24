@@ -45,7 +45,12 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                                     <select
                                         value={meta?.per_page || 10}
                                         onChange={handlePerPageChange}
-                                        className='px-3 py-1.5 text-sm border rounded-lg bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer'
+                                        className='pl-3 pr-8 py-1.5 text-sm border rounded-lg bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer appearance-none bg-no-repeat bg-right'
+                                        style={{
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+                                            backgroundSize: '16px',
+                                            backgroundPosition: 'right 8px center'
+                                        }}
                                     >
                                         {perPageOptions.map(option => (
                                             <option key={option} value={option}>{option}</option>
@@ -68,6 +73,7 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                                     return (
                                         <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
                                             <IconChevronLeft size={16} strokeWidth={2} />
+                                            <span className='hidden sm:inline ml-1'>Prev</span>
                                         </Link>
                                     )
                                 }
@@ -75,14 +81,16 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                                 if (item.label.includes('Next')) {
                                     return (
                                         <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
+                                            <span className='hidden sm:inline mr-1'>Next</span>
                                             <IconChevronRight size={16} strokeWidth={2} />
                                         </Link>
                                     )
                                 }
                                 
+                                // Hide middle page numbers on mobile, show only active
                                 return (
                                     <Link 
-                                        className={`${baseStyle} ${item.active ? activeStyle : inactiveStyle}`} 
+                                        className={`${baseStyle} ${item.active ? activeStyle : `${inactiveStyle} hidden sm:flex`}`} 
                                         key={i} 
                                         href={item.url}
                                     >

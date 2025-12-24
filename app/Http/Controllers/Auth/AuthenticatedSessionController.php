@@ -33,15 +33,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect based on user permissions
-        $user = Auth::user();
-        
-        if ($user->can('dashboard-access')) {
-            return redirect()->intended(route('dashboard', absolute: false));
-        }
-        
-        // Cashier or users without dashboard access go to transactions
-        return redirect()->intended(route('transactions.index', absolute: false));
+        // All authenticated users go to dashboard
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**

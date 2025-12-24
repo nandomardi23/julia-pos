@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, usePage } from '@inertiajs/react'
 import { IconChevronDown, IconChevronUp, IconCornerDownRight } from '@tabler/icons-react'
-export default function LinkItemDropdown({ icon, title, data, access, sidebarOpen, ...props }) {
+export default function LinkItemDropdown({ icon, title, data, access, sidebarOpen, onNavigate, ...props }) {
 
     // destruct url from usepage
     const { url } = usePage();
@@ -12,7 +12,11 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
     // destruct auth from usepage props
     const { auth } = usePage().props;
 
-    console.log(auth)
+    const handleNavigate = () => {
+        if (onNavigate) {
+            onNavigate();
+        }
+    };
 
     return (
         <>
@@ -36,6 +40,7 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
                                     <Link
                                         key={i}
                                         href={data.href}
+                                        onClick={handleNavigate}
                                         className={`${url === data.href && 'border-r-2 border-r-gray-400 bg-gray-100 text-gray-700 dark:border-r-gray-500 dark:bg-gray-900 dark:text-white'} min-w-full flex items-center font-medium gap-x-3.5 px-5 py-3 hover:border-r-2 capitalize hover:cursor-pointer text-sm line-clamp-1 text-gray-500 hover:border-r-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:border-r-gray-50 dark:hover:text-gray-100`}
                                         {...props}>
                                         <IconCornerDownRight size={18} strokeWidth={1.5} /> {data.title}
@@ -55,6 +60,7 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
                                     data.permissions === true &&
                                     <Link
                                         href={data.href}
+                                        onClick={handleNavigate}
                                         className={`${url === data.href && 'border-r-2 border-r-gray-400 bg-gray-100 text-gray-700 dark:border-r-gray-500 dark:bg-gray-900 dark:text-white'} min-w-full flex justify-center py-3 hover:border-r-2 hover:cursor-pointer text-gray-500 hover:border-r-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:border-r-gray-50 dark:hover:text-gray-100`}
                                         key={i}
                                         {...props}>
@@ -83,6 +89,7 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
                                     <Link
                                         key={i}
                                         href={data.href}
+                                        onClick={handleNavigate}
                                         className={`${url === data.href && 'border-r-2 border-r-gray-400 bg-gray-100 text-gray-700 dark:border-r-gray-500 dark:bg-gray-900 dark:text-white'} min-w-full flex items-center font-medium gap-x-3.5 px-5 py-3 hover:border-r-2 capitalize hover:cursor-pointer text-sm line-clamp-1 text-gray-500 hover:border-r-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:border-r-gray-50 dark:hover:text-gray-100`}
                                         {...props}>
                                         <IconCornerDownRight size={18} strokeWidth={1.5} /> {data.title}
@@ -102,6 +109,7 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
                                     data.permissions === true &&
                                     <Link
                                         href={data.href}
+                                        onClick={handleNavigate}
                                         className={`${url === data.href && 'border-r-2 border-r-gray-400 bg-gray-100 text-gray-700 dark:border-r-gray-500 dark:bg-gray-900 dark:text-white'} min-w-full flex justify-center py-3 hover:border-r-2 hover:cursor-pointer text-gray-500 hover:border-r-gray-700 hover:text-gray-900 dark:text-gray-500 dark:hover:border-r-gray-50 dark:hover:text-gray-100`}
                                         key={i}
                                         {...props}>

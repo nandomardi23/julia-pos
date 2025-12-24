@@ -1,15 +1,25 @@
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconLayoutList } from '@tabler/icons-react'
+import { IconPencilPlus, IconLayoutList, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
+import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 export default function Edit({ display }) {
     const { errors } = usePage().props
+    const [showConfirm, setShowConfirm] = useState(false)
+
+    // Simpan data original untuk perbandingan
+    const originalData = useMemo(() => ({
+        name: display.name || '',
+        location: display.location || '',
+        description: display.description || '',
+        is_active: display.is_active ?? true,
+    }), [display.id])
 
     const { data, setData, put, processing } = useForm({
         name: display.name || '',
@@ -18,16 +28,43 @@ export default function Edit({ display }) {
         is_active: display.is_active ?? true
     })
 
-    const submit = (e) => {
+    // Cek apakah ada perubahan data
+    const hasChanges = () => {
+        return data.name !== originalData.name ||
+               data.location !== originalData.location ||
+               data.description !== originalData.description ||
+               data.is_active !== originalData.is_active
+    }
+
+    const handleSubmit = (e) => {
         e.preventDefault()
+        
+        if (!hasChanges()) {
+            toast('Tidak ada perubahan data', {
+                icon: 'ℹ️',
+                style: {
+                    borderRadius: '10px',
+                    background: '#3B82F6',
+                    color: '#fff',
+                },
+            })
+            return
+        }
+        
+        setShowConfirm(true)
+    }
+
+    const confirmUpdate = () => {
         put(route('displays.update', display.id), {
             onSuccess: () => {
+                setShowConfirm(false)
                 toast('Display berhasil diupdate', {
                     icon: '👏',
                     style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
                 })
             },
             onError: () => {
+                setShowConfirm(false)
                 toast('Terjadi kesalahan', {
                     style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
                 })
@@ -42,14 +79,23 @@ export default function Edit({ display }) {
                 title={'Edit Display'}
                 icon={<IconLayoutList size={20} strokeWidth={1.5} />}
                 footer={
-                    <Button
-                        type={'submit'}
-                        label={'Update'}
-                        icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
-                    />
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'button'}
+                            label={'Kembali'}
+                            icon={<IconArrowLeft size={20} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => router.visit(route('displays.index'))}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={'Simpan Perubahan'}
+                            icon={<IconPencilPlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900'}
+                        />
+                    </div>
                 }
-                form={submit}
+                form={handleSubmit}
             >
                 <div className='grid grid-cols-12 gap-4'>
                     <div className='col-span-6'>
@@ -97,6 +143,18 @@ export default function Edit({ display }) {
                     </div>
                 </div>
             </Card>
+
+            <ConfirmDialog
+                show={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={confirmUpdate}
+                title="Konfirmasi Perubahan"
+                message="Apakah Anda yakin ingin menyimpan perubahan data display ini?"
+                confirmLabel="Ya, Simpan"
+                cancelLabel="Batal"
+                type="warning"
+                processing={processing}
+            />
         </>
     )
 }

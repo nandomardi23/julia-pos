@@ -38,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return redirect()
-                ->back(fallback: route('transactions.index'))
+                ->back(fallback: route('pos.index'))
                 ->with('error', $message);
         });
     })->create();

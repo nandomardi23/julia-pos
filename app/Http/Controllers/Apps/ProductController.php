@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\ProductIngredient;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -161,8 +162,8 @@ class ProductController extends Controller
             })
             ->get(['id', 'title', 'unit', 'barcode']);
         
-        // Load current ingredients
-        $product->load('ingredients.ingredient');
+        // Load current ingredients and variants
+        $product->load('ingredients.ingredient', 'variants');
 
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product,
@@ -246,6 +247,41 @@ class ProductController extends Controller
             // If not a recipe anymore, remove all ingredients
             $product->ingredients()->delete();
         }
+
+        // Sync variants
+        $existingVariantIds = $product->variants->pluck('id')->toArray();
+        $newVariantIds = [];
+
+        if ($request->variants) {
+            foreach ($request->variants as $index => $variant) {
+                if (!empty($variant['id'])) {
+                    // Update existing variant
+                    ProductVariant::where('id', $variant['id'])->update([
+                        'name' => $variant['name'],
+                        'buy_price' => $variant['buy_price'] ?? 0,
+                        'sell_price' => $variant['sell_price'] ?? 0,
+                        'sort_order' => $index,
+                        'is_default' => $variant['is_default'] ?? false,
+                    ]);
+                    $newVariantIds[] = $variant['id'];
+                } else {
+                    // Create new variant
+                    $newVariant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'name' => $variant['name'],
+                        'buy_price' => $variant['buy_price'] ?? 0,
+                        'sell_price' => $variant['sell_price'] ?? 0,
+                        'sort_order' => $index,
+                        'is_default' => $variant['is_default'] ?? false,
+                    ]);
+                    $newVariantIds[] = $newVariant->id;
+                }
+            }
+        }
+
+        // Delete removed variants
+        $variantsToDelete = array_diff($existingVariantIds, $newVariantIds);
+        ProductVariant::whereIn('id', $variantsToDelete)->delete();
 
         //redirect
         return to_route('products.index');

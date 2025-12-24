@@ -27,7 +27,7 @@ class POSController extends Controller
         if ($display) {
             $displayStocks = DisplayStock::where('display_id', $display->id)
                 ->where('quantity', '>', 0)
-                ->with(['product.category'])
+                ->with(['product.category', 'product.variants'])
                 ->get();
             
             $products = $displayStocks->map(function ($stock) {
@@ -41,7 +41,7 @@ class POSController extends Controller
         $categories = Category::orderBy('name')->get();
 
         // Get cart for current cashier
-        $carts = Cart::with('product')
+        $carts = Cart::with(['product', 'variant'])
             ->where('cashier_id', auth()->user()->id)
             ->latest()
             ->get();
@@ -77,10 +77,21 @@ class POSController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
             'qty' => 'required|numeric|min:0.001',
         ]);
 
         $product = Product::findOrFail($request->product_id);
+        $variantId = $request->product_variant_id;
+        
+        // Determine price based on variant or product
+        $price = $product->sell_price;
+        if ($variantId) {
+            $variant = \App\Models\ProductVariant::find($variantId);
+            if ($variant) {
+                $price = $variant->sell_price;
+            }
+        }
         
         // Get active display
         $display = Display::active()->first();
@@ -95,8 +106,9 @@ class POSController extends Controller
 
         $availableQty = $displayStock ? $displayStock->quantity : 0;
 
-        // Check if product already in cart (to account for already added qty)
+        // Check if product (with same variant) already in cart
         $existingCart = Cart::where('product_id', $request->product_id)
+            ->where('product_variant_id', $variantId)
             ->where('cashier_id', auth()->user()->id)
             ->first();
         
@@ -110,15 +122,16 @@ class POSController extends Controller
         if ($existingCart) {
             // Update quantity
             $existingCart->increment('qty', $request->qty);
-            $existingCart->price = $product->sell_price;
+            $existingCart->price = $price;
             $existingCart->save();
         } else {
             // Create new cart item
             Cart::create([
                 'cashier_id' => auth()->user()->id,
                 'product_id' => $request->product_id,
+                'product_variant_id' => $variantId,
                 'qty' => $request->qty,
-                'price' => $product->sell_price,
+                'price' => $price,
             ]);
         }
 

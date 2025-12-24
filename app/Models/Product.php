@@ -95,6 +95,24 @@ class Product extends Model
     }
 
     /**
+     * Get product variants (sizes).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Check if product has variants.
+     */
+    public function hasVariants(): bool
+    {
+        return $this->variants()->count() > 0;
+    }
+
+    /**
      * Get total warehouse stock.
      */
     public function getWarehouseStockAttribute()

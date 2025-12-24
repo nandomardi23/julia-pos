@@ -15,7 +15,7 @@ class Cart extends Model
      * @var array
      */
     protected $fillable = [
-        'cashier_id', 'product_id', 'qty', 'price'
+        'cashier_id', 'product_id', 'product_variant_id', 'qty', 'price'
     ];
 
     /**
@@ -29,7 +29,7 @@ class Cart extends Model
     ];
 
     /**
-     * product
+     * Get the product.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -37,4 +37,15 @@ class Cart extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /**
+     * Get the product variant (optional).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
 }
+

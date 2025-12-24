@@ -3,7 +3,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconBox, IconPlus, IconTrash, IconChefHat, IconArrowLeft } from '@tabler/icons-react'
+import { IconPencilPlus, IconBox, IconPlus, IconTrash, IconChefHat, IconArrowLeft, IconTag } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
 import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
@@ -62,6 +62,15 @@ export default function Edit({ categories, product, suppliers, availableIngredie
         name: ing.ingredient?.title || ''
     })) || []
 
+    // Initialize variants from product
+    const initialVariants = product.variants?.map(v => ({
+        id: v.id,
+        name: v.name,
+        buy_price: v.buy_price,
+        sell_price: v.sell_price,
+        is_default: v.is_default
+    })) || []
+
     const { data, setData, post, processing } = useForm({
         image: '',
         barcode: product.barcode,
@@ -77,6 +86,7 @@ export default function Edit({ categories, product, suppliers, availableIngredie
         is_supply: product.is_supply || false,
         is_ingredient: product.is_ingredient || false,
         ingredients: initialIngredients,
+        variants: initialVariants,
         _method: 'PUT'
     })
 
@@ -154,6 +164,33 @@ export default function Edit({ categories, product, suppliers, availableIngredie
             newIngredients[index].name = ing?.title || ''
         }
         setData('ingredients', newIngredients)
+    }
+
+    // Add variant
+    const addVariant = () => {
+        setData('variants', [...data.variants, { id: null, name: '', buy_price: 0, sell_price: 0, is_default: data.variants.length === 0 }])
+    }
+
+    // Remove variant
+    const removeVariant = (index) => {
+        const newVariants = data.variants.filter((_, i) => i !== index)
+        // Jika default dihapus, set yang pertama sebagai default
+        if (newVariants.length > 0 && !newVariants.some(v => v.is_default)) {
+            newVariants[0].is_default = true
+        }
+        setData('variants', newVariants)
+    }
+
+    // Update variant
+    const updateVariant = (index, field, value) => {
+        const newVariants = [...data.variants]
+        if (field === 'is_default' && value) {
+            // Hanya satu yang bisa default
+            newVariants.forEach((v, i) => v.is_default = i === index)
+        } else {
+            newVariants[index][field] = value
+        }
+        setData('variants', newVariants)
     }
 
     const handleSubmit = (e) => {
@@ -380,6 +417,81 @@ export default function Edit({ categories, product, suppliers, availableIngredie
                                     Bahan Baku
                                 </span>
                             </label>
+                        </div>
+                    </div>
+
+                    {/* Variants Section */}
+                    <div className='col-span-12'>
+                        <div className='border rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800'>
+                            <div className='flex justify-between items-center mb-4'>
+                                <h3 className='text-lg font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2'>
+                                    <IconTag size={20} /> Varian Ukuran (Opsional)
+                                </h3>
+                                <button
+                                    type='button'
+                                    onClick={addVariant}
+                                    className='flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600'
+                                >
+                                    <IconPlus size={16} /> Tambah Varian
+                                </button>
+                            </div>
+                            
+                            {data.variants.length === 0 ? (
+                                <p className='text-gray-500 dark:text-gray-400 text-sm text-center py-4'>
+                                    Tidak ada varian. Produk menggunakan harga jual di atas. Klik "Tambah Varian" jika ingin menambah ukuran (R/L/XL).
+                                </p>
+                            ) : (
+                                <div className='space-y-3'>
+                                    {data.variants.map((variant, index) => (
+                                        <div key={index} className='flex gap-3 items-center bg-white dark:bg-gray-900 p-3 rounded-lg border dark:border-gray-700'>
+                                            <div className='flex-1'>
+                                                <input
+                                                    type='text'
+                                                    placeholder='Nama varian (R, L, XL)'
+                                                    value={variant.name}
+                                                    onChange={e => updateVariant(index, 'name', e.target.value)}
+                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
+                                                />
+                                            </div>
+                                            <div className='w-28'>
+                                                <input
+                                                    type='number'
+                                                    placeholder='Harga Beli'
+                                                    value={variant.buy_price}
+                                                    onChange={e => updateVariant(index, 'buy_price', parseInt(e.target.value) || 0)}
+                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
+                                                />
+                                            </div>
+                                            <div className='w-28'>
+                                                <input
+                                                    type='number'
+                                                    placeholder='Harga Jual'
+                                                    value={variant.sell_price}
+                                                    onChange={e => updateVariant(index, 'sell_price', parseInt(e.target.value) || 0)}
+                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
+                                                />
+                                            </div>
+                                            <label className='flex items-center gap-1 cursor-pointer'>
+                                                <input
+                                                    type='radio'
+                                                    name='defaultVariant'
+                                                    checked={variant.is_default}
+                                                    onChange={() => updateVariant(index, 'is_default', true)}
+                                                    className='text-purple-600'
+                                                />
+                                                <span className='text-xs text-gray-500'>Default</span>
+                                            </label>
+                                            <button
+                                                type='button'
+                                                onClick={() => removeVariant(index)}
+                                                className='text-red-500 hover:text-red-600'
+                                            >
+                                                <IconTrash size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 

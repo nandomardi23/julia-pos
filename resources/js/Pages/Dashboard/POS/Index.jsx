@@ -46,6 +46,9 @@ export default function Index({
     const [qtyModalOpen, setQtyModalOpen] = useState(false);
     const [qtyModalProduct, setQtyModalProduct] = useState(null);
     const [qtyModalValue, setQtyModalValue] = useState("");
+    const [variantModalOpen, setVariantModalOpen] = useState(false);
+    const [variantModalProduct, setVariantModalProduct] = useState(null);
+    const [selectedVariant, setSelectedVariant] = useState(null);
     const searchInputRef = useRef(null);
     const lastInputTimeRef = useRef(Date.now());
     const barcodeBufferRef = useRef("");
@@ -269,8 +272,16 @@ export default function Index({
         return Math.floor(numQty).toString();
     };
 
-    const handleAddToCart = (product, customQty = null) => {
+    const handleAddToCart = (product, customQty = null, variantId = null) => {
         const qty = customQty || 1;
+        
+        // Check if product has variants and no variant selected
+        if (product.variants && product.variants.length > 0 && !variantId && customQty === null) {
+            setVariantModalProduct(product);
+            setSelectedVariant(product.variants.find(v => v.is_default) || product.variants[0]);
+            setVariantModalOpen(true);
+            return;
+        }
         
         if (product.display_qty < qty) {
             toast.error("Stok produk tidak mencukupi!");
@@ -278,7 +289,7 @@ export default function Index({
         }
 
         // If product is sold by weight and no custom qty, show modal
-        if (isWeightBasedUnit(product.unit) && customQty === null) {
+        if (isWeightBasedUnit(product.unit) && customQty === null && !variantId) {
             setQtyModalProduct(product);
             setQtyModalValue("1");
             setQtyModalOpen(true);
@@ -289,6 +300,7 @@ export default function Index({
             route("pos.addToCart"),
             {
                 product_id: product.id,
+                product_variant_id: variantId,
                 qty: qty,
             },
             {
@@ -297,9 +309,16 @@ export default function Index({
                     toast.success("Produk ditambahkan");
                     setQtyModalOpen(false);
                     setQtyModalProduct(null);
+                    setVariantModalOpen(false);
+                    setVariantModalProduct(null);
                 },
             }
         );
+    };
+
+    const handleVariantSelect = () => {
+        if (!selectedVariant || !variantModalProduct) return;
+        handleAddToCart(variantModalProduct, 1, selectedVariant.id);
     };
 
     const handleQtyModalSubmit = () => {
@@ -587,6 +606,11 @@ export default function Index({
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
                                                     {cart.product?.title}
+                                                    {cart.variant && (
+                                                        <span className="ml-1 text-xs font-normal text-blue-600 dark:text-blue-400">
+                                                            ({cart.variant.name})
+                                                        </span>
+                                                    )}
                                                 </h4>
                                                 <p className="text-xs text-gray-500">
                                                     {formatPrice(cart.price)} × {formatQty(cart.qty, cart.product?.unit)} {cart.product?.unit || 'pcs'}
@@ -808,6 +832,73 @@ export default function Index({
                                 type="button"
                                 onClick={handleQtyModalSubmit}
                                 disabled={!qtyModalValue || parseFloat(qtyModalValue) <= 0}
+                                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            >
+                                Tambahkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Variant Selection Modal */}
+            {variantModalOpen && variantModalProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            Pilih Ukuran
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            {variantModalProduct.title}
+                        </p>
+
+                        {/* Variant Options */}
+                        <div className="space-y-2 mb-6">
+                            {variantModalProduct.variants.map((variant) => (
+                                <button
+                                    key={variant.id}
+                                    type="button"
+                                    onClick={() => setSelectedVariant(variant)}
+                                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                                        selectedVariant?.id === variant.id
+                                            ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                                    }`}
+                                >
+                                    <span className={`font-medium ${
+                                        selectedVariant?.id === variant.id
+                                            ? "text-blue-600 dark:text-blue-400"
+                                            : "text-gray-700 dark:text-gray-300"
+                                    }`}>
+                                        {variant.name}
+                                    </span>
+                                    <span className={`font-bold ${
+                                        selectedVariant?.id === variant.id
+                                            ? "text-blue-600 dark:text-blue-400"
+                                            : "text-gray-900 dark:text-white"
+                                    }`}>
+                                        {formatPrice(variant.sell_price)}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setVariantModalOpen(false);
+                                    setVariantModalProduct(null);
+                                    setSelectedVariant(null);
+                                }}
+                                className="flex-1 py-3 rounded-xl border dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleVariantSelect}
+                                disabled={!selectedVariant}
                                 className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                             >
                                 Tambahkan

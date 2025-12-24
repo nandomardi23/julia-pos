@@ -73,17 +73,20 @@ class DashboardController extends Controller
                 'total'    => (int) $t->grand_total,
             ]);
 
-        // Low stock alert (display stock below min_stock, limit 5)
-        $lowStockProducts = DisplayStock::where('quantity', '<=', DB::raw('min_stock'))
-            ->where('min_stock', '>', 0)
-            ->with('product:id,title,unit')
-            ->take(5)
+        // Low stock alert (display stock below product's min_stock, limit 10)
+        $lowStockProducts = DisplayStock::select('display_stock.*')
+            ->join('products', 'display_stock.product_id', '=', 'products.id')
+            ->whereColumn('display_stock.quantity', '<=', 'products.min_stock')
+            ->where('products.min_stock', '>', 0)
+            ->with('product:id,title,unit,min_stock', 'display:id,name')
+            ->take(10)
             ->get()
             ->map(fn($s) => [
                 'name' => $s->product?->title ?? 'Produk',
                 'unit' => $s->product?->unit ?? 'pcs',
-                'stock' => $s->quantity,
-                'min_stock' => $s->min_stock,
+                'stock' => (float) $s->quantity,
+                'min_stock' => (float) ($s->product?->min_stock ?? 0),
+                'display' => $s->display?->name ?? 'Display',
             ]);
 
         return Inertia::render('Dashboard/Index', [

@@ -200,8 +200,8 @@ const ProfitReport = ({
                         />
                         <Input
                             type="text"
-                            label="Nomor Invoice"
-                            placeholder="Cari invoice"
+                            label="No. Resi"
+                            placeholder="Cari resi"
                             value={filterData.invoice}
                             onChange={(event) =>
                                 handleChange("invoice", event.target.value)
@@ -245,7 +245,7 @@ const ProfitReport = ({
                                 <Table.Th className="w-16 text-center">
                                     No
                                 </Table.Th>
-                                <Table.Th>Invoice</Table.Th>
+                                <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
                                 <Table.Th>Pelanggan</Table.Th>

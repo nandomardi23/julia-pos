@@ -71,6 +71,7 @@ export default function Edit({ categories, product, suppliers, availableIngredie
         description: product.description,
         buy_price: product.buy_price,
         sell_price: product.sell_price,
+        min_stock: product.min_stock || 0,
         unit: product.unit || 'pcs',
         is_recipe: product.is_recipe || false,
         is_supply: product.is_supply || false,
@@ -326,6 +327,17 @@ export default function Edit({ categories, product, suppliers, availableIngredie
                             onChange={e => setData('sell_price', e.target.value)}
                             errors={errors.sell_price}
                             placeholder={'Harga jual produk'}
+                        />
+                    </div>
+                    <div className='col-span-6'>
+                        <Input
+                            type={'number'}
+                            step={'0.001'}
+                            label={'Stok Minimum (Alert)'}
+                            value={data.min_stock}
+                            onChange={e => setData('min_stock', e.target.value)}
+                            errors={errors.min_stock}
+                            placeholder={'0 = tidak ada alert'}
                         />
                     </div>
 

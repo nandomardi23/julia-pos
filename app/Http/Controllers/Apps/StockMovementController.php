@@ -9,10 +9,13 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
+use App\Exports\StockImportTemplateExport;
+use App\Imports\StockImport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockMovementController extends Controller
 {
@@ -264,10 +267,13 @@ class StockMovementController extends Controller
             'location_type' => 'required|in:warehouse,display',
             'location_id' => 'required|integer',
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|numeric|min:0.001',
             'reason' => 'required|string',
             'note' => 'nullable|string',
         ]);
+
+        // Get product to calculate loss
+        $product = Product::findOrFail($validated['product_id']);
 
         // Check stock based on location type
         if ($validated['location_type'] === 'warehouse') {
@@ -290,11 +296,26 @@ class StockMovementController extends Controller
         $reasons = StockMovement::getStockOutReasons();
         $reasonLabel = $reasons[$validated['reason']] ?? $validated['reason'];
 
-        DB::transaction(function () use ($validated, $stock, $fromType, $reasonLabel) {
+        // Calculate loss amount (only for damaged/expired, not for returns)
+        $lossAmount = null;
+        $lossReasons = [
+            StockMovement::REASON_DAMAGED,
+            StockMovement::REASON_EXPIRED,
+            StockMovement::REASON_INTERNAL_USE,
+            StockMovement::REASON_ADJUSTMENT,
+            StockMovement::REASON_OTHER,
+        ];
+        
+        if (in_array($validated['reason'], $lossReasons)) {
+            // Kerugian = quantity × buy_price
+            $lossAmount = $validated['quantity'] * $product->buy_price;
+        }
+
+        DB::transaction(function () use ($validated, $stock, $fromType, $reasonLabel, $lossAmount) {
             // Decrease stock
             $stock->decrement('quantity', $validated['quantity']);
 
-            // Create stock movement record
+            // Create stock movement record with loss amount
             StockMovement::create([
                 'product_id' => $validated['product_id'],
                 'from_type' => $fromType,
@@ -302,12 +323,76 @@ class StockMovementController extends Controller
                 'to_type' => StockMovement::TYPE_OUT,
                 'to_id' => null,
                 'quantity' => $validated['quantity'],
+                'loss_amount' => $lossAmount,
                 'note' => '[' . $reasonLabel . '] ' . ($validated['note'] ?? ''),
                 'user_id' => auth()->id(),
             ]);
         });
 
-        return redirect()->route('stock-movements.index')->with('success', 'Barang keluar berhasil dicatat!');
+        $message = 'Barang keluar berhasil dicatat!';
+        if ($lossAmount) {
+            $formattedLoss = 'Rp ' . number_format($lossAmount, 0, ',', '.');
+            $message .= ' Kerugian: ' . $formattedLoss;
+        }
+
+        return redirect()->route('stock-movements.index')->with('success', $message);
+    }
+
+    /**
+     * Show bulk import form.
+     */
+    public function bulkImport()
+    {
+        $warehouses = Warehouse::active()->get();
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
+
+        return Inertia::render('Dashboard/StockMovements/BulkImport', [
+            'warehouses' => $warehouses,
+            'suppliers' => $suppliers,
+        ]);
+    }
+
+    /**
+     * Download template Excel for stock import.
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(
+            new StockImportTemplateExport(), 
+            'template_barang_masuk_' . date('Y-m-d') . '.xlsx'
+        );
+    }
+
+    /**
+     * Process bulk import from Excel file.
+     */
+    public function processImport(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        $import = new StockImport(
+            $request->warehouse_id,
+            $request->supplier_id,
+            auth()->id()
+        );
+
+        Excel::import($import, $request->file('file'));
+
+        $importedCount = $import->getImportedCount();
+        $errors = $import->getErrors();
+
+        if (count($errors) > 0) {
+            return redirect()->back()->with([
+                'warning' => "Berhasil import {$importedCount} item dengan " . count($errors) . " error.",
+                'importErrors' => $errors,
+            ]);
+        }
+
+        return redirect()->route('stock-movements.index')
+            ->with('success', "Berhasil import {$importedCount} item ke gudang!");
     }
 }
-

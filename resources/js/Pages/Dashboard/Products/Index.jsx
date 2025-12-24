@@ -6,7 +6,7 @@ import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabl
 import Search from '@/Components/Dashboard/Search'
 import Table from '@/Components/Dashboard/Table'
 
-export default function Index({ products }) {
+export default function Index({ products, currentType = 'product', typeLabel = 'Produk' }) {
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -15,26 +15,26 @@ export default function Index({ products }) {
 
     return (
         <>
-            <Head title='Produk' />
+            <Head title={typeLabel} />
             <div className='mb-4'>
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
                     <Button
                         type={'link'}
                         icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
                         className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={'Tambah Produk'}
-                        href={route('products.create')}
+                        label={`Tambah ${typeLabel}`}
+                        href={route('products.create') + `?type=${currentType}`}
                     />
                     <div className='w-full sm:w-80'>
                         <Search
-                            url={route('products.index')}
-                            placeholder='Cari produk...'
+                            url={route('products.index') + `?type=${currentType}`}
+                            placeholder={`Cari ${typeLabel.toLowerCase()}...`}
                         />
                     </div>
                 </div>
             </div>
             <Table.Card 
-                title={'Data Produk'}
+                title={`Data ${typeLabel}`}
                 links={products.links}
                 meta={{
                     from: products.from,
@@ -42,7 +42,7 @@ export default function Index({ products }) {
                     total: products.total,
                     per_page: products.per_page
                 }}
-                url={route('products.index')}
+                url={route('products.index') + `?type=${currentType}`}
             >
                 <Table>
                     <Table.Thead>

@@ -57,7 +57,7 @@ export default function Print({ transaction }) {
 
     return (
         <>
-            <Head title="Invoice Penjualan" />
+            <Head title="Resi Penjualan" />
 
             <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:p-0">
                 <div className="max-w-3xl mx-auto space-y-6">
@@ -88,7 +88,7 @@ export default function Print({ transaction }) {
                             className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
                         >
                             <IconPrinter size={16} />
-                            Cetak invoice
+                            Cetak resi
                         </button>
                     </div>
 
@@ -96,7 +96,7 @@ export default function Print({ transaction }) {
                         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 bg-gray-50 px-6 py-5">
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Invoice
+                                    No. Resi
                                 </p>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {transaction.invoice}
@@ -286,7 +286,7 @@ export default function Print({ transaction }) {
                                     <p className="mt-2 text-gray-700">
                                         {isNonCash
                                             ? "Bagikan tautan pembayaran ini kepada pelanggan dan tunggu konfirmasi sistem gateway."
-                                            : "Simpan invoice ini sebagai bukti transaksi resmi. Silakan hubungi kasir jika terdapat kekeliruan."}
+                                            : "Simpan resi ini sebagai bukti transaksi resmi. Silakan hubungi kasir jika terdapat kekeliruan."}
                                     </p>
                                 </div>
                             </div>

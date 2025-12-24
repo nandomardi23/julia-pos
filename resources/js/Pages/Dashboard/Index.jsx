@@ -232,7 +232,7 @@ export default function Dashboard({
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-gray-500 border-b dark:border-gray-700">
-                                    <th className="pb-2">Invoice</th>
+                                    <th className="pb-2">No. Resi</th>
                                     <th className="pb-2">Tanggal</th>
                                     <th className="pb-2">Kasir</th>
                                     <th className="pb-2 text-right">Total</th>

@@ -77,7 +77,7 @@ class POSController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1',
+            'qty' => 'required|numeric|min:0.001',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -148,7 +148,7 @@ class POSController extends Controller
     public function updateCart(Request $request, $cart_id)
     {
         $request->validate([
-            'qty' => 'required|integer|min:1',
+            'qty' => 'required|numeric|min:0.001',
         ]);
 
         $cart = Cart::with('product')

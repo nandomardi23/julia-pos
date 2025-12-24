@@ -146,6 +146,7 @@ export default function Index({ movements, filters }) {
                             <Table.Th>Ke</Table.Th>
                             <Table.Th className='w-20 text-center'>Qty</Table.Th>
                             <Table.Th className='w-28 text-right'>Harga Beli</Table.Th>
+                            <Table.Th className='w-28 text-right'>Kerugian</Table.Th>
                             <Table.Th>User</Table.Th>
                         </tr>
                     </Table.Thead>
@@ -184,11 +185,17 @@ export default function Index({ movements, filters }) {
                                                 : '-'
                                             }
                                         </Table.Td>
+                                        <Table.Td className='text-sm text-right'>
+                                            {movement.loss_amount 
+                                                ? <span className='text-red-600 font-medium'>Rp {new Intl.NumberFormat('id-ID').format(movement.loss_amount)}</span>
+                                                : '-'
+                                            }
+                                        </Table.Td>
                                         <Table.Td className='text-sm'>{movement.user?.name}</Table.Td>
                                     </tr>
                                 )
                             }) :
-                            <Table.Empty colSpan={8} message={
+                            <Table.Empty colSpan={9} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={24} strokeWidth={1.5} className='text-gray-500 dark:text-white' />

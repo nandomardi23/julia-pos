@@ -16,25 +16,57 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Inertia\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //get products
-        $products = Product::when(request()->search, function ($products) {
-            $products = $products->where('title', 'like', '%' . request()->search . '%');
-        })->with('category')->latest()->paginate(request()->input('per_page', 10))->withQueryString();
+        $type = $request->input('type', 'product');
+        
+        $products = Product::query()
+            // Filter by type
+            ->when($type === 'product', function ($query) {
+                // Produk jual: bukan ingredient, bukan supply, bukan recipe
+                $query->where('is_ingredient', false)
+                    ->where('is_supply', false)
+                    ->where('is_recipe', false);
+            })
+            ->when($type === 'ingredient', function ($query) {
+                $query->where('is_ingredient', true);
+            })
+            ->when($type === 'recipe', function ($query) {
+                $query->where('is_recipe', true);
+            })
+            ->when($type === 'supply', function ($query) {
+                $query->where('is_supply', true);
+            })
+            // Search filter
+            ->when($request->search, function ($query, $search) {
+                $query->where('title', 'like', '%' . $search . '%');
+            })
+            ->with('category')
+            ->latest()
+            ->paginate($request->input('per_page', 10))
+            ->withQueryString();
 
-        //return inertia
+        // Get page titles based on type
+        $typeLabels = [
+            'product' => 'Produk Jual',
+            'ingredient' => 'Bahan Baku',
+            'recipe' => 'Resep',
+            'supply' => 'Alat Pendukung',
+        ];
+
         return Inertia::render('Dashboard/Products/Index', [
             'products' => $products,
+            'currentType' => $type,
+            'typeLabel' => $typeLabels[$type] ?? 'Produk',
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Inertia\Response
      */
     public function create()
     {
@@ -53,7 +85,7 @@ class ProductController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -112,8 +144,8 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  Product  $product
+     * @return \Inertia\Response
      */
     public function edit(Product $product)
     {
@@ -144,8 +176,8 @@ class ProductController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  Product  $product
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, Product $product)
     {
@@ -161,6 +193,7 @@ class ProductController extends Controller
             'buy_price' => 'required',
             'sell_price' => 'required',
             'unit' => 'required',
+            'min_stock' => 'nullable|numeric|min:0',
             'is_recipe' => 'boolean',
             'is_supply' => 'boolean',
             'is_ingredient' => 'boolean',
@@ -175,6 +208,7 @@ class ProductController extends Controller
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
+            'min_stock' => $request->min_stock ?? 0,
             'is_recipe' => $request->is_recipe ?? false,
             'is_supply' => $request->is_supply ?? false,
             'is_ingredient' => $request->is_ingredient ?? false,
@@ -222,7 +256,7 @@ class ProductController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {

@@ -237,8 +237,8 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
                         />
                         <Input
                             type="text"
-                            label="Nomor Invoice"
-                            placeholder="Cari berdasarkan invoice"
+                            label="No. Resi"
+                            placeholder="Cari berdasarkan resi"
                             value={filterData.invoice}
                             onChange={(event) =>
                                 handleChange("invoice", event.target.value)
@@ -270,7 +270,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
                                 <Table.Th className="w-16 text-center">
                                     No
                                 </Table.Th>
-                                <Table.Th>Invoice</Table.Th>
+                                <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Pelanggan</Table.Th>
                                 <Table.Th>Kasir</Table.Th>

@@ -109,6 +109,17 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/stock-movements/stock-out', [StockMovementController::class, 'storeStockOut'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.storeStockOut');
+    
+    // Bulk Import Routes
+    Route::get('/stock-movements/bulk-import', [StockMovementController::class, 'bulkImport'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.bulkImport');
+    Route::get('/stock-movements/download-template', [StockMovementController::class, 'downloadTemplate'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.downloadTemplate');
+    Route::post('/stock-movements/process-import', [StockMovementController::class, 'processImport'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.processImport');
 
 
     //route transaction searchProduct

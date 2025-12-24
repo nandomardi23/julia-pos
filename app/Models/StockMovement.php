@@ -23,6 +23,7 @@ class StockMovement extends Model
         'to_id',
         'quantity',
         'purchase_price',
+        'loss_amount',
         'note',
         'user_id',
     ];

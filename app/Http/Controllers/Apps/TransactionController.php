@@ -24,7 +24,7 @@ class TransactionController extends Controller
     /**
      * index
      *
-     * @return void
+     * @return \Inertia\Response
      */
     public function index()
     {
@@ -55,7 +55,7 @@ class TransactionController extends Controller
      * searchProduct
      *
      * @param  mixed $request
-     * @return void
+     * @return \Illuminate\Http\JsonResponse
      */
     public function searchProduct(Request $request)
     {
@@ -79,7 +79,7 @@ class TransactionController extends Controller
      * addToCart
      *
      * @param  mixed $request
-     * @return void
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function addToCart(Request $request)
     {
@@ -127,8 +127,8 @@ class TransactionController extends Controller
     /**
      * destroyCart
      *
-     * @param  mixed $request
-     * @return void
+     * @param  mixed $cart_id
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroyCart($cart_id)
     {
@@ -148,7 +148,8 @@ class TransactionController extends Controller
      * store
      *
      * @param  mixed $request
-     * @return void
+     * @param  PaymentGatewayManager $paymentGatewayManager
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request, PaymentGatewayManager $paymentGatewayManager)
     {
@@ -226,7 +227,7 @@ class TransactionController extends Controller
                         ->first();
                     
                     if ($displayStock) {
-                        $displayStock->decrement('quantity', $cart->qty);
+                        $displayStock->decrement('quantity', (float) $cart->qty);
                         
                         // Create stock movement record
                         StockMovement::create([

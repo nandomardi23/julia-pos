@@ -97,7 +97,7 @@ const History = ({ transactions, filters }) => {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <Input
                             type="text"
-                            label="Nomor Invoice"
+                            label="No. Resi"
                             placeholder="Contoh: TRX-"
                             value={filterData.invoice}
                             onChange={(event) =>
@@ -130,7 +130,7 @@ const History = ({ transactions, filters }) => {
                                 <Table.Th className="w-16 text-center">
                                     No
                                 </Table.Th>
-                                <Table.Th>Invoice</Table.Th>
+                                <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
                                 <Table.Th className="text-center">

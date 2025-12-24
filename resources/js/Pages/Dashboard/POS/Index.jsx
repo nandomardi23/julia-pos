@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import toast, { Toaster } from "react-hot-toast";
 import Input from "@/Components/Dashboard/Input";
@@ -14,6 +14,7 @@ import {
     IconMoon,
     IconPackage,
     IconPlus,
+    IconScale,
     IconSearch,
     IconShoppingCart,
     IconSun,
@@ -42,6 +43,33 @@ export default function Index({
     const [paymentMethod, setPaymentMethod] = useState(
         defaultPaymentGateway ?? "cash"
     );
+    const [qtyModalOpen, setQtyModalOpen] = useState(false);
+    const [qtyModalProduct, setQtyModalProduct] = useState(null);
+    const [qtyModalValue, setQtyModalValue] = useState("");
+    const searchInputRef = useRef(null);
+    const lastInputTimeRef = useRef(Date.now());
+    const barcodeBufferRef = useRef("");
+
+    // Play beep sound for feedback
+    const playBeep = useCallback((success = true) => {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = success ? 800 : 300;
+            oscillator.type = "sine";
+            gainNode.gain.value = 0.3;
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + (success ? 0.1 : 0.3));
+        } catch (e) {
+            console.log("Audio not available");
+        }
+    }, []);
 
     useEffect(() => {
         setPaymentMethod(defaultPaymentGateway ?? "cash");
@@ -66,6 +94,40 @@ export default function Index({
     useEffect(() => {
         setCurrentPage(1);
     }, [search, selectedCategory]);
+
+    // Barcode scanner detection - auto-add when Enter is pressed after fast input
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Only handle if search input is focused
+            if (document.activeElement !== searchInputRef.current) return;
+            
+            const now = Date.now();
+            const timeDiff = now - lastInputTimeRef.current;
+            lastInputTimeRef.current = now;
+            
+            // If Enter is pressed and we have a search value
+            if (e.key === "Enter" && search.trim()) {
+                e.preventDefault();
+                
+                // Find product by exact barcode match
+                const product = products.find(
+                    (p) => p.barcode && p.barcode.toLowerCase() === search.trim().toLowerCase()
+                );
+                
+                if (product) {
+                    playBeep(true);
+                    handleAddToCart(product);
+                    setSearch("");
+                } else {
+                    playBeep(false);
+                    toast.error("Produk tidak ditemukan!");
+                }
+            }
+        };
+        
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [search, products, playBeep]);
 
     // Paginated products
     const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
@@ -125,6 +187,16 @@ export default function Index({
                 label: "Tunai",
                 description: "Pembayaran tunai",
             },
+            {
+                value: "transfer",
+                label: "Transfer",
+                description: "Transfer bank (manual)",
+            },
+            {
+                value: "qris",
+                label: "QRIS",
+                description: "Scan QRIS (manual)",
+            },
             ...options,
         ];
     }, [paymentGateways]);
@@ -172,9 +244,44 @@ export default function Index({
         return numbersOnly.replace(/^0+(?=\d)/, "");
     };
 
-    const handleAddToCart = (product) => {
-        if (product.display_qty < 1) {
-            toast.error("Stok produk habis!");
+    const sanitizeDecimalInput = (value) => {
+        // Allow numbers and one decimal point
+        const cleaned = value.replace(/[^\d.]/g, "");
+        // Only allow one decimal point
+        const parts = cleaned.split(".");
+        if (parts.length > 2) {
+            return parts[0] + "." + parts.slice(1).join("");
+        }
+        return cleaned;
+    };
+
+    // Check if product is sold by weight/volume
+    const isWeightBasedUnit = (unit) => {
+        const weightUnits = ["kg", "gram", "g", "liter", "l", "ml", "ons", "ton"];
+        return weightUnits.includes(unit?.toLowerCase());
+    };
+
+    const formatQty = (qty, unit) => {
+        const numQty = parseFloat(qty);
+        if (isWeightBasedUnit(unit)) {
+            return numQty % 1 === 0 ? numQty.toString() : numQty.toFixed(2);
+        }
+        return Math.floor(numQty).toString();
+    };
+
+    const handleAddToCart = (product, customQty = null) => {
+        const qty = customQty || 1;
+        
+        if (product.display_qty < qty) {
+            toast.error("Stok produk tidak mencukupi!");
+            return;
+        }
+
+        // If product is sold by weight and no custom qty, show modal
+        if (isWeightBasedUnit(product.unit) && customQty === null) {
+            setQtyModalProduct(product);
+            setQtyModalValue("1");
+            setQtyModalOpen(true);
             return;
         }
 
@@ -182,15 +289,26 @@ export default function Index({
             route("pos.addToCart"),
             {
                 product_id: product.id,
-                qty: 1,
+                qty: qty,
             },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     toast.success("Produk ditambahkan");
+                    setQtyModalOpen(false);
+                    setQtyModalProduct(null);
                 },
             }
         );
+    };
+
+    const handleQtyModalSubmit = () => {
+        const qty = parseFloat(qtyModalValue);
+        if (isNaN(qty) || qty <= 0) {
+            toast.error("Jumlah tidak valid!");
+            return;
+        }
+        handleAddToCart(qtyModalProduct, qty);
     };
 
     const handleRemoveFromCart = (cartId) => {
@@ -295,8 +413,9 @@ export default function Index({
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 />
                                 <input
+                                    ref={searchInputRef}
                                     type="text"
-                                    placeholder="Cari produk atau scan barcode..."
+                                    placeholder="Cari produk atau scan barcode... (Enter untuk tambah)"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -470,7 +589,7 @@ export default function Index({
                                                     {cart.product?.title}
                                                 </h4>
                                                 <p className="text-xs text-gray-500">
-                                                    {formatPrice(cart.price)} × {cart.qty}
+                                                    {formatPrice(cart.price)} × {formatQty(cart.qty, cart.product?.unit)} {cart.product?.unit || 'pcs'}
                                                 </p>
                                             </div>
                                             <div className="text-right">
@@ -614,6 +733,89 @@ export default function Index({
                     </div>
                 </div>
             </div>
+
+            {/* Qty Input Modal for Weight-based Products */}
+            {qtyModalOpen && qtyModalProduct && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <IconScale size={24} className="text-blue-600" />
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                Masukkan Jumlah
+                            </h3>
+                        </div>
+                        
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                {qtyModalProduct.title}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                Harga: {formatPrice(qtyModalProduct.sell_price)} / {qtyModalProduct.unit}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                Stok tersedia: {qtyModalProduct.display_qty} {qtyModalProduct.unit}
+                            </p>
+                        </div>
+
+                        <div className="mb-4">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={qtyModalValue}
+                                    onChange={(e) => setQtyModalValue(sanitizeDecimalInput(e.target.value))}
+                                    placeholder="0.00"
+                                    className="flex-1 px-4 py-3 text-2xl font-bold text-center rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    autoFocus
+                                />
+                                <span className="text-lg font-medium text-gray-600 dark:text-gray-400 w-16">
+                                    {qtyModalProduct.unit}
+                                </span>
+                            </div>
+                            {qtyModalValue && (
+                                <p className="text-center mt-2 text-blue-600 font-medium">
+                                    Total: {formatPrice(parseFloat(qtyModalValue || 0) * qtyModalProduct.sell_price)}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Quick buttons */}
+                        <div className="grid grid-cols-4 gap-2 mb-4">
+                            {[0.25, 0.5, 1, 1.5].map((val) => (
+                                <button
+                                    key={val}
+                                    type="button"
+                                    onClick={() => setQtyModalValue(val.toString())}
+                                    className="py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+                                >
+                                    {val}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setQtyModalOpen(false);
+                                    setQtyModalProduct(null);
+                                }}
+                                className="flex-1 py-3 rounded-xl border dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleQtyModalSubmit}
+                                disabled={!qtyModalValue || parseFloat(qtyModalValue) <= 0}
+                                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            >
+                                Tambahkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

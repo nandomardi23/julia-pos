@@ -73,6 +73,23 @@ Barang pendukung yang tidak dijual langsung dan **stoknya dipotong dari Warehous
 
 > ⚠️ **Catatan Penting:** Saat produk resep terjual, supply akan dipotong dari warehouse pertama yang memiliki stok mencukupi. Pastikan stok supply selalu ada di warehouse.
 
+### 🔄 **Produk Dual-Role (is_ingredient = true + sell_price > 0)**
+Produk yang **BISA** digunakan sebagai bahan di resep lain, namun juga **BISA dijual langsung** di POS.
+
+**Contoh:** Apel Fuji, Coffee Beans, Fresh Milk
+
+```
+Apel Fuji (per kg)
+├── Dijual langsung: Rp 55.000/kg di POS
+└── Sebagai bahan: Jus Apel, Salad Buah, dll
+
+Coffee Beans (per kg)
+├── Dijual langsung: Rp 220.000/kg di POS
+└── Sebagai bahan: Espresso, Latte, dll
+```
+
+> 💡 **Tips:** Untuk membuat produk dual-role, set `is_ingredient = true` DAN isi `sell_price` dengan harga jual yang diinginkan. Produk akan muncul di POS dan juga bisa dipilih sebagai bahan di resep.
+
 ---
 
 ## 3. Relasi Product

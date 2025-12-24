@@ -25,6 +25,7 @@ class Product extends Model
         'category_id', 
         'supplier_id',
         'unit',
+        'min_stock',
         'is_recipe',
         'is_supply',
         'is_ingredient',
@@ -39,6 +40,7 @@ class Product extends Model
         'is_recipe' => 'boolean',
         'is_supply' => 'boolean',
         'is_ingredient' => 'boolean',
+        'min_stock' => 'decimal:3',
     ];
 
     /**
@@ -49,9 +51,9 @@ class Product extends Model
     protected $appends = ['warehouse_stock', 'display_stock'];
 
     /**
-     * category
+     * Get the category that owns the product.
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function category()
     {
@@ -59,9 +61,9 @@ class Product extends Model
     }
 
     /**
-     * supplier
+     * Get the supplier that owns the product.
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function supplier()
     {

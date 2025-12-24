@@ -19,9 +19,19 @@ class TransactionDetail extends Model
     ];
 
     /**
+     * casts
+     *
+     * @var array
+     */
+    protected $casts = [
+        'qty' => 'decimal:3',
+        'price' => 'integer',
+    ];
+
+    /**
      * transaction
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function transaction()
     {
@@ -31,7 +41,7 @@ class TransactionDetail extends Model
     /**
      * product
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function product()
     {

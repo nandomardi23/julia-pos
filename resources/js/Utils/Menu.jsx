@@ -60,10 +60,34 @@ export default function Menu() {
                 },
                 {
                     title: "Produk",
-                    href: route("products.index"),
-                    active: url.startsWith("/dashboard/products"),
                     icon: <IconBox size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["products-access"]),
+                    subdetails: [
+                        {
+                            title: "Produk Jual",
+                            href: route("products.index") + "?type=product",
+                            active: url.includes("/dashboard/products") && (url.includes("type=product") || !url.includes("type=")),
+                            permissions: hasAnyPermission(["products-access"]),
+                        },
+                        {
+                            title: "Bahan Baku",
+                            href: route("products.index") + "?type=ingredient",
+                            active: url.includes("type=ingredient"),
+                            permissions: hasAnyPermission(["products-access"]),
+                        },
+                        {
+                            title: "Resep",
+                            href: route("products.index") + "?type=recipe",
+                            active: url.includes("type=recipe"),
+                            permissions: hasAnyPermission(["products-access"]),
+                        },
+                        {
+                            title: "Alat Pendukung",
+                            href: route("products.index") + "?type=supply",
+                            active: url.includes("type=supply"),
+                            permissions: hasAnyPermission(["products-access"]),
+                        },
+                    ],
                 },
                 {
                     title: "Supplier",
@@ -120,6 +144,13 @@ export default function Menu() {
                     active: url === "/dashboard/stock-movements",
                     icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-movements-access"]),
+                },
+                {
+                    title: "Import Excel",
+                    href: route("stock-movements.bulkImport"),
+                    active: url === "/dashboard/stock-movements/bulk-import",
+                    icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-create"]),
                 },
             ],
         },

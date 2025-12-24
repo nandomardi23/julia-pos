@@ -84,23 +84,23 @@ export default function Index({ displays, filters }) {
                                         </span>
                                     </Table.Td>
                                     <Table.Td>
-                                        <div className='flex gap-2'>
+                                        <div className='flex gap-1'>
                                             <Button
                                                 type={'link'}
-                                                icon={<IconEye size={16} strokeWidth={1.5} />}
-                                                className={'border bg-blue-100 border-blue-300 text-blue-500 hover:bg-blue-200 dark:bg-blue-950 dark:border-blue-800 dark:text-gray-300 dark:hover:bg-blue-900'}
+                                                icon={<IconEye size={14} strokeWidth={1.5} />}
+                                                className={'border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900'}
                                                 href={route('displays.show', display.id)}
                                             />
                                             <Button
                                                 type={'edit'}
-                                                icon={<IconPencilCog size={16} strokeWidth={1.5} />}
-                                                className={'border bg-orange-100 border-orange-300 text-orange-500 hover:bg-orange-200 dark:bg-orange-950 dark:border-orange-800 dark:text-gray-300  dark:hover:bg-orange-900'}
+                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
+                                                className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
                                                 href={route('displays.edit', display.id)}
                                             />
                                             <Button
                                                 type={'delete'}
-                                                icon={<IconTrash size={16} strokeWidth={1.5} />}
-                                                className={'border bg-rose-100 border-rose-300 text-rose-500 hover:bg-rose-200 dark:bg-rose-950 dark:border-rose-800 dark:text-gray-300  dark:hover:bg-rose-900'}
+                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
+                                                className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
                                                 url={route('displays.destroy', display.id)}
                                             />
                                         </div>

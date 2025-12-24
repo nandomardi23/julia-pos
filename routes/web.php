@@ -130,6 +130,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/pos/addToCart', [POSController::class, 'addToCart'])->middleware('permission:transactions-access')->name('pos.addToCart');
     Route::delete('/pos/{cart_id}/destroyCart', [POSController::class, 'destroyCart'])->middleware('permission:transactions-access')->name('pos.destroyCart');
     Route::patch('/pos/{cart_id}/updateCart', [POSController::class, 'updateCart'])->middleware('permission:transactions-access')->name('pos.updateCart');
+    Route::post('/pos/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('pos.store');
 
     Route::get('/settings/payments', [PaymentSettingController::class, 'edit'])->middleware('permission:payment-settings-access')->name('settings.payments.edit');
     Route::put('/settings/payments', [PaymentSettingController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.payments.update');

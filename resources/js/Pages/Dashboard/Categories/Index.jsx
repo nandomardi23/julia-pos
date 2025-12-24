@@ -72,16 +72,16 @@ export default function Index({ categories }) {
                                         </span>
                                     </Table.Td>
                                     <Table.Td>
-                                        <div className='flex justify-center gap-2'>
+                                        <div className='flex justify-center gap-1'>
                                             <Button
                                                 type={'edit'}
-                                                icon={<IconPencilCog size={16} strokeWidth={1.5} />}
+                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
                                                 className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
                                                 href={route('categories.edit', category.id)}
                                             />
                                             <Button
                                                 type={'delete'}
-                                                icon={<IconTrash size={16} strokeWidth={1.5} />}
+                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
                                                 className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
                                                 url={route('categories.destroy', category.id)}
                                             />

@@ -65,14 +65,8 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier)
     {
-        // Get products that have EVER been purchased from this supplier (based on stock_movements)
-        $productIds = \App\Models\StockMovement::where('supplier_id', $supplier->id)
-            ->distinct()
-            ->pluck('product_id');
-        
-        $products = \App\Models\Product::whereIn('id', $productIds)
-            ->with('category')
-            ->get();
+        // Get products that belong directly to this supplier (via supplier_id)
+        $products = $supplier->products()->with('category')->get();
 
         // Get purchase history (stock movements from this supplier)
         $purchases = \App\Models\StockMovement::where('supplier_id', $supplier->id)
@@ -81,7 +75,7 @@ class SupplierController extends Controller
             ->take(20)
             ->get();
 
-        // Calculate totals
+        // Calculate totals from stock movements
         $totalPurchases = \App\Models\StockMovement::where('supplier_id', $supplier->id)->count();
         $totalSpent = \App\Models\StockMovement::where('supplier_id', $supplier->id)->sum('purchase_price');
         $totalItems = \App\Models\StockMovement::where('supplier_id', $supplier->id)->sum('quantity');

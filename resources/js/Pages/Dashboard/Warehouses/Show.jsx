@@ -28,18 +28,18 @@ export default function Show({ warehouse, stocks, filters }) {
                         <div className='space-y-3'>
                             <div>
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
-                                <p className='font-medium dark:text-white'>{warehouse.name}</p>
+                                <p className='font-medium text-gray-900 dark:text-white'>{warehouse.name}</p>
                             </div>
                             {warehouse.location && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Lokasi</span>
-                                    <p className='font-medium dark:text-white'>{warehouse.location}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{warehouse.location}</p>
                                 </div>
                             )}
                             {warehouse.description && (
                                 <div>
                                     <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
-                                    <p className='font-medium dark:text-white'>{warehouse.description}</p>
+                                    <p className='font-medium text-gray-900 dark:text-white'>{warehouse.description}</p>
                                 </div>
                             )}
                             <div>

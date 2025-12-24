@@ -72,7 +72,7 @@ export default function Show({ supplier, purchases, stats, products }) {
                             )}
                             <div>
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Jumlah Produk</span>
-                                <p className='font-medium dark:text-white'>
+                                <p className='font-medium text-gray-900 dark:text-white'>
                                     <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs dark:bg-blue-900 dark:text-blue-300'>
                                         {stats.total_products} produk
                                     </span>

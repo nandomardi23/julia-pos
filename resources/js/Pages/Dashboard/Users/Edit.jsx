@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { Head, usePage, useForm, router } from "@inertiajs/react";
-import Card from "@/Components/Dashboard/Card";
+import Card from "@/Components/Common/Card";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import {
     IconUsersPlus,
     IconPencilPlus,
     IconArrowLeft,
 } from "@tabler/icons-react";
-import Input from "@/Components/Dashboard/Input";
-import Button from "@/Components/Dashboard/Button";
-import Checkbox from "@/Components/Dashboard/Checkbox";
-import ConfirmDialog from "@/Components/Dashboard/ConfirmDialog";
+import Input from "@/Components/Common/Input";
+import Button from "@/Components/Common/Button";
+import Checkbox from "@/Components/Common/Checkbox";
+import ConfirmDialog from "@/Components/Common/ConfirmDialog";
 import toast from "react-hot-toast";
 
 export default function Edit() {

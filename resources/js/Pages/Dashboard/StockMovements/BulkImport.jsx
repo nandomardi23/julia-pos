@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, router, usePage } from '@inertiajs/react'
 import { IconUpload, IconDownload, IconFileSpreadsheet, IconAlertCircle, IconCheck } from '@tabler/icons-react'
-import Button from '@/Components/Dashboard/Button'
-import Select from '@/Components/Dashboard/Select'
-import Card from '@/Components/Dashboard/Card'
+import Button from '@/Components/Common/Button'
+import Select from '@/Components/Common/Select'
+import Card from '@/Components/Common/Card'
 
 export default function BulkImport({ warehouses, suppliers }) {
     const { flash } = usePage().props

@@ -1,9 +1,9 @@
-import Button from '@/Components/Dashboard/Button';
-import Input from '@/Components/Dashboard/Input';
-import ListBox from '@/Components/Dashboard/ListBox';
-import Modal from '@/Components/Dashboard/Modal';
-import Search from '@/Components/Dashboard/Search';
-import Table from '@/Components/Dashboard/Table'
+import Button from '@/Components/Common/Button';
+import Input from '@/Components/Common/Input';
+import ListBox from '@/Components/Common/ListBox';
+import Modal from '@/Components/Common/Modal';
+import Search from '@/Components/Common/Search';
+import Table from '@/Components/Common/Table'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage } from '@inertiajs/react'
 import { IconDatabaseOff, IconCirclePlus, IconTrash, IconUserShield, IconPencilCog, IconPencilCheck } from '@tabler/icons-react';

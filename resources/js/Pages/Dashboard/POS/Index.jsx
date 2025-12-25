@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import toast, { Toaster } from "react-hot-toast";
-import Input from "@/Components/Dashboard/Input";
-import Button from "@/Components/Dashboard/Button";
-import Table from "@/Components/Dashboard/Table";
+import Input from "@/Components/Common/Input";
+import Button from "@/Components/Common/Button";
+import Table from "@/Components/Common/Table";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
 import {
     IconArrowLeft,

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { usePage } from '@inertiajs/react';
 import { IconAlignLeft, IconMoon, IconSun, IconMenu2 } from '@tabler/icons-react'
-import AuthDropdown from '@/Components/Dashboard/AuthDropdown';
+import AuthDropdown from '@/Layouts/Partials/AuthDropdown';
 import Menu from '@/Utils/Menu';
-import Notification from '@/Components/Dashboard/Notification';
+import Notification from '@/Layouts/Partials/Notification';
 
 export default function Navbar({ toggleSidebar, toggleMobileSidebar, themeSwitcher, darkMode }) {
     // destruct auth from props

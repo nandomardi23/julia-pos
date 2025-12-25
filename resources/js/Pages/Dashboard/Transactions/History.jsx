@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Head, router, Link } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import Card from "@/Components/Dashboard/Card";
-import Input from "@/Components/Dashboard/Input";
-import Button from "@/Components/Dashboard/Button";
-import Table from "@/Components/Dashboard/Table";
-import Pagination from "@/Components/Dashboard/Pagination";
+import Card from "@/Components/Common/Card";
+import Input from "@/Components/Common/Input";
+import Button from "@/Components/Common/Button";
+import Table from "@/Components/Common/Table";
+import Pagination from "@/Components/Common/Pagination";
 import {
     IconDatabaseOff,
     IconSearch,

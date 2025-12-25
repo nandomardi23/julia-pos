@@ -2,10 +2,10 @@ import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, router } from '@inertiajs/react'
 import { IconBuildingWarehouse, IconBox, IconArrowsExchange, IconArrowLeft } from '@tabler/icons-react'
-import Card from '@/Components/Dashboard/Card'
-import Table from '@/Components/Dashboard/Table'
-import Button from '@/Components/Dashboard/Button'
-import Search from '@/Components/Dashboard/Search'
+import Card from '@/Components/Common/Card'
+import Table from '@/Components/Common/Table'
+import Button from '@/Components/Common/Button'
+import Search from '@/Components/Common/Search'
 
 export default function Show({ warehouse, stocks, filters }) {
     return (

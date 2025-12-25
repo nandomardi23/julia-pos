@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { Head, useForm, usePage } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import Card from "@/Components/Dashboard/Card";
-import Input from "@/Components/Dashboard/Input";
-import Checkbox from "@/Components/Dashboard/Checkbox";
-import Button from "@/Components/Dashboard/Button";
+import Card from "@/Components/Common/Card";
+import Input from "@/Components/Common/Input";
+import Checkbox from "@/Components/Common/Checkbox";
+import Button from "@/Components/Common/Button";
 import { IconCreditCard } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 

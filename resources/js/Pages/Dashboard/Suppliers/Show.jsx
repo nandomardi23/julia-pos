@@ -2,9 +2,9 @@ import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, router } from '@inertiajs/react'
 import { IconTruck, IconBox, IconShoppingCart, IconCurrencyDollar, IconPackage, IconArrowLeft } from '@tabler/icons-react'
-import Card from '@/Components/Dashboard/Card'
-import Table from '@/Components/Dashboard/Table'
-import Button from '@/Components/Dashboard/Button'
+import Card from '@/Components/Common/Card'
+import Table from '@/Components/Common/Table'
+import Button from '@/Components/Common/Button'
 
 export default function Show({ supplier, purchases, stats, products }) {
     const formatDate = (dateString) => {

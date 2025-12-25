@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage, router } from '@inertiajs/react'
-import Card from '@/Components/Dashboard/Card'
-import Button from '@/Components/Dashboard/Button'
+import Card from '@/Components/Common/Card'
+import Button from '@/Components/Common/Button'
 import { IconPencilPlus, IconBuildingWarehouse, IconArrowLeft } from '@tabler/icons-react'
-import Input from '@/Components/Dashboard/Input'
-import Textarea from '@/Components/Dashboard/TextArea'
-import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
+import Input from '@/Components/Common/Input'
+import Textarea from '@/Components/Common/TextArea'
+import ConfirmDialog from '@/Components/Common/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 export default function Edit({ warehouse }) {

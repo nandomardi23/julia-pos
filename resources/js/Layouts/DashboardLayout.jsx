@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import Sidebar from '@/Components/Dashboard/Sidebar'
-import Navbar from '@/Components/Dashboard/Navbar'
+import Sidebar from '@/Layouts/Partials/Sidebar'
+import Navbar from '@/Layouts/Partials/Navbar'
 import { Toaster } from 'react-hot-toast';
 import { useTheme } from '@/Context/ThemeSwitcherContext';
 

@@ -1,10 +1,10 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, usePage } from '@inertiajs/react'
-import Button from '@/Components/Dashboard/Button'
+import Button from '@/Components/Common/Button'
 import { IconCirclePlus, IconDatabaseOff, IconEye, IconPencilCog, IconTrash, IconBuildingWarehouse } from '@tabler/icons-react'
-import Search from '@/Components/Dashboard/Search'
-import Table from '@/Components/Dashboard/Table'
+import Search from '@/Components/Common/Search'
+import Table from '@/Components/Common/Table'
 
 export default function Index({ warehouses, filters }) {
     return (

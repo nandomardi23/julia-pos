@@ -1,11 +1,11 @@
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import React, { useEffect, useState } from 'react'
 import { Head, useForm, usePage } from '@inertiajs/react'
-import Button from '@/Components/Dashboard/Button'
+import Button from '@/Components/Common/Button'
 import { IconDatabaseOff, IconCirclePlus, IconTrash, IconPencilCog } from '@tabler/icons-react';
-import Search from '@/Components/Dashboard/Search';
-import Table from '@/Components/Dashboard/Table';
-import Checkbox from '@/Components/Dashboard/Checkbox';
+import Search from '@/Components/Common/Search';
+import Table from '@/Components/Common/Table';
+import Checkbox from '@/Components/Common/Checkbox';
 import Swal from 'sweetalert2';
 export default function Index() {
 

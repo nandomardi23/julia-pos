@@ -1,8 +1,8 @@
 import React from "react";
 import { usePage } from "@inertiajs/react";
 import { IconBrandReact, IconX } from "@tabler/icons-react";
-import LinkItem from "@/Components/Dashboard/LinkItem";
-import LinkItemDropdown from "@/Components/Dashboard/LinkItemDropdown";
+import LinkItem from "@/Layouts/Partials/LinkItem";
+import LinkItemDropdown from "@/Layouts/Partials/LinkItemDropdown";
 import Menu from "@/Utils/Menu";
 
 export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMobileSidebarOpen }) {

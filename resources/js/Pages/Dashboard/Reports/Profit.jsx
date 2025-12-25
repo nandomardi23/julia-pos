@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Head, router } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import Card from "@/Components/Dashboard/Card";
-import Input from "@/Components/Dashboard/Input";
-import Button from "@/Components/Dashboard/Button";
-import InputSelect from "@/Components/Dashboard/InputSelect";
-import Table from "@/Components/Dashboard/Table";
-import Pagination from "@/Components/Dashboard/Pagination";
+import Card from "@/Components/Common/Card";
+import Input from "@/Components/Common/Input";
+import Button from "@/Components/Common/Button";
+import InputSelect from "@/Components/Common/InputSelect";
+import Table from "@/Components/Common/Table";
+import Pagination from "@/Components/Common/Pagination";
 import {
     IconArrowDownRight,
     IconArrowUpRight,

@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage, router } from '@inertiajs/react'
-import Button from '@/Components/Dashboard/Button'
+import Button from '@/Components/Common/Button'
 import { IconPencilPlus, IconToolsKitchen2, IconArrowLeft, IconPlus, IconTrash } from '@tabler/icons-react'
-import Input from '@/Components/Dashboard/Input'
-import Textarea from '@/Components/Dashboard/TextArea'
+import Input from '@/Components/Common/Input'
+import Textarea from '@/Components/Common/TextArea'
 import toast from 'react-hot-toast'
-import InputSelect from '@/Components/Dashboard/InputSelect'
-import Select from '@/Components/Dashboard/Select'
+import InputSelect from '@/Components/Common/InputSelect'
+import Select from '@/Components/Common/Select'
 
 export default function Edit({ recipe, categories, ingredients, supplies }) {
     const { errors } = usePage().props

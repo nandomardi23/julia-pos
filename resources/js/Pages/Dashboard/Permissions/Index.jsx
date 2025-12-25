@@ -1,5 +1,5 @@
-import Search from '@/Components/Dashboard/Search';
-import Table from '@/Components/Dashboard/Table'
+import Search from '@/Components/Common/Search';
+import Table from '@/Components/Common/Table'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, usePage } from '@inertiajs/react'
 import { IconDatabaseOff, IconShieldCheck } from '@tabler/icons-react';

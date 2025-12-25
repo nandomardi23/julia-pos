@@ -1,10 +1,10 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head } from '@inertiajs/react'
-import Button from '@/Components/Dashboard/Button'
+import Button from '@/Components/Common/Button'
 import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
-import Search from '@/Components/Dashboard/Search'
-import Table from '@/Components/Dashboard/Table'
+import Search from '@/Components/Common/Search'
+import Table from '@/Components/Common/Table'
 
 export default function Index({ ingredients }) {
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {

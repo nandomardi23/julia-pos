@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('price_histories', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->decimal('old_buy_price', 15, 2)->nullable();
+            $table->decimal('new_buy_price', 15, 2)->nullable();
+            $table->decimal('old_sell_price', 15, 2)->nullable();
+            $table->decimal('new_sell_price', 15, 2)->nullable();
+            $table->foreignId('changed_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('note')->nullable();
+            $table->timestamps();
+            
+            $table->index(['product_id', 'created_at']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('price_histories');
+    }
+};

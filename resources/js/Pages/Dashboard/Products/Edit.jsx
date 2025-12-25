@@ -3,13 +3,15 @@ import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Dashboard/Card'
 import Button from '@/Components/Dashboard/Button'
-import { IconPencilPlus, IconBox, IconPlus, IconTrash, IconChefHat, IconArrowLeft, IconTag } from '@tabler/icons-react'
+import { IconPencilPlus, IconBox, IconArrowLeft } from '@tabler/icons-react'
 import Input from '@/Components/Dashboard/Input'
 import Textarea from '@/Components/Dashboard/TextArea'
 import ConfirmDialog from '@/Components/Dashboard/ConfirmDialog'
 import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Dashboard/InputSelect'
 import Select from '@/Components/Dashboard/Select'
+import ImagePreview from '@/Components/Dashboard/ImagePreview'
+import PriceHistoryTable from '@/Components/Dashboard/PriceHistoryTable'
 
 // Daftar satuan yang tersedia
 const unitOptions = [
@@ -31,7 +33,7 @@ const unitOptions = [
     { value: 'pasang', label: 'Pasang' },
 ]
 
-export default function Edit({ categories, product, suppliers, availableIngredients = [] }) {
+export default function Edit({ categories, product, suppliers, priceHistories = [] }) {
 
     const { errors } = usePage().props
     const [showConfirm, setShowConfirm] = useState(false)
@@ -73,20 +75,15 @@ export default function Edit({ categories, product, suppliers, availableIngredie
 
     const { data, setData, post, processing } = useForm({
         image: '',
-        barcode: product.barcode,
-        title: product.title,
-        category_id: product.category_id,
+        barcode: product.barcode || '',
+        title: product.title || '',
+        category_id: product.category_id || '',
         supplier_id: product.supplier_id || '',
-        description: product.description,
-        buy_price: product.buy_price,
-        sell_price: product.sell_price,
+        description: product.description || '',
+        buy_price: product.buy_price || 0,
+        sell_price: product.sell_price || 0,
         min_stock: product.min_stock || 0,
         unit: product.unit || 'pcs',
-        is_recipe: product.is_recipe || false,
-        is_supply: product.is_supply || false,
-        is_ingredient: product.is_ingredient || false,
-        ingredients: initialIngredients,
-        variants: initialVariants,
         _method: 'PUT'
     })
 
@@ -267,12 +264,10 @@ export default function Edit({ categories, product, suppliers, availableIngredie
 
                 <div className='grid grid-cols-12 gap-4'>
                     <div className='col-span-12'>
-                        <Input
-                            type={'file'}
-                            label={'Gambar'}
-                            onChange={handleImageChange}
+                        <ImagePreview
+                            currentImage={product.image}
+                            onImageChange={handleImageChange}
                             errors={errors.image}
-                            placeholder={'Gambar produk'}
                         />
                     </div>
                     <div className='col-span-12'>
@@ -378,187 +373,13 @@ export default function Edit({ categories, product, suppliers, availableIngredie
                         />
                     </div>
 
-                    {/* Product Type Flags */}
-                    <div className='col-span-12'>
-                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                            Tipe Produk
-                        </label>
-                        <div className='flex flex-wrap gap-4'>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                                <input
-                                    type='checkbox'
-                                    checked={data.is_recipe}
-                                    onChange={e => setData('is_recipe', e.target.checked)}
-                                    className='w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600'
-                                />
-                                <span className='text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1'>
-                                    <IconChefHat size={16} /> Resep (Produk Komposit)
-                                </span>
-                            </label>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                                <input
-                                    type='checkbox'
-                                    checked={data.is_supply}
-                                    onChange={e => setData('is_supply', e.target.checked)}
-                                    className='w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600'
-                                />
-                                <span className='text-sm text-gray-700 dark:text-gray-300'>
-                                    Supply (Cup, Pipet, dll)
-                                </span>
-                            </label>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                                <input
-                                    type='checkbox'
-                                    checked={data.is_ingredient}
-                                    onChange={e => setData('is_ingredient', e.target.checked)}
-                                    className='w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600'
-                                />
-                                <span className='text-sm text-gray-700 dark:text-gray-300'>
-                                    Bahan Baku
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Variants Section */}
-                    <div className='col-span-12'>
-                        <div className='border rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800'>
-                            <div className='flex justify-between items-center mb-4'>
-                                <h3 className='text-lg font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2'>
-                                    <IconTag size={20} /> Varian Ukuran (Opsional)
-                                </h3>
-                                <button
-                                    type='button'
-                                    onClick={addVariant}
-                                    className='flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600'
-                                >
-                                    <IconPlus size={16} /> Tambah Varian
-                                </button>
-                            </div>
-                            
-                            {data.variants.length === 0 ? (
-                                <p className='text-gray-500 dark:text-gray-400 text-sm text-center py-4'>
-                                    Tidak ada varian. Produk menggunakan harga jual di atas. Klik "Tambah Varian" jika ingin menambah ukuran (R/L/XL).
-                                </p>
-                            ) : (
-                                <div className='space-y-3'>
-                                    {data.variants.map((variant, index) => (
-                                        <div key={index} className='flex gap-3 items-center bg-white dark:bg-gray-900 p-3 rounded-lg border dark:border-gray-700'>
-                                            <div className='flex-1'>
-                                                <input
-                                                    type='text'
-                                                    placeholder='Nama varian (R, L, XL)'
-                                                    value={variant.name}
-                                                    onChange={e => updateVariant(index, 'name', e.target.value)}
-                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
-                                                />
-                                            </div>
-                                            <div className='w-28'>
-                                                <input
-                                                    type='number'
-                                                    placeholder='Harga Beli'
-                                                    value={variant.buy_price}
-                                                    onChange={e => updateVariant(index, 'buy_price', parseInt(e.target.value) || 0)}
-                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
-                                                />
-                                            </div>
-                                            <div className='w-28'>
-                                                <input
-                                                    type='number'
-                                                    placeholder='Harga Jual'
-                                                    value={variant.sell_price}
-                                                    onChange={e => updateVariant(index, 'sell_price', parseInt(e.target.value) || 0)}
-                                                    className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm'
-                                                />
-                                            </div>
-                                            <label className='flex items-center gap-1 cursor-pointer'>
-                                                <input
-                                                    type='radio'
-                                                    name='defaultVariant'
-                                                    checked={variant.is_default}
-                                                    onChange={() => updateVariant(index, 'is_default', true)}
-                                                    className='text-purple-600'
-                                                />
-                                                <span className='text-xs text-gray-500'>Default</span>
-                                            </label>
-                                            <button
-                                                type='button'
-                                                onClick={() => removeVariant(index)}
-                                                className='text-red-500 hover:text-red-600'
-                                            >
-                                                <IconTrash size={18} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Ingredients Section (only shown if is_recipe is checked) */}
-                    {data.is_recipe && (
+                    {/* Price History */}
+                    {priceHistories && priceHistories.length > 0 && (
                         <div className='col-span-12'>
-                            <div className='border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'>
-                                <div className='flex justify-between items-center mb-4'>
-                                    <h3 className='text-lg font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2'>
-                                        <IconChefHat size={20} /> Bahan-bahan Resep
-                                    </h3>
-                                    <button
-                                        type='button'
-                                        onClick={addIngredient}
-                                        className='flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600'
-                                    >
-                                        <IconPlus size={16} /> Tambah Bahan
-                                    </button>
-                                </div>
-                                
-                                {data.ingredients.length === 0 ? (
-                                    <p className='text-gray-500 dark:text-gray-400 text-sm text-center py-4'>
-                                        Belum ada bahan. Klik "Tambah Bahan" untuk menambahkan bahan resep.
-                                    </p>
-                                ) : (
-                                    <div className='space-y-3'>
-                                        {data.ingredients.map((ingredient, index) => (
-                                            <div key={index} className='flex gap-3 items-center bg-white dark:bg-gray-900 p-3 rounded-lg border dark:border-gray-700'>
-                                                <div className='flex-1'>
-                                                    <select
-                                                        value={ingredient.ingredient_id}
-                                                        onChange={e => updateIngredient(index, 'ingredient_id', e.target.value)}
-                                                        className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                                                    >
-                                                        <option value=''>Pilih bahan...</option>
-                                                        {availableIngredients.map(ing => (
-                                                            <option key={ing.id} value={ing.id}>
-                                                                {ing.title} ({ing.unit})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className='w-24'>
-                                                    <input
-                                                        type='number'
-                                                        step='0.001'
-                                                        min='0'
-                                                        value={ingredient.quantity}
-                                                        onChange={e => updateIngredient(index, 'quantity', e.target.value)}
-                                                        placeholder='Qty'
-                                                        className='w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                                                    />
-                                                </div>
-                                                <button
-                                                    type='button'
-                                                    onClick={() => removeIngredient(index)}
-                                                    className='p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg'
-                                                >
-                                                    <IconTrash size={18} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <PriceHistoryTable priceHistories={priceHistories} />
                         </div>
                     )}
+
                 </div>
             </Card>
 

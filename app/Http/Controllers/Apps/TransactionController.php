@@ -10,6 +10,7 @@ use App\Models\PaymentSetting;
 use App\Models\Display;
 use App\Models\DisplayStock;
 use App\Models\WarehouseStock;
+use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -145,6 +146,85 @@ class TransactionController extends Controller
     }
 
     /**
+     * Recursively deduct ingredient stocks for recipe products.
+     * Supports variant-based ingredients.
+     *
+     * @param  Product $product The recipe product
+     * @param  ProductVariant|null $variant The selected variant
+     * @param  float $multiplier Quantity multiplier
+     * @param  Display $display Active display location
+     * @param  Transaction $transaction Current transaction
+     * @return void
+     */
+    private function deductIngredientStock($product, $variant, $multiplier, $display, $transaction)
+    {
+        if (!$product->is_recipe) {
+            return;
+        }
+
+        // Get ingredients from the selected variant
+        $ingredients = [];
+        if ($variant) {
+            $variant->load('ingredients.ingredient');
+            $ingredients = $variant->ingredients;
+        }
+
+        // If no ingredients on variant, skip
+        if (empty($ingredients) || count($ingredients) === 0) {
+            return;
+        }
+
+        foreach ($ingredients as $variantIngredient) {
+            $ingredient = $variantIngredient->ingredient;
+            if (!$ingredient) continue;
+            
+            $ingredientQty = $variantIngredient->quantity * $multiplier;
+
+            if ($ingredient->is_supply || $ingredient->product_type === Product::TYPE_SUPPLY) {
+                // SUPPLY → deduct from WAREHOUSE (first available)
+                $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)
+                    ->where('quantity', '>=', $ingredientQty)
+                    ->first();
+
+                if ($warehouseStock) {
+                    $warehouseStock->decrement('quantity', $ingredientQty);
+
+                    StockMovement::create([
+                        'product_id' => $ingredient->id,
+                        'from_type' => StockMovement::TYPE_WAREHOUSE,
+                        'from_id' => $warehouseStock->warehouse_id,
+                        'to_type' => StockMovement::TYPE_TRANSACTION,
+                        'to_id' => $transaction->id,
+                        'quantity' => $ingredientQty,
+                        'note' => 'Supply resep: ' . $product->title . ' (' . ($variant->name ?? 'default') . ') x' . $multiplier,
+                        'user_id' => auth()->id(),
+                    ]);
+                }
+            } else {
+                // INGREDIENT → deduct from DISPLAY
+                $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
+                    ->where('product_id', $ingredient->id)
+                    ->first();
+
+                if ($ingredientDisplayStock) {
+                    $ingredientDisplayStock->decrement('quantity', $ingredientQty);
+
+                    StockMovement::create([
+                        'product_id' => $ingredient->id,
+                        'from_type' => StockMovement::TYPE_DISPLAY,
+                        'from_id' => $display->id,
+                        'to_type' => StockMovement::TYPE_TRANSACTION,
+                        'to_id' => $transaction->id,
+                        'quantity' => $ingredientQty,
+                        'note' => 'Bahan resep: ' . $product->title . ' (' . ($variant->name ?? 'default') . ') x' . $multiplier,
+                        'user_id' => auth()->id(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * store
      *
      * @param  mixed $request
@@ -203,14 +283,19 @@ class TransactionController extends Controller
             $carts = Cart::where('cashier_id', auth()->user()->id)->get();
 
             foreach ($carts as $cart) {
+                // Simpan buy_price saat transaksi agar profit tetap akurat meski harga berubah
+                $currentBuyPrice = $cart->product->buy_price;
+                
                 $transaction->details()->create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $cart->product_id,
                     'qty' => $cart->qty,
                     'price' => $cart->price,
+                    'buy_price' => $currentBuyPrice,
                 ]);
 
-                $total_buy_price = $cart->product->buy_price * $cart->qty;
+                // Hitung profit berdasarkan buy_price saat transaksi
+                $total_buy_price = $currentBuyPrice * $cart->qty;
                 $total_sell_price = $cart->product->sell_price * $cart->qty;
                 $profits = $total_sell_price - $total_buy_price;
 
@@ -219,82 +304,39 @@ class TransactionController extends Controller
                     'total' => $profits,
                 ]);
 
-                // Deduct from display stock instead of product stock
+                // Deduct from display stock (for non-recipe products only)
                 $display = Display::active()->first();
+                $product = $cart->product;
+                
                 if ($display) {
-                    $displayStock = DisplayStock::where('display_id', $display->id)
-                        ->where('product_id', $cart->product_id)
-                        ->first();
-                    
-                    if ($displayStock) {
-                        $displayStock->decrement('quantity', (float) $cart->qty);
+                    // Only deduct display stock for non-recipe products
+                    if (!$product->is_recipe) {
+                        $displayStock = DisplayStock::where('display_id', $display->id)
+                            ->where('product_id', $cart->product_id)
+                            ->first();
                         
-                        // Create stock movement record
-                        StockMovement::create([
-                            'product_id' => $cart->product_id,
-                            'from_type' => StockMovement::TYPE_DISPLAY,
-                            'from_id' => $display->id,
-                            'to_type' => StockMovement::TYPE_TRANSACTION,
-                            'to_id' => $transaction->id,
-                            'quantity' => $cart->qty,
-                            'note' => 'Penjualan: ' . $transaction->invoice,
-                            'user_id' => auth()->id(),
-                        ]);
+                        if ($displayStock) {
+                            $displayStock->decrement('quantity', (float) $cart->qty);
+                            
+                            // Create stock movement record
+                            StockMovement::create([
+                                'product_id' => $cart->product_id,
+                                'from_type' => StockMovement::TYPE_DISPLAY,
+                                'from_id' => $display->id,
+                                'to_type' => StockMovement::TYPE_TRANSACTION,
+                                'to_id' => $transaction->id,
+                                'quantity' => $cart->qty,
+                                'note' => 'Penjualan: ' . $transaction->invoice,
+                                'user_id' => auth()->id(),
+                            ]);
+                        }
                     }
 
                     // Deduct ingredient stocks for recipe products
-                    $product = $cart->product;
                     if ($product->is_recipe) {
-                        $product->load('ingredients.ingredient');
-                        
-                        foreach ($product->ingredients as $recipeIngredient) {
-                            $ingredient = $recipeIngredient->ingredient;
-                            $ingredientQty = $recipeIngredient->quantity * $cart->qty;
-                            
-                            if ($ingredient->is_supply) {
-                                // SUPPLY → potong dari WAREHOUSE pertama yang punya stok
-                                $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)
-                                    ->where('quantity', '>=', $ingredientQty)
-                                    ->first();
-                                
-                                if ($warehouseStock) {
-                                    $warehouseStock->decrement('quantity', $ingredientQty);
-                                    
-                                    // Create stock movement for supply deduction
-                                    StockMovement::create([
-                                        'product_id' => $ingredient->id,
-                                        'from_type' => StockMovement::TYPE_WAREHOUSE,
-                                        'from_id' => $warehouseStock->warehouse_id,
-                                        'to_type' => StockMovement::TYPE_TRANSACTION,
-                                        'to_id' => $transaction->id,
-                                        'quantity' => $ingredientQty,
-                                        'note' => 'Supply resep: ' . $product->title . ' x' . $cart->qty,
-                                        'user_id' => auth()->id(),
-                                    ]);
-                                }
-                            } else {
-                                // INGREDIENT BIASA → potong dari DISPLAY
-                                $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
-                                    ->where('product_id', $ingredient->id)
-                                    ->first();
-                                
-                                if ($ingredientDisplayStock) {
-                                    $ingredientDisplayStock->decrement('quantity', $ingredientQty);
-                                    
-                                    // Create stock movement for ingredient deduction
-                                    StockMovement::create([
-                                        'product_id' => $ingredient->id,
-                                        'from_type' => StockMovement::TYPE_DISPLAY,
-                                        'from_id' => $display->id,
-                                        'to_type' => StockMovement::TYPE_TRANSACTION,
-                                        'to_id' => $transaction->id,
-                                        'quantity' => $ingredientQty,
-                                        'note' => 'Bahan resep: ' . $product->title . ' x' . $cart->qty,
-                                        'user_id' => auth()->id(),
-                                    ]);
-                                }
-                            }
-                        }
+                        // Load variant from cart if available
+                        $variant = $cart->variant;
+                        $this->deductIngredientStock($product, $variant, (float) $cart->qty, $display, $transaction);
                     }
                 }
             }
@@ -370,5 +412,51 @@ class TransactionController extends Controller
             'transactions' => $transactions,
             'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Delete transaction and revert stock changes.
+     */
+    public function destroy($invoice)
+    {
+        $transaction = Transaction::where('invoice', $invoice)->firstOrFail();
+
+        DB::transaction(function () use ($transaction) {
+            // Get display for restoring stock
+            $display = Display::active()->first();
+
+            // Restore stock for each transaction detail
+            foreach ($transaction->details as $detail) {
+                $product = Product::find($detail->product_id);
+                
+                if ($product && $display) {
+                    // Kembalikan stok ke display
+                    $displayStock = DisplayStock::firstOrCreate(
+                        [
+                            'display_id' => $display->id,
+                            'product_id' => $detail->product_id,
+                        ],
+                        ['quantity' => 0]
+                    );
+                    $displayStock->increment('quantity', $detail->qty);
+                }
+            }
+
+            // Delete related stock movements
+            StockMovement::where('to_type', StockMovement::TYPE_TRANSACTION)
+                ->where('to_id', $transaction->id)
+                ->delete();
+
+            // Delete profits
+            $transaction->profits()->delete();
+
+            // Delete transaction details
+            $transaction->details()->delete();
+
+            // Delete transaction
+            $transaction->delete();
+        });
+
+        return redirect()->route('transactions.history')->with('success', 'Transaksi berhasil dihapus dan stok dikembalikan!');
     }
 }

@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Product extends Model
 {
     use HasFactory;
+
+    // Product Type Constants
+    const TYPE_SELLABLE = 'sellable';
+    const TYPE_INGREDIENT = 'ingredient';
+    const TYPE_SUPPLY = 'supply';
+    const TYPE_RECIPE = 'recipe';
     
     /**
      * fillable
@@ -21,7 +27,8 @@ class Product extends Model
         'title', 
         'description', 
         'buy_price', 
-        'sell_price', 
+        'sell_price',
+        'average_cost',
         'category_id', 
         'supplier_id',
         'unit',
@@ -29,6 +36,7 @@ class Product extends Model
         'is_recipe',
         'is_supply',
         'is_ingredient',
+        'product_type',
     ];
 
     /**
@@ -105,6 +113,14 @@ class Product extends Model
     }
 
     /**
+     * Get price history records.
+     */
+    public function priceHistories()
+    {
+        return $this->hasMany(PriceHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Check if product has variants.
      */
     public function hasVariants(): bool
@@ -162,5 +178,41 @@ class Product extends Model
         return Attribute::make(
             get: fn ($value) => asset('/storage/products/' . $value),
         );
+    }
+
+    /**
+     * Calculate weighted average cost from all stock in movements.
+     * Formula: Σ(qty × price) / Σ(qty)
+     *
+     * @return float
+     */
+    public function calculateAverageCost(): float
+    {
+        $movements = StockMovement::where('product_id', $this->id)
+            ->where('from_type', StockMovement::TYPE_SUPPLIER)
+            ->whereNotNull('purchase_price')
+            ->where('purchase_price', '>', 0)
+            ->get();
+
+        if ($movements->isEmpty()) {
+            return 0;
+        }
+
+        $totalValue = $movements->sum(fn($m) => $m->quantity * $m->purchase_price);
+        $totalQty = $movements->sum('quantity');
+
+        return $totalQty > 0 ? round($totalValue / $totalQty, 2) : 0;
+    }
+
+    /**
+     * Update the average cost and save to database.
+     *
+     * @return float The calculated average cost
+     */
+    public function updateAverageCost(): float
+    {
+        $averageCost = $this->calculateAverageCost();
+        $this->update(['average_cost' => $averageCost]);
+        return $averageCost;
     }
 }

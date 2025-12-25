@@ -50,18 +50,22 @@ class CategoryController extends Controller
          * validate
          */
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'name' => 'required',
             'description' => 'required'
         ]);
 
-        //upload image
-        $image = $request->file('image');
-        $image->storeAs('public/category', $image->hashName());
+        //upload image if provided
+        $imageName = null;
+        if ($request->file('image')) {
+            $image = $request->file('image');
+            $image->storeAs('public/category', $image->hashName());
+            $imageName = $image->hashName();
+        }
 
         //create category
         Category::create([
-            'image' => $image->hashName(),
+            'image' => $imageName,
             'name' => $request->name,
             'description' => $request->description
         ]);

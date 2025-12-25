@@ -1,13 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head } from '@inertiajs/react'
-import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus } from '@tabler/icons-react'
+import { Head, router } from '@inertiajs/react'
+import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash } from '@tabler/icons-react'
 import Table from '@/Components/Dashboard/Table'
 import Button from '@/Components/Dashboard/Button'
 import Input from '@/Components/Dashboard/Input'
 import Select from '@/Components/Dashboard/Select'
-import { router } from '@inertiajs/react'
-import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 export default function Index({ movements, filters }) {
     const [filterData, setFilterData] = useState({
@@ -21,6 +20,19 @@ export default function Index({ movements, filters }) {
         router.get(route('stock-movements.index'), filterData, {
             preserveState: true
         })
+    }
+
+    const handleDelete = (id) => {
+        if (confirm('Apakah Anda yakin ingin menghapus pergerakan stok ini? Stok akan dikembalikan ke posisi sebelumnya.')) {
+            router.delete(route('stock-movements.destroy', id), {
+                onSuccess: () => {
+                    toast.success('Pergerakan stok berhasil dihapus')
+                },
+                onError: () => {
+                    toast.error('Gagal menghapus pergerakan stok')
+                }
+            })
+        }
     }
 
     const getTypeLabel = (movement) => {
@@ -148,6 +160,7 @@ export default function Index({ movements, filters }) {
                             <Table.Th className='w-28 text-right'>Harga Beli</Table.Th>
                             <Table.Th className='w-28 text-right'>Kerugian</Table.Th>
                             <Table.Th>User</Table.Th>
+                            <Table.Th className='w-16 text-center'>Action</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -192,10 +205,23 @@ export default function Index({ movements, filters }) {
                                             }
                                         </Table.Td>
                                         <Table.Td className='text-sm'>{movement.user?.name}</Table.Td>
+                                        <Table.Td>
+                                            {movement.to_type !== 'transaction' && (
+                                                <div className='flex items-center justify-center'>
+                                                    <button
+                                                        onClick={() => handleDelete(movement.id)}
+                                                        className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                        title='Hapus'
+                                                    >
+                                                        <IconTrash size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </Table.Td>
                                     </tr>
                                 )
                             }) :
-                            <Table.Empty colSpan={9} message={
+                            <Table.Empty colSpan={10} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={24} strokeWidth={1.5} className='text-gray-500 dark:text-white' />

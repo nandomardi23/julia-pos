@@ -18,6 +18,9 @@ import {
     IconChartBarPopular,
     IconCreditCard,
     IconReceipt,
+    IconLeaf,
+    IconCup,
+    IconToolsKitchen2,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -59,35 +62,32 @@ export default function Menu() {
                     permissions: hasAnyPermission(["categories-access"]),
                 },
                 {
-                    title: "Produk",
+                    title: "Produk Jual",
+                    href: route("products.index"),
+                    active: url.startsWith("/dashboard/products"),
                     icon: <IconBox size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["products-access"]),
-                    subdetails: [
-                        {
-                            title: "Produk Jual",
-                            href: route("products.index") + "?type=product",
-                            active: url.includes("/dashboard/products") && (url.includes("type=product") || !url.includes("type=")),
-                            permissions: hasAnyPermission(["products-access"]),
-                        },
-                        {
-                            title: "Bahan Baku",
-                            href: route("products.index") + "?type=ingredient",
-                            active: url.includes("type=ingredient"),
-                            permissions: hasAnyPermission(["products-access"]),
-                        },
-                        {
-                            title: "Resep",
-                            href: route("products.index") + "?type=recipe",
-                            active: url.includes("type=recipe"),
-                            permissions: hasAnyPermission(["products-access"]),
-                        },
-                        {
-                            title: "Alat Pendukung",
-                            href: route("products.index") + "?type=supply",
-                            active: url.includes("type=supply"),
-                            permissions: hasAnyPermission(["products-access"]),
-                        },
-                    ],
+                },
+                {
+                    title: "Bahan Baku",
+                    href: route("ingredients.index"),
+                    active: url.startsWith("/dashboard/ingredients"),
+                    icon: <IconLeaf size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["products-access"]),
+                },
+                {
+                    title: "Supply",
+                    href: route("supplies.index"),
+                    active: url.startsWith("/dashboard/supplies"),
+                    icon: <IconCup size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["products-access"]),
+                },
+                {
+                    title: "Resep",
+                    href: route("recipes.index"),
+                    active: url.startsWith("/dashboard/recipes"),
+                    icon: <IconToolsKitchen2 size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["products-access"]),
                 },
                 {
                     title: "Supplier",

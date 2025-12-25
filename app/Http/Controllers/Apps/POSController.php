@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Display;
 use App\Models\DisplayStock;
 use App\Models\PaymentSetting;
+use App\Models\ProductVariantIngredient;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -22,7 +23,7 @@ class POSController extends Controller
         // Get active display (since we use single display)
         $display = Display::active()->first();
 
-        // Get products that have display stock
+        // Get products that have display stock (non-recipe products)
         $products = collect();
         if ($display) {
             $displayStocks = DisplayStock::where('display_id', $display->id)
@@ -32,10 +33,31 @@ class POSController extends Controller
             
             $products = $displayStocks->map(function ($stock) {
                 $product = $stock->product;
+                // Skip recipe products from display stock (they are handled separately)
+                if ($product->product_type === Product::TYPE_RECIPE) {
+                    return null;
+                }
                 $product->display_qty = $stock->quantity;
+                $product->is_available = true;
+                return $product;
+            })->filter();
+        }
+
+        // Get RECIPE products and check ingredient availability
+        $recipeProducts = Product::where('product_type', Product::TYPE_RECIPE)
+            ->where('sell_price', '>', 0)
+            ->with(['category', 'variants.ingredients'])
+            ->get()
+            ->map(function ($product) use ($display) {
+                // Check if all ingredients are available
+                $isAvailable = $this->checkRecipeIngredients($product, $display);
+                $product->display_qty = $isAvailable ? 999 : 0;
+                $product->is_available = $isAvailable;
                 return $product;
             });
-        }
+
+        // Merge all products
+        $products = $products->merge($recipeProducts);
 
         // Get all categories for filter
         $categories = Category::orderBy('name')->get();
@@ -99,12 +121,19 @@ class POSController extends Controller
             return redirect()->back()->with('error', 'Display tidak tersedia!');
         }
 
-        // Get display stock for this product
-        $displayStock = DisplayStock::where('display_id', $display->id)
-            ->where('product_id', $request->product_id)
-            ->first();
+        // Skip stock check for RECIPE products (they don't need display stock)
+        $isRecipe = $product->is_recipe;
 
-        $availableQty = $displayStock ? $displayStock->quantity : 0;
+        // Get display stock for this product (only for non-recipe products)
+        $displayStock = null;
+        $availableQty = 0;
+        
+        if (!$isRecipe) {
+            $displayStock = DisplayStock::where('display_id', $display->id)
+                ->where('product_id', $request->product_id)
+                ->first();
+            $availableQty = $displayStock ? $displayStock->quantity : 0;
+        }
 
         // Check if product (with same variant) already in cart
         $existingCart = Cart::where('product_id', $request->product_id)
@@ -114,8 +143,8 @@ class POSController extends Controller
         
         $totalQtyNeeded = $request->qty + ($existingCart ? $existingCart->qty : 0);
 
-        // Check stock
-        if ($availableQty < $totalQtyNeeded) {
+        // Check stock (only for non-recipe products)
+        if (!$isRecipe && $availableQty < $totalQtyNeeded) {
             return redirect()->back()->with('error', 'Stok display tidak mencukupi! (Tersedia: ' . $availableQty . ')');
         }
 
@@ -173,22 +202,27 @@ class POSController extends Controller
             return redirect()->back()->with('error', 'Item keranjang tidak ditemukan!');
         }
 
-        // Get active display
-        $display = Display::active()->first();
-        if (!$display) {
-            return redirect()->back()->with('error', 'Display tidak tersedia!');
-        }
+        // Skip stock check for RECIPE products
+        $isRecipe = $cart->product->is_recipe;
 
-        // Get display stock for this product
-        $displayStock = DisplayStock::where('display_id', $display->id)
-            ->where('product_id', $cart->product_id)
-            ->first();
+        if (!$isRecipe) {
+            // Get active display
+            $display = Display::active()->first();
+            if (!$display) {
+                return redirect()->back()->with('error', 'Display tidak tersedia!');
+            }
 
-        $availableQty = $displayStock ? $displayStock->quantity : 0;
+            // Get display stock for this product
+            $displayStock = DisplayStock::where('display_id', $display->id)
+                ->where('product_id', $cart->product_id)
+                ->first();
 
-        // Check stock
-        if ($availableQty < $request->qty) {
-            return redirect()->back()->with('error', 'Stok display tidak mencukupi! (Tersedia: ' . $availableQty . ')');
+            $availableQty = $displayStock ? $displayStock->quantity : 0;
+
+            // Check stock
+            if ($availableQty < $request->qty) {
+                return redirect()->back()->with('error', 'Stok display tidak mencukupi! (Tersedia: ' . $availableQty . ')');
+            }
         }
 
         $cart->qty = $request->qty;
@@ -196,5 +230,54 @@ class POSController extends Controller
         $cart->save();
 
         return redirect()->back()->with('success', 'Keranjang diperbarui!');
+    }
+
+    /**
+     * Check if all ingredients for a recipe are available in display stock
+     */
+    private function checkRecipeIngredients($recipe, $display)
+    {
+        // If no display, recipe is not available
+        if (!$display) {
+            return false;
+        }
+
+        // Get all variants of the recipe
+        $variants = $recipe->variants;
+        
+        // If recipe has no variants, check if it has any ingredients defined
+        if ($variants->isEmpty()) {
+            return true; // No variants, assume always available
+        }
+
+        // Check each variant - if ANY variant is available, recipe is available
+        foreach ($variants as $variant) {
+            $variantAvailable = true;
+
+            // If variant has no ingredients, it's available
+            if (!$variant->ingredients || $variant->ingredients->isEmpty()) {
+                return true;
+            }
+
+            foreach ($variant->ingredients as $ingredient) {
+                // Check if this ingredient exists in display stock
+                $displayStock = DisplayStock::where('display_id', $display->id)
+                    ->where('product_id', $ingredient->ingredient_id)
+                    ->first();
+
+                // If ingredient not in display or quantity is 0, variant is not available
+                if (!$displayStock || $displayStock->quantity < $ingredient->quantity) {
+                    $variantAvailable = false;
+                    break;
+                }
+            }
+
+            // If any variant is fully available, recipe is available
+            if ($variantAvailable) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

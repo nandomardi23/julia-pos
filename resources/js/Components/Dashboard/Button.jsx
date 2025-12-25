@@ -40,7 +40,7 @@ export default function Button({ className, icon, label, type, href, added, url,
                 </Link>
             }
             {type === 'button' &&
-                <button className={`${className} px-4 py-2 flex items-center gap-1 rounded-lg text-sm font-semibold`} {...props}>
+                <button type='button' className={`${className} px-4 py-2 flex items-center gap-1 rounded-lg text-sm font-semibold`} {...props}>
                     {icon} <span className={`${added === true ? 'hidden md:block' : ''}`}>{label}</span>
                 </button>
             }

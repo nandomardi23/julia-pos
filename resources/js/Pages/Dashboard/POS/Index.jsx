@@ -522,7 +522,11 @@ export default function Index({
                                                                 : "bg-rose-500 text-white"
                                                         }`}
                                                     >
-                                                        {product.display_qty}
+                                                        {product.display_qty > 0 
+                                                            ? (product.is_recipe || product.product_type === 'recipe' 
+                                                                ? '✓' 
+                                                                : product.display_qty)
+                                                            : 'Habis'}
                                                     </span>
                                                 </div>
 

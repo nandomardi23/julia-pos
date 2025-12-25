@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, Link } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import Card from "@/Components/Dashboard/Card";
 import Input from "@/Components/Dashboard/Input";
@@ -10,7 +10,11 @@ import {
     IconDatabaseOff,
     IconSearch,
     IconClockHour6,
+    IconEye,
+    IconPrinter,
+    IconTrash,
 } from "@tabler/icons-react";
+import toast from "react-hot-toast";
 
 const defaultFilters = {
     invoice: "",
@@ -43,6 +47,19 @@ const History = ({ transactions, filters }) => {
             ...prev,
             [field]: value,
         }));
+    };
+
+    const handleDelete = (invoice) => {
+        if (confirm('Apakah Anda yakin ingin menghapus transaksi ini? Stok akan dikembalikan.')) {
+            router.delete(route('transactions.destroy', invoice), {
+                onSuccess: () => {
+                    toast.success('Transaksi berhasil dihapus');
+                },
+                onError: () => {
+                    toast.error('Gagal menghapus transaksi');
+                }
+            });
+        }
     };
 
     const applyFilters = (event) => {
@@ -145,6 +162,9 @@ const History = ({ transactions, filters }) => {
                                 <Table.Th className="text-right">
                                     Profit
                                 </Table.Th>
+                                <Table.Th className="text-center">
+                                    Action
+                                </Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -186,11 +206,38 @@ const History = ({ transactions, filters }) => {
                                                 transaction.total_profit ?? 0
                                             )}
                                         </Table.Td>
+                                        <Table.Td>
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Link
+                                                    href={route('transactions.print', transaction.invoice)}
+                                                    className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <IconEye size={14} />
+                                                </Link>
+                                                <a
+                                                    href={route('transactions.print', transaction.invoice)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                                                    title="Cetak Struk"
+                                                >
+                                                    <IconPrinter size={14} />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDelete(transaction.invoice)}
+                                                    className="p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                                                    title="Hapus"
+                                                >
+                                                    <IconTrash size={14} />
+                                                </button>
+                                            </div>
+                                        </Table.Td>
                                     </tr>
                                 ))
                             ) : (
                                 <Table.Empty
-                                    colSpan={8}
+                                    colSpan={9}
                                     message={
                                         <div className="text-gray-500">
                                             <IconDatabaseOff

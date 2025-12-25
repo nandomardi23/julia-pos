@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\ProductIngredient;
 use App\Models\ProductVariant;
+use App\Models\PriceHistory;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -162,14 +163,15 @@ class ProductController extends Controller
             })
             ->get(['id', 'title', 'unit', 'barcode']);
         
-        // Load current ingredients and variants
-        $product->load('ingredients.ingredient', 'variants');
+        // Load current ingredients, variants, and price history
+        $product->load('ingredients.ingredient', 'variants', 'priceHistories.user');
 
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product,
             'categories' => $categories,
             'suppliers' => $suppliers,
             'availableIngredients' => $availableIngredients,
+            'priceHistories' => $product->priceHistories,
         ]);
     }
 
@@ -224,6 +226,17 @@ class ProductController extends Controller
             $image = $request->file('image');
             $image->storeAs('public/products', $image->hashName());
             $updateData['image'] = $image->hashName();
+        }
+
+        // Record price change if buy_price or sell_price changed
+        if ($product->buy_price != $request->buy_price || $product->sell_price != $request->sell_price) {
+            PriceHistory::recordChange(
+                $product->id,
+                $product->buy_price,
+                $request->buy_price,
+                $product->sell_price,
+                $request->sell_price
+            );
         }
 
         $product->update($updateData);

@@ -122,6 +122,12 @@ class StockMovementController extends Controller
             ]);
         });
 
+        // Recalculate average cost after stock in
+        $product = Product::find($validated['product_id']);
+        if ($product) {
+            $product->updateAverageCost();
+        }
+
         return redirect()->route('stock-movements.index')->with('success', 'Stok berhasil ditambahkan ke gudang!');
     }
 
@@ -394,5 +400,78 @@ class StockMovementController extends Controller
 
         return redirect()->route('stock-movements.index')
             ->with('success', "Berhasil import {$importedCount} item ke gudang!");
+    }
+
+    /**
+     * Delete stock movement and revert stock changes.
+     */
+    public function destroy($id)
+    {
+        $movement = StockMovement::findOrFail($id);
+
+        // Tidak boleh hapus movement dari transaksi
+        if ($movement->to_type === StockMovement::TYPE_TRANSACTION) {
+            return redirect()->back()->with('error', 'Tidak dapat menghapus pergerakan stok dari transaksi!');
+        }
+
+        DB::transaction(function () use ($movement) {
+            // Revert stock based on movement type
+            if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
+                // Stock In: kurangi stok warehouse
+                $stock = WarehouseStock::where('warehouse_id', $movement->to_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($stock) {
+                    $stock->decrement('quantity', $movement->quantity);
+                }
+            } elseif ($movement->to_type === StockMovement::TYPE_DISPLAY) {
+                // Transfer: kembalikan ke warehouse, kurangi display
+                $warehouseStock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($warehouseStock) {
+                    $warehouseStock->increment('quantity', $movement->quantity);
+                }
+                
+                $displayStock = DisplayStock::where('display_id', $movement->to_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($displayStock) {
+                    $displayStock->decrement('quantity', $movement->quantity);
+                }
+            } elseif ($movement->to_type === StockMovement::TYPE_OUT) {
+                // Stock Out: kembalikan stok
+                if ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
+                    $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                    if ($stock) {
+                        $stock->increment('quantity', $movement->quantity);
+                    }
+                } elseif ($movement->from_type === StockMovement::TYPE_DISPLAY) {
+                    $stock = DisplayStock::where('display_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                    if ($stock) {
+                        $stock->increment('quantity', $movement->quantity);
+                    }
+                }
+            }
+
+            // Recalculate average cost if this was a stock in with purchase price
+            if ($movement->to_type === StockMovement::TYPE_WAREHOUSE && $movement->purchase_price) {
+                $product = Product::find($movement->product_id);
+                if ($product) {
+                    // Delete first, then recalculate
+                    $movement->delete();
+                    $product->updateAverageCost();
+                    return;
+                }
+            }
+
+            $movement->delete();
+        });
+
+        return redirect()->route('stock-movements.index')->with('success', 'Pergerakan stok berhasil dihapus!');
     }
 }

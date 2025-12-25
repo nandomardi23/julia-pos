@@ -46,4 +46,35 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /**
+     * Get ingredients specific to this variant.
+     * If variant has its own ingredients, use those.
+     * Otherwise, fall back to parent product's ingredients.
+     */
+    public function ingredients()
+    {
+        return $this->hasMany(ProductVariantIngredient::class);
+    }
+
+    /**
+     * Check if variant has its own ingredients defined.
+     */
+    public function hasOwnIngredients(): bool
+    {
+        return $this->ingredients()->count() > 0;
+    }
+
+    /**
+     * Get effective ingredients (variant's own or fallback to product's).
+     * Returns collection of ingredient data with 'ingredient' and 'quantity'.
+     */
+    public function getEffectiveIngredients()
+    {
+        if ($this->hasOwnIngredients()) {
+            return $this->ingredients()->with('ingredient')->get();
+        }
+        
+        return $this->product->ingredients()->with('ingredient')->get();
+    }
 }

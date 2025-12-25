@@ -9,6 +9,9 @@ use App\Http\Controllers\Apps\SupplierController;
 use App\Http\Controllers\Apps\WarehouseController;
 use App\Http\Controllers\Apps\DisplayController;
 use App\Http\Controllers\Apps\StockMovementController;
+use App\Http\Controllers\Apps\IngredientController;
+use App\Http\Controllers\Apps\SupplyController;
+use App\Http\Controllers\Apps\RecipeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -59,6 +62,26 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middlewareFor(['edit', 'update'], 'permission:products-edit')
         ->middlewareFor('destroy', 'permission:products-delete');
 
+    // Ingredients (Bahan Baku) Routes
+    Route::resource('ingredients', IngredientController::class)
+        ->middlewareFor(['index', 'show'], 'permission:products-access')
+        ->middlewareFor(['create', 'store'], 'permission:products-create')
+        ->middlewareFor(['edit', 'update'], 'permission:products-edit')
+        ->middlewareFor('destroy', 'permission:products-delete');
+
+    // Supplies (Alat Pendukung) Routes
+    Route::resource('supplies', SupplyController::class)
+        ->middlewareFor(['index', 'show'], 'permission:products-access')
+        ->middlewareFor(['create', 'store'], 'permission:products-create')
+        ->middlewareFor(['edit', 'update'], 'permission:products-edit')
+        ->middlewareFor('destroy', 'permission:products-delete');
+
+    // Recipes (Resep) Routes
+    Route::resource('recipes', RecipeController::class)
+        ->middlewareFor(['index', 'show'], 'permission:products-access')
+        ->middlewareFor(['create', 'store'], 'permission:products-create')
+        ->middlewareFor(['edit', 'update'], 'permission:products-edit')
+        ->middlewareFor('destroy', 'permission:products-delete');
 
     // Suppliers Routes
     Route::resource('suppliers', SupplierController::class)
@@ -109,6 +132,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/stock-movements/stock-out', [StockMovementController::class, 'storeStockOut'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.storeStockOut');
+    Route::delete('/stock-movements/{id}', [StockMovementController::class, 'destroy'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.destroy');
     
     // Bulk Import Routes
     Route::get('/stock-movements/bulk-import', [StockMovementController::class, 'bulkImport'])
@@ -135,6 +161,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
+    Route::delete('/transactions/{invoice}', [TransactionController::class, 'destroy'])->middleware('permission:transactions-access')->name('transactions.destroy');
 
     // POS Routes
     Route::get('/pos', [POSController::class, 'index'])->middleware('permission:transactions-access')->name('pos.index');

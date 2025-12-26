@@ -96,7 +96,6 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
-            'supplier_id' => 'nullable|exists:suppliers,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
             'unit' => 'required',
@@ -113,7 +112,6 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
-            'supplier_id' => $request->supplier_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
@@ -127,6 +125,72 @@ class ProductController extends Controller
         return to_route('products.index');
     }
 
+    /**
+     * Display the specified resource.
+     *
+     * @param  Product  $product
+     * @return \Inertia\Response
+     */
+    public function show(Product $product)
+    {
+        // Load variants and price history
+        $product->load(['category', 'variants.ingredients.ingredient', 'priceHistories.user']);
+
+        // Get sales analytics
+        $salesStats = \DB::table('transaction_details')
+            ->join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+            ->where('transaction_details.product_id', $product->id)
+            ->selectRaw('
+                COUNT(DISTINCT transaction_details.transaction_id) as total_transactions,
+                SUM(transaction_details.qty) as total_qty_sold,
+                SUM(transaction_details.price * transaction_details.qty) as total_revenue
+            ')
+            ->first();
+
+        // Get sales by variant
+        $variantSales = \DB::table('transaction_details')
+            ->where('transaction_details.product_id', $product->id)
+            ->whereNotNull('transaction_details.variant_name')
+            ->groupBy('transaction_details.variant_name')
+            ->selectRaw('
+                transaction_details.variant_name,
+                SUM(transaction_details.qty) as qty_sold,
+                SUM(transaction_details.price * transaction_details.qty) as revenue
+            ')
+            ->get();
+
+        // Get recent transactions (last 30 days, max 20)
+        $recentTransactions = \DB::table('transaction_details')
+            ->join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+            ->where('transaction_details.product_id', $product->id)
+            ->where('transactions.created_at', '>=', now()->subDays(30))
+            ->select(
+                'transaction_details.id',
+                'transaction_details.qty',
+                'transaction_details.price',
+                'transaction_details.variant_name',
+                'transactions.invoice',
+                'transactions.grand_total',
+                'transactions.created_at as transaction_date'
+            )
+            ->orderBy('transactions.created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        // Pass raw image filename
+        $productData = $product->toArray();
+        $productData['image'] = $product->getRawOriginal('image');
+
+        return Inertia::render('Dashboard/Products/Show', [
+            'product' => $productData,
+            'priceHistories' => $product->priceHistories,
+            'salesStats' => $salesStats,
+            'variantSales' => $variantSales,
+            'recentTransactions' => $recentTransactions,
+            'warehouseStocks' => [],
+        ]);
+    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -138,7 +202,6 @@ class ProductController extends Controller
     {
         //get categories
         $categories = Category::all();
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
         
         // Get available ingredients (products that can be used as ingredients)
         $availableIngredients = Product::where('id', '!=', $product->id)
@@ -146,14 +209,61 @@ class ProductController extends Controller
             ->get(['id', 'title', 'unit', 'barcode']);
         
         // Load variants and price history
-        $product->load('variants.ingredients.ingredient', 'priceHistories.user');
+        $product->load(['variants.ingredients.ingredient', 'priceHistories.user']);
+
+        // Get sales analytics
+        $salesStats = \DB::table('transaction_details')
+            ->join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+            ->where('transaction_details.product_id', $product->id)
+            ->selectRaw('
+                COUNT(DISTINCT transaction_details.transaction_id) as total_transactions,
+                SUM(transaction_details.qty) as total_qty_sold,
+                SUM(transaction_details.price * transaction_details.qty) as total_revenue
+            ')
+            ->first();
+
+        // Get sales by variant
+        $variantSales = \DB::table('transaction_details')
+            ->where('transaction_details.product_id', $product->id)
+            ->whereNotNull('transaction_details.variant_name')
+            ->groupBy('transaction_details.variant_name')
+            ->selectRaw('
+                transaction_details.variant_name,
+                SUM(transaction_details.qty) as qty_sold,
+                SUM(transaction_details.price * transaction_details.qty) as revenue
+            ')
+            ->get();
+
+        // Get recent transactions (last 30 days, max 20)
+        $recentTransactions = \DB::table('transaction_details')
+            ->join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+            ->where('transaction_details.product_id', $product->id)
+            ->where('transactions.created_at', '>=', now()->subDays(30))
+            ->select(
+                'transaction_details.id',
+                'transaction_details.qty',
+                'transaction_details.price',
+                'transaction_details.variant_name',
+                'transactions.invoice',
+                'transactions.grand_total',
+                'transactions.created_at as transaction_date'
+            )
+            ->orderBy('transactions.created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        // Pass raw image filename for ImagePreview component
+        $productData = $product->toArray();
+        $productData['image'] = $product->getRawOriginal('image');
 
         return Inertia::render('Dashboard/Products/Edit', [
-            'product' => $product,
+            'product' => $productData,
             'categories' => $categories,
-            'suppliers' => $suppliers,
             'availableIngredients' => $availableIngredients,
             'priceHistories' => $product->priceHistories,
+            'salesStats' => $salesStats,
+            'variantSales' => $variantSales,
+            'recentTransactions' => $recentTransactions,
         ]);
     }
 
@@ -174,7 +284,6 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
-            'supplier_id' => 'nullable|exists:suppliers,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
             'unit' => 'required',
@@ -187,7 +296,6 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
-            'supplier_id' => $request->supplier_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
@@ -197,8 +305,8 @@ class ProductController extends Controller
 
         //check image update
         if ($request->file('image')) {
-            //remove old image
-            Storage::disk('local')->delete('public/products/' . basename($product->image));
+            //remove old image using raw filename
+            Storage::disk('local')->delete('public/products/' . $product->getRawOriginal('image'));
 
             //upload new image
             $image = $request->file('image');
@@ -273,8 +381,8 @@ class ProductController extends Controller
         //find by ID
         $product = Product::findOrFail($id);
 
-        //remove image
-        Storage::disk('local')->delete('public/products/' . basename($product->image));
+        //remove image using raw filename
+        Storage::disk('local')->delete('public/products/' . $product->getRawOriginal('image'));
 
         //delete
         $product->delete();

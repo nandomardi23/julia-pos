@@ -30,7 +30,7 @@ const unitOptions = [
     { value: 'pasang', label: 'Pasang' },
 ]
 
-export default function Create({ categories, suppliers }) {
+export default function Create({ categories }) {
 
     const { errors } = usePage().props
 
@@ -39,7 +39,6 @@ export default function Create({ categories, suppliers }) {
         barcode: '',
         title: '',
         category_id: '',
-        supplier_id: '',
         description: '',
         buy_price: '',
         sell_price: '',
@@ -47,7 +46,6 @@ export default function Create({ categories, suppliers }) {
     })
 
     const [selectedCategory, setSelectedCategory] = useState(null)
-    const [selectedSupplier, setSelectedSupplier] = useState(null)
 
     // Set category
     const setSelectedCategoryHandler = (value) => {
@@ -55,11 +53,6 @@ export default function Create({ categories, suppliers }) {
         setData('category_id', value.id)
     }
 
-    // Set supplier
-    const setSelectedSupplierHandler = (value) => {
-        setSelectedSupplier(value)
-        setData('supplier_id', value ? value.id : '')
-    }
 
 
     const handleImageChange = (e) => {
@@ -143,19 +136,7 @@ export default function Create({ categories, suppliers }) {
                             displayKey='name'
                         />
                     </div>
-                    <div className='col-span-12'>
-                        <InputSelect
-                            label="Supplier (Opsional)"
-                            data={suppliers.map(s => ({ ...s, name: s.company ? `${s.name} (${s.company})` : s.name }))}
-                            selected={selectedSupplier}
-                            setSelected={setSelectedSupplierHandler}
-                            placeholder="Pilih supplier"
-                            errors={errors.supplier_id}
-                            multiple={false}
-                            searchable={true}
-                            displayKey='name'
-                        />
-                    </div>
+
                     <div className='col-span-12'>
                         <Input
                             type={'text'}

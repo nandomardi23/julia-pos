@@ -29,8 +29,7 @@ class Product extends Model
         'buy_price', 
         'sell_price',
         'average_cost',
-        'category_id', 
-        'supplier_id',
+        'category_id',
         'unit',
         'min_stock',
         'product_type',
@@ -62,15 +61,7 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Get the supplier that owns the product.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
+
 
     /**
      * Get warehouse stock records.

@@ -1,21 +1,31 @@
 import React from 'react'
 
 export default function Card({ icon, title, children, footer, className, form }) {
+    const Wrapper = form ? 'form' : 'div'
+    
     return (
-        <>
-            <form onSubmit={form}>
-                <div className={`p-4 rounded-t-lg border ${className} bg-white dark:bg-gray-950 dark:border-gray-900 `}>
-                    <div className='flex items-center gap-2 font-semibold text-sm text-gray-700 dark:text-gray-200'>
+        <Wrapper onSubmit={form} className={`bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden ${className || ''}`}>
+            {/* Card Header */}
+            {title && (
+                <div className='px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30'>
+                    <div className='flex items-center gap-2 font-semibold text-gray-900 dark:text-white'>
+                        {icon && <span className="text-gray-500 dark:text-gray-400">{icon}</span>}
                         {title}
                     </div>
                 </div>
-                <div className='bg-white dark:bg-gray-950 p-4 border border-t-0 border-b-0 dark:border-gray-900'>
-                    {children}
-                </div>
-                <div className={`px-4 py-2 rounded-b-lg border ${className} bg-white dark:bg-gray-950 dark:border-gray-900 `}>
+            )}
+            
+            {/* Card Body */}
+            <div className='p-5'>
+                {children}
+            </div>
+            
+            {/* Card Footer */}
+            {footer && (
+                <div className='px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30'>
                     {footer}
                 </div>
-            </form>
-        </>
+            )}
+        </Wrapper>
     )
 }

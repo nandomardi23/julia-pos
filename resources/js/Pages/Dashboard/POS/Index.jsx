@@ -862,14 +862,14 @@ export default function Index({
             {qtyModalOpen && qtyModalProduct && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm shadow-xl">
-                        <div className="flex items-center gap-3 mb-4">
+                        <div className="flex items-center justify-center gap-3 mb-4">
                             <IconScale size={24} className="text-blue-600" />
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                                 Masukkan Jumlah
                             </h3>
                         </div>
                         
-                        <div className="mb-4">
+                        <div className="mb-4 text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 {qtyModalProduct.title}
                             </p>
@@ -882,20 +882,18 @@ export default function Index({
                         </div>
 
                         <div className="mb-4">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={qtyModalValue}
-                                    onChange={(e) => setQtyModalValue(sanitizeDecimalInput(e.target.value))}
-                                    placeholder="0.00"
-                                    className="flex-1 px-4 py-3 text-2xl font-bold text-center rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                                    autoFocus
-                                />
-                                <span className="text-lg font-medium text-gray-600 dark:text-gray-400 w-16">
-                                    {qtyModalProduct.unit}
-                                </span>
-                            </div>
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                value={qtyModalValue}
+                                onChange={(e) => setQtyModalValue(sanitizeDecimalInput(e.target.value))}
+                                placeholder="0.00"
+                                className="w-full px-4 py-3 text-2xl font-bold text-center rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white mb-2"
+                                autoFocus
+                            />
+                            <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                                {qtyModalProduct.unit}
+                            </p>
                             {qtyModalValue && (
                                 <p className="text-center mt-2 text-blue-600 font-medium">
                                     Total: {formatPrice(parseFloat(qtyModalValue || 0) * qtyModalProduct.sell_price)}

@@ -1,8 +1,8 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head } from '@inertiajs/react'
+import { Head, router } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
-import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
+import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
 
@@ -97,6 +97,12 @@ export default function Index({ ingredients }) {
                                     </Table.Td>
                                     <Table.Td>
                                         <div className='flex justify-center gap-1'>
+                                            <Button
+                                                type={'modal'}
+                                                icon={<IconEye size={14} strokeWidth={1.5} />}
+                                                className={'border bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900'}
+                                                onClick={() => router.visit(route('products.show', ingredient.id))}
+                                            />
                                             <Button
                                                 type={'edit'}
                                                 icon={<IconPencilCog size={14} strokeWidth={1.5} />}

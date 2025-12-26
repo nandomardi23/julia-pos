@@ -11,7 +11,6 @@ import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Common/InputSelect'
 import Select from '@/Components/Common/Select'
 import ImagePreview from '@/Components/Product/ImagePreview'
-import PriceHistoryTable from '@/Components/Product/PriceHistoryTable'
 
 // Daftar satuan yang tersedia
 const unitOptions = [
@@ -33,7 +32,7 @@ const unitOptions = [
     { value: 'pasang', label: 'Pasang' },
 ]
 
-export default function Edit({ categories, product, suppliers, priceHistories = [] }) {
+export default function Edit({ categories, product, availableIngredients }) {
 
     const { errors } = usePage().props
     const [showConfirm, setShowConfirm] = useState(false)
@@ -43,47 +42,27 @@ export default function Edit({ categories, product, suppliers, priceHistories = 
         barcode: product.barcode || '',
         title: product.title || '',
         category_id: product.category_id || '',
-        supplier_id: product.supplier_id || '',
         description: product.description || '',
         buy_price: product.buy_price || 0,
         sell_price: product.sell_price || 0,
+        min_stock: product.min_stock || 0,
         unit: product.unit || 'pcs',
-        is_recipe: product.is_recipe || false,
-        is_supply: product.is_supply || false,
-        is_ingredient: product.is_ingredient || false,
-        ingredientsJson: JSON.stringify((product.ingredients || []).map(ing => ({
-            ingredient_id: ing.ingredient_id,
-            quantity: ing.quantity
-        })).sort((a, b) => a.ingredient_id - b.ingredient_id)),
+        product_type: product.product_type || 'sellable',
     }), [product.id])
 
-    // Initialize ingredients from product
-    const initialIngredients = product.ingredients?.map(ing => ({
-        ingredient_id: ing.ingredient_id,
-        quantity: ing.quantity,
-        name: ing.ingredient?.title || ''
-    })) || []
 
-    // Initialize variants from product
-    const initialVariants = product.variants?.map(v => ({
-        id: v.id,
-        name: v.name,
-        buy_price: v.buy_price,
-        sell_price: v.sell_price,
-        is_default: v.is_default
-    })) || []
 
     const { data, setData, post, processing } = useForm({
         image: '',
         barcode: product.barcode || '',
         title: product.title || '',
         category_id: product.category_id || '',
-        supplier_id: product.supplier_id || '',
         description: product.description || '',
         buy_price: product.buy_price || 0,
         sell_price: product.sell_price || 0,
         min_stock: product.min_stock || 0,
         unit: product.unit || 'pcs',
+        product_type: product.product_type || 'sellable',
         _method: 'PUT'
     })
 
@@ -95,25 +74,16 @@ export default function Edit({ categories, product, suppliers, priceHistories = 
         if (data.barcode !== originalData.barcode) return true
         if (data.title !== originalData.title) return true
         if (data.category_id !== originalData.category_id) return true
-        if ((data.supplier_id || '') !== (originalData.supplier_id || '')) return true
         if ((data.description || '') !== (originalData.description || '')) return true
         if (parseFloat(data.buy_price) !== parseFloat(originalData.buy_price)) return true
         if (parseFloat(data.sell_price) !== parseFloat(originalData.sell_price)) return true
+        if (parseFloat(data.min_stock || 0) !== parseFloat(originalData.min_stock || 0)) return true
         if (data.unit !== originalData.unit) return true
-        if (data.is_recipe !== originalData.is_recipe) return true
-        if (data.is_supply !== originalData.is_supply) return true
-        if (data.is_ingredient !== originalData.is_ingredient) return true
-        // Bandingkan ingredients
-        const currentIngJson = JSON.stringify(data.ingredients.map(ing => ({
-            ingredient_id: parseInt(ing.ingredient_id),
-            quantity: parseFloat(ing.quantity)
-        })).filter(i => i.ingredient_id).sort((a, b) => a.ingredient_id - b.ingredient_id))
-        if (currentIngJson !== originalData.ingredientsJson) return true
+        if (data.product_type !== originalData.product_type) return true
         return false
     }
 
     const [selectedCategory, setSelectedCategory] = useState(null)
-    const [selectedSupplier, setSelectedSupplier] = useState(null)
 
     // Set category
     const setSelectedCategoryHandler = (value) => {
@@ -121,49 +91,18 @@ export default function Edit({ categories, product, suppliers, priceHistories = 
         setData('category_id', value.id)
     }
 
-    // Set supplier
-    const setSelectedSupplierHandler = (value) => {
-        setSelectedSupplier(value)
-        setData('supplier_id', value ? value.id : '')
-    }
-
     useEffect(() => {
         if (product.category_id) {
             setSelectedCategory(categories.find(category => category.id === product.category_id))
         }
-        if (product.supplier_id && suppliers) {
-            setSelectedSupplier(suppliers.find(supplier => supplier.id === product.supplier_id))
-        }
-    }, [product.category_id, product.supplier_id])
+    }, [product.category_id])
 
     const handleImageChange = (e) => {
         const image = e.target.files[0]
         setData('image', image)
     }
 
-    // Add ingredient
-    const addIngredient = () => {
-        setData('ingredients', [...data.ingredients, { ingredient_id: '', quantity: 1, name: '' }])
-    }
 
-    // Remove ingredient
-    const removeIngredient = (index) => {
-        const newIngredients = data.ingredients.filter((_, i) => i !== index)
-        setData('ingredients', newIngredients)
-    }
-
-    // Update ingredient
-    const updateIngredient = (index, field, value) => {
-        const newIngredients = [...data.ingredients]
-        newIngredients[index][field] = value
-        if (field === 'ingredient_id') {
-            const ing = availableIngredients.find(i => i.id === parseInt(value))
-            newIngredients[index].name = ing?.title || ''
-        }
-        setData('ingredients', newIngredients)
-    }
-
-    // Add variant
     const addVariant = () => {
         setData('variants', [...data.variants, { id: null, name: '', buy_price: 0, sell_price: 0, is_default: data.variants.length === 0 }])
     }
@@ -283,19 +222,7 @@ export default function Edit({ categories, product, suppliers, priceHistories = 
                             displayKey='name'
                         />
                     </div>
-                    <div className='col-span-12'>
-                        <InputSelect
-                            label="Supplier (Opsional)"
-                            data={suppliers.map(s => ({ ...s, name: s.company ? `${s.name} (${s.company})` : s.name }))}
-                            selected={selectedSupplier}
-                            setSelected={setSelectedSupplierHandler}
-                            placeholder="Pilih supplier"
-                            errors={errors.supplier_id}
-                            multiple={false}
-                            searchable={true}
-                            displayKey='name'
-                        />
-                    </div>
+
                     <div className='col-span-12'>
                         <Input
                             type={'text'}
@@ -373,13 +300,19 @@ export default function Edit({ categories, product, suppliers, priceHistories = 
                         />
                     </div>
 
-                    {/* Price History */}
-                    {priceHistories && priceHistories.length > 0 && (
-                        <div className='col-span-12'>
-                            <PriceHistoryTable priceHistories={priceHistories} />
-                        </div>
-                    )}
-
+                    <div className='col-span-6'>
+                        <Select
+                            label="Tipe Produk"
+                            value={data.product_type}
+                            onChange={e => setData('product_type', e.target.value)}
+                            errors={errors.product_type}
+                        >
+                            <option value="sellable">Sellable (Produk Jual)</option>
+                            <option value="ingredient">Ingredient (Bahan Baku)</option>
+                            <option value="supply">Supply (Alat Pendukung)</option>
+                            <option value="recipe">Recipe (Resep)</option>
+                        </Select>
+                    </div>
                 </div>
             </Card>
 

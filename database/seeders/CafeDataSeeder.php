@@ -132,7 +132,7 @@ class CafeDataSeeder extends Seeder
         ];
 
         foreach ($coffeeProducts as $p) {
-            $product = $this->createProductWithVariants($p, 'Coffee', 'Kopi Nusantara', $categories, $suppliers, $counter++);
+            $product = $this->createProductWithVariants($p, 'Coffee', $categories, $counter++);
             $products[$product->barcode] = $product;
         }
 
@@ -149,7 +149,7 @@ class CafeDataSeeder extends Seeder
         ];
 
         foreach ($nonCoffeeProducts as $p) {
-            $product = $this->createProductWithVariants($p, 'Non-Coffee', 'Susu Murni', $categories, $suppliers, $counter++);
+            $product = $this->createProductWithVariants($p, 'Non-Coffee', $categories, $counter++);
             $products[$product->barcode] = $product;
         }
 
@@ -166,7 +166,8 @@ class CafeDataSeeder extends Seeder
         ];
 
         foreach ($jusProducts as $p) {
-            $product = $this->createProductWithVariants($p, 'Jus', 'Buah Segar', $categories, $suppliers, $counter++);
+            // Jus adalah recipe karena dibuat dari buah segar
+            $product = $this->createProductWithVariants($p, 'Jus', $categories, $counter++, true);
             $products[$product->barcode] = $product;
         }
 
@@ -177,7 +178,8 @@ class CafeDataSeeder extends Seeder
             ['name' => 'Fruit Salad', 'img' => 'https://images.unsplash.com/photo-1564093497595-593b96d80180?w=400', 'buy' => 18000, 'sell' => 35000],
         ];
         foreach ($salads as $s) {
-            $product = $this->createSimpleProduct($s, 'Salad', 'Buah Segar', $categories, $suppliers, $counter++, 'porsi');
+            // Salad adalah recipe karena dibuat dari berbagai bahan
+            $product = $this->createRecipeProduct($s, 'Salad', $categories, $counter++, 'porsi');
             $products[$product->barcode] = $product;
         }
 
@@ -189,7 +191,7 @@ class CafeDataSeeder extends Seeder
             ['name' => 'Anggur', 'img' => 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400', 'buy' => 25000, 'sell' => 45000],
         ];
         foreach ($buahs as $b) {
-            $product = $this->createSimpleProduct($b, 'Buah', 'Buah Segar', $categories, $suppliers, $counter++, 'pack');
+            $product = $this->createSimpleProduct($b, 'Buah', $categories, $counter++, 'pack');
             $products[$product->barcode] = $product;
         }
 
@@ -201,7 +203,8 @@ class CafeDataSeeder extends Seeder
             ['name' => 'Croissant', 'img' => 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400', 'buy' => 12000, 'sell' => 25000],
         ];
         foreach ($snacks as $s) {
-            $product = $this->createSimpleProduct($s, 'Snacks', null, $categories, $suppliers, $counter++, 'pcs');
+            // Snacks adalah recipe karena dibuat dari tepung, telur, dll
+            $product = $this->createRecipeProduct($s, 'Snacks', $categories, $counter++, 'pcs');
             $products[$product->barcode] = $product;
         }
 
@@ -216,7 +219,6 @@ class CafeDataSeeder extends Seeder
             $imageName = $this->downloadImage($s['img'], 'products', Str::slug($s['name']));
             $product = Product::create([
                 'category_id' => $categories['Supplies']->id,
-                'supplier_id' => $suppliers['Packaging']->id,
                 'barcode' => 'SUP-' . str_pad($counter++, 3, '0', STR_PAD_LEFT),
                 'title' => $s['name'],
                 'description' => $s['name'],
@@ -241,7 +243,6 @@ class CafeDataSeeder extends Seeder
             $imageName = $this->downloadImage($i['img'], 'products', Str::slug($i['name']));
             $product = Product::create([
                 'category_id' => $categories['Ingredients']->id,
-                'supplier_id' => $suppliers['Susu Murni']->id,
                 'barcode' => 'ING-' . str_pad($counter++, 3, '0', STR_PAD_LEFT),
                 'title' => $i['name'],
                 'description' => $i['name'],
@@ -259,14 +260,13 @@ class CafeDataSeeder extends Seeder
         return $products;
     }
 
-    private function createProductWithVariants(array $data, string $category, string $supplier, array $categories, array $suppliers, int $counter): Product
+    private function createProductWithVariants(array $data, string $category, array $categories, int $counter, bool $isRecipe = true): Product
     {
         $imageName = $this->downloadImage($data['img'], 'products', Str::slug($data['name']));
         $baseVariant = $data['variants'][0];
         
         $product = Product::create([
             'category_id' => $categories[$category]->id,
-            'supplier_id' => $suppliers[$supplier]->id ?? null,
             'barcode' => substr($category, 0, 3) . '-' . str_pad($counter, 3, '0', STR_PAD_LEFT),
             'title' => $data['name'],
             'description' => $data['name'],
@@ -274,7 +274,7 @@ class CafeDataSeeder extends Seeder
             'sell_price' => $baseVariant['sell'],
             'unit' => 'cup',
             'min_stock' => 5,
-            'product_type' => Product::TYPE_RECIPE,
+            'product_type' => $isRecipe ? Product::TYPE_RECIPE : Product::TYPE_SELLABLE,
             'image' => $imageName,
         ]);
 
@@ -293,13 +293,12 @@ class CafeDataSeeder extends Seeder
         return $product;
     }
 
-    private function createSimpleProduct(array $data, string $category, ?string $supplier, array $categories, array $suppliers, int $counter, string $unit): Product
+    private function createSimpleProduct(array $data, string $category, array $categories, int $counter, string $unit): Product
     {
         $imageName = $this->downloadImage($data['img'], 'products', Str::slug($data['name']));
         
         $product = Product::create([
             'category_id' => $categories[$category]->id,
-            'supplier_id' => $supplier ? ($suppliers[$supplier]->id ?? null) : null,
             'barcode' => substr($category, 0, 3) . '-' . str_pad($counter, 3, '0', STR_PAD_LEFT),
             'title' => $data['name'],
             'description' => $data['name'],
@@ -312,6 +311,27 @@ class CafeDataSeeder extends Seeder
         ]);
 
         $this->command->info("  ✓ {$data['name']}");
+        return $product;
+    }
+
+    private function createRecipeProduct(array $data, string $category, array $categories, int $counter, string $unit): Product
+    {
+        $imageName = $this->downloadImage($data['img'], 'products', Str::slug($data['name']));
+        
+        $product = Product::create([
+            'category_id' => $categories[$category]->id,
+            'barcode' => substr($category, 0, 3) . '-' . str_pad($counter, 3, '0', STR_PAD_LEFT),
+            'title' => $data['name'],
+            'description' => $data['name'],
+            'buy_price' => $data['buy'],
+            'sell_price' => $data['sell'],
+            'unit' => $unit,
+            'min_stock' => 5,
+            'product_type' => Product::TYPE_RECIPE,
+            'image' => $imageName,
+        ]);
+
+        $this->command->info("  ✓ {$data['name']} (recipe)");
         return $product;
     }
 

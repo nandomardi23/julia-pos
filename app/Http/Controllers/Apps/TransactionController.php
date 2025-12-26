@@ -22,128 +22,7 @@ use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
-    /**
-     * index
-     *
-     * @return \Inertia\Response
-     */
-    public function index()
-    {
-        //get cart
-        $carts = Cart::with('product')->where('cashier_id', auth()->user()->id)->latest()->get();
 
-        $paymentSetting = PaymentSetting::first();
-
-        $carts_total = $carts->sum(fn($cart) => $cart->price * $cart->qty);
-
-        $defaultGateway = $paymentSetting?->default_gateway ?? 'cash';
-        if (
-            $defaultGateway !== 'cash'
-            && (!$paymentSetting || !$paymentSetting->isGatewayReady($defaultGateway))
-        ) {
-            $defaultGateway = 'cash';
-        }
-
-        return Inertia::render('Dashboard/Transactions/Index', [
-            'carts' => $carts,
-            'carts_total' => $carts_total,
-            'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
-            'defaultPaymentGateway' => $defaultGateway,
-        ]);
-    }
-
-    /**
-     * searchProduct
-     *
-     * @param  mixed $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function searchProduct(Request $request)
-    {
-        //find product by barcode
-        $product = Product::where('barcode', $request->barcode)->first();
-
-        if ($product) {
-            return response()->json([
-                'success' => true,
-                'data' => $product
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'data' => null
-        ]);
-    }
-
-    /**
-     * addToCart
-     *
-     * @param  mixed $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function addToCart(Request $request)
-    {
-        // Cari produk berdasarkan ID yang diberikan
-        $product = Product::whereId($request->product_id)->first();
-
-        // Jika produk tidak ditemukan, redirect dengan pesan error
-        if (!$product) {
-            return redirect()->back()->with('error', 'Product not found.');
-        }
-
-        // Cek stok produk
-        if ($product->stock < $request->qty) {
-            return redirect()->back()->with('error', 'Out of Stock Product!.');
-        }
-
-        // Cek keranjang
-        $cart = Cart::with('product')
-            ->where('product_id', $request->product_id)
-            ->where('cashier_id', auth()->user()->id)
-            ->first();
-
-        if ($cart) {
-            // Tingkatkan qty
-            $cart->increment('qty', $request->qty);
-
-            // Jumlahkan harga * kuantitas
-            $cart->price = $cart->product->sell_price * $cart->qty;
-
-            $cart->save();
-        } else {
-            // Insert ke keranjang
-            Cart::create([
-                'cashier_id' => auth()->user()->id,
-                'product_id' => $request->product_id,
-                'qty' => $request->qty,
-                'price' => $request->sell_price * $request->qty,
-            ]);
-        }
-
-        return redirect()->route('pos.index')->with('success', 'Product Added Successfully!.');
-    }
-
-
-    /**
-     * destroyCart
-     *
-     * @param  mixed $cart_id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function destroyCart($cart_id)
-    {
-        $cart = Cart::with('product')->whereId($cart_id)->first();
-
-        if ($cart) {
-            $cart->delete();
-            return back();
-        } else {
-            // Handle case where no cart is found (e.g., redirect with error message)
-            return back()->withErrors(['message' => 'Cart not found']);
-        }
-
-    }
 
     /**
      * Recursively deduct ingredient stocks for recipe products.
@@ -158,7 +37,7 @@ class TransactionController extends Controller
      */
     private function deductIngredientStock($product, $variant, $multiplier, $display, $transaction)
     {
-        if (!$product->is_recipe) {
+        if ($product->product_type !== Product::TYPE_RECIPE) {
             return;
         }
 
@@ -310,7 +189,7 @@ class TransactionController extends Controller
                 
                 if ($display) {
                     // Only deduct display stock for non-recipe products
-                    if (!$product->is_recipe) {
+                if ($product->product_type !== Product::TYPE_RECIPE) {
                         $displayStock = DisplayStock::where('display_id', $display->id)
                             ->where('product_id', $cart->product_id)
                             ->first();
@@ -333,7 +212,7 @@ class TransactionController extends Controller
                     }
 
                     // Deduct ingredient stocks for recipe products
-                    if ($product->is_recipe) {
+                if ($product->product_type === Product::TYPE_RECIPE) {
                         // Load variant from cart if available
                         $variant = $cart->variant;
                         $this->deductIngredientStock($product, $variant, (float) $cart->qty, $display, $transaction);

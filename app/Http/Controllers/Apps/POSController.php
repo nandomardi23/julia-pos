@@ -43,14 +43,22 @@ class POSController extends Controller
             })->filter();
         }
 
+        // Preload ALL display stocks to prevent N+1 queries
+        $displayStockMap = [];
+        if ($display) {
+            $displayStockMap = DisplayStock::where('display_id', $display->id)
+                ->pluck('quantity', 'product_id')
+                ->toArray();
+        }
+
         // Get RECIPE products and check ingredient availability
         $recipeProducts = Product::where('product_type', Product::TYPE_RECIPE)
             ->where('sell_price', '>', 0)
             ->with(['category', 'variants.ingredients'])
             ->get()
-            ->map(function ($product) use ($display) {
+            ->map(function ($product) use ($display, $displayStockMap) {
                 // Check if all ingredients are available
-                $isAvailable = $this->checkRecipeIngredients($product, $display);
+                $isAvailable = $this->checkRecipeIngredients($product, $display, $displayStockMap);
                 $product->display_qty = $isAvailable ? 999 : 0;
                 $product->is_available = $isAvailable;
                 return $product;
@@ -68,8 +76,8 @@ class POSController extends Controller
             ->latest()
             ->get();
 
-        // Calculate cart total
-        $carts_total = $carts->sum(fn($cart) => $cart->price * $cart->qty);
+        // Calculate cart total (using Cart model accessor)
+        $carts_total = $carts->sum(fn($cart) => $cart->total);
 
         // Get payment settings
         $paymentSetting = PaymentSetting::first();
@@ -122,7 +130,7 @@ class POSController extends Controller
         }
 
         // Skip stock check for RECIPE products (they don't need display stock)
-        $isRecipe = $product->is_recipe;
+        $isRecipe = $product->product_type === Product::TYPE_RECIPE;
 
         // Get display stock for this product (only for non-recipe products)
         $displayStock = null;
@@ -203,7 +211,7 @@ class POSController extends Controller
         }
 
         // Skip stock check for RECIPE products
-        $isRecipe = $cart->product->is_recipe;
+        $isRecipe = $cart->product->product_type === Product::TYPE_RECIPE;
 
         if (!$isRecipe) {
             // Get active display
@@ -233,9 +241,10 @@ class POSController extends Controller
     }
 
     /**
-     * Check if all ingredients for a recipe are available in display stock
+     * Check if all ingredients for a recipe are available in display stock.
+     * Optimized version that uses preloaded display stock map.
      */
-    private function checkRecipeIngredients($recipe, $display)
+    private function checkRecipeIngredients($recipe, $display, $displayStockMap)
     {
         // If no display, recipe is not available
         if (!$display) {
@@ -260,13 +269,11 @@ class POSController extends Controller
             }
 
             foreach ($variant->ingredients as $ingredient) {
-                // Check if this ingredient exists in display stock
-                $displayStock = DisplayStock::where('display_id', $display->id)
-                    ->where('product_id', $ingredient->ingredient_id)
-                    ->first();
+                // Check using preloaded stock map (no query!)
+                $availableQty = $displayStockMap[$ingredient->ingredient_id] ?? 0;
 
                 // If ingredient not in display or quantity is 0, variant is not available
-                if (!$displayStock || $displayStock->quantity < $ingredient->quantity) {
+                if ($availableQty < $ingredient->quantity) {
                     $variantAvailable = false;
                     break;
                 }

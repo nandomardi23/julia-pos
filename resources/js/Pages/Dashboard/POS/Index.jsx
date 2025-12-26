@@ -50,6 +50,19 @@ export default function Index({
     const [variantModalProduct, setVariantModalProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const searchInputRef = useRef(null);
+    
+    // Local state for optimistic updates - Moved up to fix ReferenceError
+    const [localCarts, setLocalCarts] = useState(carts);
+    
+    // Sync local state when props change (server response)
+    useEffect(() => {
+        setLocalCarts(carts);
+    }, [carts]);
+
+    // Recalculate totals based on local state
+    const localCartsTotal = useMemo(() => {
+        return localCarts.reduce((total, item) => total + (item.price * item.qty), 0);
+    }, [localCarts]);
     const lastInputTimeRef = useRef(Date.now());
     const barcodeBufferRef = useRef("");
 
@@ -144,7 +157,7 @@ export default function Index({
 
     const discount = useMemo(() => {
         const value = Number(discountInput) || 0;
-        const total = carts_total || 0;
+        const total = localCartsTotal || 0;
 
         if (discountType === "percent") {
             const percent = Math.min(Math.max(value, 0), 100);
@@ -152,9 +165,9 @@ export default function Index({
         }
 
         return Math.min(value, total);
-    }, [discountInput, discountType, carts_total]);
+    }, [discountInput, discountType, localCartsTotal]);
     
-    const subtotal = useMemo(() => carts_total ?? 0, [carts_total]);
+    const subtotal = useMemo(() => localCartsTotal ?? 0, [localCartsTotal]);
     const payable = useMemo(
         () => Math.max(subtotal - discount, 0),
         [subtotal, discount]
@@ -172,8 +185,8 @@ export default function Index({
         [payable, cash]
     );
     const cartCount = useMemo(
-        () => carts.reduce((total, item) => total + Number(item.qty), 0),
-        [carts]
+        () => localCarts.reduce((total, item) => total + Number(item.qty), 0),
+        [localCarts]
     );
 
     const paymentOptions = useMemo(() => {
@@ -339,8 +352,43 @@ export default function Index({
         });
     };
 
+    const handleUpdateCartQty = (cartId, newQty, sync = true) => {
+        if (newQty === '' || newQty < 0) newQty = 0; // Allow 0 for input typing, handle validation later? No, stick to logic
+        if (newQty <= 0 && sync) return; // Don't sync invalid
+
+        // Optimistic update
+        setLocalCarts(prevCarts => 
+            prevCarts.map(cart => 
+                cart.id === cartId 
+                    ? { ...cart, qty: newQty } 
+                    : cart
+            )
+        );
+
+        // Send request in background ONLY if sync is true
+        if (sync) {
+            router.patch(
+                route("pos.updateCart", cartId),
+                {
+                    qty: newQty,
+                },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    onFinish: () => {
+                        // Optional: handle completion
+                    }
+                }
+            );
+        }
+    };
+
+    const handleBack = () => {
+        router.visit(route("dashboard"));
+    };
+
     const handleSubmitTransaction = () => {
-        if (carts.length === 0) {
+        if (localCarts.length === 0) {
             toast.error("Keranjang kosong!");
             return;
         }
@@ -377,9 +425,7 @@ export default function Index({
         );
     };
 
-    const handleBack = () => {
-        router.visit(route("dashboard"));
-    };
+
 
     return (
         <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
@@ -587,14 +633,14 @@ export default function Index({
 
                         {/* Cart Items */}
                         <div className="flex-1 overflow-y-auto p-4">
-                            {carts.length === 0 ? (
+                            {localCarts.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                                     <IconShoppingCart size={32} className="mb-2 opacity-50" />
                                     <p className="text-sm">Keranjang kosong</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {carts.map((cart) => (
+                                    {localCarts.map((cart) => (
                                         <div
                                             key={cart.id}
                                             className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl"
@@ -616,9 +662,59 @@ export default function Index({
                                                         </span>
                                                     )}
                                                 </h4>
-                                                <p className="text-xs text-gray-500">
-                                                    {formatPrice(cart.price)} × {formatQty(cart.qty, cart.product?.unit)} {cart.product?.unit || 'pcs'}
-                                                </p>
+                                                
+                                                {/* Qty Controls */}
+                                                <div className="flex items-center gap-3 mt-2">
+                                                    <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm h-8">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleUpdateCartQty(cart.id, Number(cart.qty) - 1);
+                                                            }}
+                                                            disabled={Number(cart.qty) <= 1}
+                                                            className="w-8 h-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors rounded-l-lg"
+                                                        >
+                                                            <IconMinus size={14} />
+                                                        </button>
+                                                        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number"
+                                                                value={isWeightBasedUnit(cart.product?.unit) ? cart.qty : Math.floor(cart.qty)}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    handleUpdateCartQty(cart.id, val, false);
+                                                                }}
+                                                                onBlur={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val && val != cart.qty) {
+                                                                         handleUpdateCartQty(cart.id, val, true);
+                                                                    }
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if(e.key === 'Enter') {
+                                                                        e.currentTarget.blur();
+                                                                    }
+                                                                }}
+                                                                className="w-12 text-center text-sm font-semibold text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 p-0 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                            />
+                                                        </div>
+                                                        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleUpdateCartQty(cart.id, Number(cart.qty) + 1);
+                                                            }}
+                                                            className="w-8 h-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-r-lg"
+                                                        >
+                                                            <IconPlus size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                        {cart.product?.unit || 'pcs'}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-gray-900 dark:text-white text-sm">

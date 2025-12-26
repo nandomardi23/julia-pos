@@ -33,9 +33,6 @@ class Product extends Model
         'supplier_id',
         'unit',
         'min_stock',
-        'is_recipe',
-        'is_supply',
-        'is_ingredient',
         'product_type',
     ];
 
@@ -45,9 +42,6 @@ class Product extends Model
      * @var array
      */
     protected $casts = [
-        'is_recipe' => 'boolean',
-        'is_supply' => 'boolean',
-        'is_ingredient' => 'boolean',
         'min_stock' => 'decimal:3',
     ];
 
@@ -144,29 +138,7 @@ class Product extends Model
         return $this->displayStocks()->sum('quantity');
     }
 
-    /**
-     * Get ingredients (for recipe products)
-     */
-    public function ingredients()
-    {
-        return $this->hasMany(ProductIngredient::class);
-    }
 
-    /**
-     * Get products that use this product as ingredient
-     */
-    public function usedInRecipes()
-    {
-        return $this->hasMany(ProductIngredient::class, 'ingredient_id');
-    }
-
-    /**
-     * Check if product is a recipe/composite product
-     */
-    public function hasIngredients()
-    {
-        return $this->is_recipe && $this->ingredients()->count() > 0;
-    }
 
     /**
      * image

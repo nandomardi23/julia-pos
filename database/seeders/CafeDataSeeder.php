@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Display;
 use App\Models\DisplayStock;
 use App\Models\Product;
-use App\Models\ProductIngredient;
 use App\Models\ProductVariant;
 use App\Models\Profit;
 use App\Models\Supplier;
@@ -33,7 +32,6 @@ class CafeDataSeeder extends Seeder
         TransactionDetail::truncate();
         Profit::truncate();
         Transaction::truncate();
-        ProductIngredient::truncate();
         ProductVariant::truncate();
         DisplayStock::truncate();
         WarehouseStock::truncate();
@@ -226,7 +224,7 @@ class CafeDataSeeder extends Seeder
                 'sell_price' => 0,
                 'unit' => 'pcs',
                 'min_stock' => 50,
-                'is_supply' => true,
+                'product_type' => Product::TYPE_SUPPLY,
                 'image' => $imageName,
             ]);
             $products[$product->barcode] = $product;
@@ -251,7 +249,7 @@ class CafeDataSeeder extends Seeder
                 'sell_price' => $i['sell'],
                 'unit' => $i['unit'],
                 'min_stock' => 5,
-                'is_ingredient' => true,
+                'product_type' => Product::TYPE_INGREDIENT,
                 'image' => $imageName,
             ]);
             $products[$product->barcode] = $product;
@@ -276,6 +274,7 @@ class CafeDataSeeder extends Seeder
             'sell_price' => $baseVariant['sell'],
             'unit' => 'cup',
             'min_stock' => 5,
+            'product_type' => Product::TYPE_RECIPE,
             'image' => $imageName,
         ]);
 
@@ -308,6 +307,7 @@ class CafeDataSeeder extends Seeder
             'sell_price' => $data['sell'],
             'unit' => $unit,
             'min_stock' => 5,
+            'product_type' => Product::TYPE_SELLABLE,
             'image' => $imageName,
         ]);
 

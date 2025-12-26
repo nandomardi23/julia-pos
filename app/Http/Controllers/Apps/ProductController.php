@@ -6,7 +6,6 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
-use App\Models\ProductIngredient;
 use App\Models\ProductVariant;
 use App\Models\PriceHistory;
 use Illuminate\Http\Request;
@@ -25,21 +24,19 @@ class ProductController extends Controller
         $type = $request->input('type', 'product');
         
         $products = Product::query()
-            // Filter by type
+            // Filter by product_type
             ->when($type === 'product', function ($query) {
-                // Produk jual: bukan ingredient, bukan supply, bukan recipe
-                $query->where('is_ingredient', false)
-                    ->where('is_supply', false)
-                    ->where('is_recipe', false);
+                // Produk jual (sellable)
+                $query->where('product_type', Product::TYPE_SELLABLE);
             })
             ->when($type === 'ingredient', function ($query) {
-                $query->where('is_ingredient', true);
+                $query->where('product_type', Product::TYPE_INGREDIENT);
             })
             ->when($type === 'recipe', function ($query) {
-                $query->where('is_recipe', true);
+                $query->where('product_type', Product::TYPE_RECIPE);
             })
             ->when($type === 'supply', function ($query) {
-                $query->where('is_supply', true);
+                $query->where('product_type', Product::TYPE_SUPPLY);
             })
             // Search filter
             ->when($request->search, function ($query, $search) {
@@ -103,9 +100,7 @@ class ProductController extends Controller
             'buy_price' => 'required',
             'sell_price' => 'required',
             'unit' => 'required',
-            'is_recipe' => 'boolean',
-            'is_supply' => 'boolean',
-            'is_ingredient' => 'boolean',
+            'product_type' => 'required|in:sellable,ingredient,supply,recipe',
         ]);
         //upload image
         $image = $request->file('image');
@@ -122,21 +117,11 @@ class ProductController extends Controller
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
-            'is_recipe' => $request->is_recipe ?? false,
-            'is_supply' => $request->is_supply ?? false,
-            'is_ingredient' => $request->is_ingredient ?? false,
+            'product_type' => $request->product_type,
         ]);
 
-        // Handle ingredients for recipe products
-        if ($request->is_recipe && $request->ingredients) {
-            foreach ($request->ingredients as $ingredient) {
-                ProductIngredient::create([
-                    'product_id' => $product->id,
-                    'ingredient_id' => $ingredient['ingredient_id'],
-                    'quantity' => $ingredient['quantity'],
-                ]);
-            }
-        }
+        // Note: Recipe ingredients are now managed via ProductVariant and ProductVariantIngredient
+        // This happens in Recipe/Variant management, not here
 
         //redirect
         return to_route('products.index');
@@ -157,14 +142,11 @@ class ProductController extends Controller
         
         // Get available ingredients (products that can be used as ingredients)
         $availableIngredients = Product::where('id', '!=', $product->id)
-            ->where(function($query) {
-                $query->where('is_ingredient', true)
-                    ->orWhere('is_supply', true);
-            })
+            ->whereIn('product_type', [Product::TYPE_INGREDIENT, Product::TYPE_SUPPLY])
             ->get(['id', 'title', 'unit', 'barcode']);
         
-        // Load current ingredients, variants, and price history
-        $product->load('ingredients.ingredient', 'variants', 'priceHistories.user');
+        // Load variants and price history
+        $product->load('variants.ingredients.ingredient', 'priceHistories.user');
 
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product,
@@ -197,9 +179,7 @@ class ProductController extends Controller
             'sell_price' => 'required',
             'unit' => 'required',
             'min_stock' => 'nullable|numeric|min:0',
-            'is_recipe' => 'boolean',
-            'is_supply' => 'boolean',
-            'is_ingredient' => 'boolean',
+            'product_type' => 'required|in:sellable,ingredient,supply,recipe',
         ]);
 
         $updateData = [
@@ -212,9 +192,7 @@ class ProductController extends Controller
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
             'min_stock' => $request->min_stock ?? 0,
-            'is_recipe' => $request->is_recipe ?? false,
-            'is_supply' => $request->is_supply ?? false,
-            'is_ingredient' => $request->is_ingredient ?? false,
+            'product_type' => $request->product_type,
         ];
 
         //check image update
@@ -241,25 +219,8 @@ class ProductController extends Controller
 
         $product->update($updateData);
 
-        // Sync ingredients for recipe products
-        if ($request->is_recipe) {
-            // Delete existing ingredients
-            $product->ingredients()->delete();
-            
-            // Add new ingredients
-            if ($request->ingredients) {
-                foreach ($request->ingredients as $ingredient) {
-                    ProductIngredient::create([
-                        'product_id' => $product->id,
-                        'ingredient_id' => $ingredient['ingredient_id'],
-                        'quantity' => $ingredient['quantity'],
-                    ]);
-                }
-            }
-        } else {
-            // If not a recipe anymore, remove all ingredients
-            $product->ingredients()->delete();
-        }
+        // Note: Recipe ingredients are now managed via ProductVariant and ProductVariantIngredient
+        // Variants are synced below
 
         // Sync variants
         $existingVariantIds = $product->variants->pluck('id')->toArray();

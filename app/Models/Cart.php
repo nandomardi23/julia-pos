@@ -47,5 +47,16 @@ class Cart extends Model
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
+
+    /**
+     * Get cart total (price * qty).
+     * This optimizes repeated calculations across controllers.
+     *
+     * @return float
+     */
+    public function getTotalAttribute()
+    {
+        return $this->price * $this->qty;
+    }
 }
 

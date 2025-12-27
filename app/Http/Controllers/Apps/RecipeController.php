@@ -63,7 +63,8 @@ class RecipeController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products',
+            'sku' => 'nullable|unique:products,sku',
+            'barcode' => 'nullable|unique:products,barcode',
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
@@ -85,9 +86,19 @@ class RecipeController extends Controller
                 $imageName = $image->hashName();
             }
 
+            // Get category for SKU generation
+            $category = Category::find($validated['category_id']);
+            
+            // Generate SKU if not provided
+            $sku = $request->sku;
+            if (empty($sku)) {
+                $sku = Product::generateSku($category, $validated['title']);
+            }
+
             $recipe = Product::create([
                 'image' => $imageName,
-                'barcode' => $validated['barcode'],
+                'sku' => $sku,
+                'barcode' => $request->barcode ?: null,
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? '',
                 'category_id' => $validated['category_id'],
@@ -95,9 +106,6 @@ class RecipeController extends Controller
                 'sell_price' => $validated['sell_price'],
                 'unit' => 'pcs',
                 'product_type' => Product::TYPE_RECIPE,
-                'is_recipe' => true,
-                'is_supply' => false,
-                'is_ingredient' => false,
             ]);
 
             // Create variants with their ingredients
@@ -161,7 +169,8 @@ class RecipeController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products,barcode,' . $recipe->id,
+            'sku' => 'required|unique:products,sku,' . $recipe->id,
+            'barcode' => 'nullable|unique:products,barcode,' . $recipe->id,
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
@@ -183,7 +192,8 @@ class RecipeController extends Controller
 
             $recipe->update([
                 'image' => $validated['image'] ?? $recipe->getRawOriginal('image'),
-                'barcode' => $validated['barcode'],
+                'sku' => $validated['sku'],
+                'barcode' => $request->barcode ?: null,
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? '',
                 'category_id' => $validated['category_id'],

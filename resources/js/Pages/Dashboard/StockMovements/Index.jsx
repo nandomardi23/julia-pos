@@ -160,7 +160,7 @@ export default function Index({ movements, filters }) {
                             <Table.Th className='w-28 text-right'>Harga Beli</Table.Th>
                             <Table.Th className='w-28 text-right'>Kerugian</Table.Th>
                             <Table.Th>User</Table.Th>
-                            <Table.Th className='w-16 text-center'>Action</Table.Th>
+                            <Table.Th className='w-16 text-center'>Aksi</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>

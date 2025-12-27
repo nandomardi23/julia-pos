@@ -92,7 +92,8 @@ class ProductController extends Controller
          * validate
          */
         $request->validate([
-            'barcode' => 'required|unique:products,barcode',
+            'sku' => 'nullable|unique:products,sku',
+            'barcode' => 'nullable|unique:products,barcode',
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
@@ -105,10 +106,20 @@ class ProductController extends Controller
         $image = $request->file('image');
         $image->storeAs('public/products', $image->hashName());
 
+        // Get category for SKU generation
+        $category = Category::find($request->category_id);
+        
+        // Generate SKU if not provided
+        $sku = $request->sku;
+        if (empty($sku)) {
+            $sku = Product::generateSku($category, $request->title);
+        }
+
         //create product
         $product = Product::create([
             'image' => $image->hashName(),
-            'barcode' => $request->barcode,
+            'sku' => $sku,
+            'barcode' => $request->barcode ?: null,
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
@@ -280,7 +291,8 @@ class ProductController extends Controller
          * validate
          */
         $request->validate([
-            'barcode' => 'required|unique:products,barcode,' . $product->id,
+            'sku' => 'required|unique:products,sku,' . $product->id,
+            'barcode' => 'nullable|unique:products,barcode,' . $product->id,
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
@@ -292,7 +304,8 @@ class ProductController extends Controller
         ]);
 
         $updateData = [
-            'barcode' => $request->barcode,
+            'sku' => $request->sku,
+            'barcode' => $request->barcode ?: null,
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,

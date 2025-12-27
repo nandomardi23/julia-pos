@@ -22,7 +22,7 @@ class SupplierController extends Controller
                     ->orWhere('company', 'like', '%' . $search . '%')
                     ->orWhere('phone', 'like', '%' . $search . '%');
             })
-            ->withCount('products')
+            ->withCount('stockMovements')
             ->latest()
             ->paginate($request->input('per_page', 10))
             ->withQueryString();
@@ -65,8 +65,8 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier)
     {
-        // Get products that belong directly to this supplier (via supplier_id)
-        $products = $supplier->products()->with('category')->get();
+        // Get unique products that belong to this supplier (via stock movements)
+        $products = $supplier->products;
 
         // Get purchase history (stock movements from this supplier)
         $purchases = \App\Models\StockMovement::where('supplier_id', $supplier->id)
@@ -127,9 +127,9 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
-        // Check if supplier has products
-        if ($supplier->products()->count() > 0) {
-            return redirect()->back()->with('error', 'Supplier tidak bisa dihapus karena masih memiliki produk!');
+        // Check if supplier has stock movements
+        if ($supplier->stockMovements()->count() > 0) {
+            return redirect()->back()->with('error', 'Supplier tidak bisa dihapus karena masih memiliki riwayat transaksi!');
         }
 
         $supplier->delete();

@@ -23,6 +23,7 @@ class Product extends Model
      */
     protected $fillable = [
         'image', 
+        'sku',
         'barcode', 
         'title', 
         'description', 
@@ -177,5 +178,47 @@ class Product extends Model
         $averageCost = $this->calculateAverageCost();
         $this->update(['average_cost' => $averageCost]);
         return $averageCost;
+    }
+
+    /**
+     * Generate SKU based on category and product title.
+     * Format: {CATEGORY_PREFIX}-{TITLE_INITIALS}-{NUMBER}
+     * Example: BU-A-001 (Apel in Buah category)
+     *
+     * @param Category|null $category
+     * @param string $title
+     * @return string
+     */
+    public static function generateSku(?Category $category, string $title): string
+    {
+        // Get category prefix (first 2 letters uppercase)
+        $categoryPrefix = $category 
+            ? strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $category->name), 0, 2))
+            : 'XX';
+        
+        // Get title initials (first letters of each word, max 2)
+        $words = explode(' ', preg_replace('/[^A-Za-z\s]/', '', $title));
+        $initials = '';
+        foreach ($words as $word) {
+            if (!empty(trim($word))) {
+                $initials .= strtoupper(substr($word, 0, 1));
+                if (strlen($initials) >= 2) break;
+            }
+        }
+        if (strlen($initials) < 1) $initials = 'XX';
+        
+        // Get next number for this prefix combination
+        $prefix = $categoryPrefix . '-' . $initials . '-';
+        $lastSku = self::where('sku', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(sku, ?) AS UNSIGNED) DESC', [strlen($prefix) + 1])
+            ->first();
+        
+        if ($lastSku && preg_match('/(\d+)$/', $lastSku->sku, $matches)) {
+            $nextNumber = (int)$matches[1] + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 }

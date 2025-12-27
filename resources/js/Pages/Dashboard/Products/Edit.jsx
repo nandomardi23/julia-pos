@@ -39,6 +39,7 @@ export default function Edit({ categories, product, availableIngredients }) {
 
     // Simpan data original untuk perbandingan
     const originalData = useMemo(() => ({
+        sku: product.sku || '',
         barcode: product.barcode || '',
         title: product.title || '',
         category_id: product.category_id || '',
@@ -54,6 +55,7 @@ export default function Edit({ categories, product, availableIngredients }) {
 
     const { data, setData, post, processing } = useForm({
         image: '',
+        sku: product.sku || '',
         barcode: product.barcode || '',
         title: product.title || '',
         category_id: product.category_id || '',
@@ -70,8 +72,8 @@ export default function Edit({ categories, product, availableIngredients }) {
     const hasChanges = () => {
         // Jika ada gambar baru, berarti ada perubahan
         if (data.image) return true
-        // Bandingkan field-field utama
-        if (data.barcode !== originalData.barcode) return true
+        if (data.sku !== originalData.sku) return true
+        if ((data.barcode || '') !== (originalData.barcode || '')) return true
         if (data.title !== originalData.title) return true
         if (data.category_id !== originalData.category_id) return true
         if ((data.description || '') !== (originalData.description || '')) return true
@@ -223,14 +225,24 @@ export default function Edit({ categories, product, availableIngredients }) {
                         />
                     </div>
 
-                    <div className='col-span-12'>
+                    <div className='col-span-6'>
                         <Input
                             type={'text'}
-                            label={'Kode Produk/Barcode'}
+                            label={'SKU'}
+                            value={data.sku}
+                            onChange={e => setData('sku', e.target.value)}
+                            errors={errors.sku}
+                            placeholder={'Kode SKU'}
+                        />
+                    </div>
+                    <div className='col-span-6'>
+                        <Input
+                            type={'text'}
+                            label={'Barcode (opsional)'}
                             value={data.barcode}
                             onChange={e => setData('barcode', e.target.value)}
                             errors={errors.barcode}
-                            placeholder={'Barcode'}
+                            placeholder={'EAN-13 untuk scan'}
                         />
                     </div>
                     <div className='col-span-6'>

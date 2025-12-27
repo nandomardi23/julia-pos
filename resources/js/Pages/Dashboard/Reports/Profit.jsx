@@ -21,7 +21,6 @@ const defaultFilters = {
     end_date: "",
     invoice: "",
     cashier_id: "",
-    customer_id: "",
 };
 
 const formatCurrency = (value = 0) =>
@@ -59,27 +58,28 @@ const ProfitReport = ({
     summary,
     filters,
     cashiers,
-    customers,
 }) => {
     const [filterData, setFilterData] = useState({
-        ...defaultFilters,
-        ...filters,
+        start_date: filters?.start_date ?? "",
+        end_date: filters?.end_date ?? "",
+        invoice: filters?.invoice ?? "",
+        cashier_id: filters?.cashier_id ?? "",
     });
 
     const [selectedCashier, setSelectedCashier] = useState(null);
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     useEffect(() => {
-        setFilterData({ ...defaultFilters, ...filters });
+        setFilterData({
+            start_date: filters?.start_date ?? "",
+            end_date: filters?.end_date ?? "",
+            invoice: filters?.invoice ?? "",
+            cashier_id: filters?.cashier_id ?? "",
+        });
         setSelectedCashier(
-            cashiers.find((item) => String(item.id) === filters.cashier_id) ||
+            (cashiers ?? []).find((item) => String(item.id) === filters?.cashier_id) ||
                 null
         );
-        setSelectedCustomer(
-            customers.find((item) => String(item.id) === filters.customer_id) ||
-                null
-        );
-    }, [filters, cashiers, customers]);
+    }, [filters, cashiers]);
 
     const handleChange = (field, value) => {
         setFilterData((prev) => ({
@@ -99,7 +99,6 @@ const ProfitReport = ({
     const resetFilters = () => {
         setFilterData(defaultFilters);
         setSelectedCashier(null);
-        setSelectedCustomer(null);
 
         router.get(route("reports.profits.index"), defaultFilters, {
             replace: true,
@@ -161,85 +160,78 @@ const ProfitReport = ({
                     />
                 </div>
 
-                <Card
-                    title="Filter Data"
-                    form={applyFilters}
-                    footer={
-                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                            <Button
-                                type="button"
-                                label="Reset"
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                onClick={resetFilters}
-                            />
-                            <Button
-                                type="submit"
-                                label="Terapkan Filter"
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                icon={<IconArrowDownRight size={18} />}
-                            />
-                        </div>
-                    }
+                <Table.Card 
+                    title="Detail Keuntungan"
+                    links={links}
+                    meta={{
+                        from: transactions?.from,
+                        to: transactions?.to,
+                        total: transactions?.total,
+                        per_page: transactions?.per_page
+                    }}
+                    url={route('reports.profits.index')}
                 >
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Input
-                            type="date"
-                            label="Mulai"
-                            value={filterData.start_date}
-                            onChange={(event) =>
-                                handleChange("start_date", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="date"
-                            label="Selesai"
-                            value={filterData.end_date}
-                            onChange={(event) =>
-                                handleChange("end_date", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="text"
-                            label="No. Resi"
-                            placeholder="Cari resi"
-                            value={filterData.invoice}
-                            onChange={(event) =>
-                                handleChange("invoice", event.target.value)
-                            }
-                        />
-                        <InputSelect
-                            label="Kasir"
-                            data={cashiers}
-                            selected={selectedCashier}
-                            setSelected={(value) => {
-                                setSelectedCashier(value);
-                                handleChange(
-                                    "cashier_id",
-                                    value ? String(value.id) : ""
-                                );
-                            }}
-                            placeholder="Semua kasir"
-                            searchable
-                        />
-                        <InputSelect
-                            label="Pelanggan"
-                            data={customers}
-                            selected={selectedCustomer}
-                            setSelected={(value) => {
-                                setSelectedCustomer(value);
-                                handleChange(
-                                    "customer_id",
-                                    value ? String(value.id) : ""
-                                );
-                            }}
-                            placeholder="Semua pelanggan"
-                            searchable
-                        />
-                    </div>
-                </Card>
+                    {/* Filter Section */}
+                    <form onSubmit={applyFilters} className="px-5 py-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                            <Input
+                                type="date"
+                                label="Mulai"
+                                value={filterData.start_date}
+                                onChange={(event) =>
+                                    handleChange("start_date", event.target.value)
+                                }
+                            />
+                            <Input
+                                type="date"
+                                label="Selesai"
+                                value={filterData.end_date}
+                                onChange={(event) =>
+                                    handleChange("end_date", event.target.value)
+                                }
+                            />
+                            <Input
+                                type="text"
+                                label="No. Resi"
+                                placeholder="Cari resi"
+                                value={filterData.invoice}
+                                onChange={(event) =>
+                                    handleChange("invoice", event.target.value)
+                                }
+                            />
+                            <InputSelect
+                                label="Kasir"
+                                data={cashiers ?? []}
+                                selected={selectedCashier}
+                                setSelected={(value) => {
+                                    setSelectedCashier(value);
+                                    handleChange(
+                                        "cashier_id",
+                                        value ? String(value.id) : ""
+                                    );
+                                }}
+                                placeholder="Semua kasir"
+                                searchable
+                            />
+                            <div className="flex items-end gap-2">
+                                <Button
+                                    type="button"
+                                    label="Reset"
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                    onClick={resetFilters}
+                                />
+                                <Button
+                                    type="submit"
+                                    label="Cari"
+                                    icon={<IconArrowDownRight size={18} />}
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                />
+                            </div>
+                        </div>
+                    </form>
 
-                <Table.Card title="Detail Keuntungan">
-                    <Table>
+                    {/* Table Section */}
+                    <Table className="mt-5">
                         <Table.Thead>
                             <tr>
                                 <Table.Th className="w-16 text-center">
@@ -248,7 +240,6 @@ const ProfitReport = ({
                                 <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th>Pelanggan</Table.Th>
                                 <Table.Th className="text-center">
                                     Item
                                 </Table.Th>
@@ -278,9 +269,6 @@ const ProfitReport = ({
                                         <Table.Td>
                                             {transaction.cashier?.name ?? "-"}
                                         </Table.Td>
-                                        <Table.Td>
-                                            {transaction.customer?.name ?? "-"}
-                                        </Table.Td>
                                         <Table.Td className="text-center">
                                             {transaction.total_items ?? 0}
                                         </Table.Td>
@@ -298,7 +286,7 @@ const ProfitReport = ({
                                 ))
                             ) : (
                                 <Table.Empty
-                                    colSpan={8}
+                                    colSpan={7}
                                     message={
                                         <div className="text-gray-500">
                                             <IconDatabaseOff
@@ -313,8 +301,6 @@ const ProfitReport = ({
                         </Table.Tbody>
                     </Table>
                 </Table.Card>
-
-                {links.length > 0 && <Pagination links={links} />}
             </div>
         </>
     );

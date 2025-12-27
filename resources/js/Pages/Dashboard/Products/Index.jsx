@@ -1,6 +1,6 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, usePage, router } from '@inertiajs/react'
+import { Head, usePage, router, Link } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
 import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
@@ -97,24 +97,31 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                     </Table.Td>
                                     <Table.Td>
                                         <div className='flex justify-center gap-1'>
-                                            <Button
-                                                type={'modal'}
-                                                icon={<IconEye size={14} strokeWidth={1.5} />}
-                                                className={'border bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900'}
-                                                onClick={() => router.visit(route('products.show', product.id))}
-                                            />
-                                            <Button
-                                                type={'edit'}
-                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
-                                                className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
+                                            <Link
+                                                href={route('products.show', product.id)}
+                                                className='p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                                title='Lihat Detail'
+                                            >
+                                                <IconEye size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <Link
                                                 href={route('products.edit', product.id)}
-                                            />
-                                            <Button
-                                                type={'delete'}
-                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
-                                                className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
-                                                url={route('products.destroy', product.id)}
-                                            />
+                                                className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'
+                                                title='Edit'
+                                            >
+                                                <IconPencilCog size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
+                                                        router.delete(route('products.destroy', product.id))
+                                                    }
+                                                }}
+                                                className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                title='Hapus'
+                                            >
+                                                <IconTrash size={14} strokeWidth={1.5} />
+                                            </button>
                                         </div>
                                     </Table.Td>
                                 </tr>

@@ -50,7 +50,6 @@ class IngredientController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products',
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
@@ -69,7 +68,8 @@ class IngredientController extends Controller
 
         Product::create([
             'image' => $imageName,
-            'barcode' => $validated['barcode'],
+            'sku' => null, // Ingredients don't need SKU
+            'barcode' => null, // Ingredients don't need barcode
             'title' => $validated['title'],
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
@@ -77,9 +77,6 @@ class IngredientController extends Controller
             'sell_price' => $validated['sell_price'],
             'unit' => $validated['unit'],
             'product_type' => Product::TYPE_INGREDIENT,
-            'is_ingredient' => true,
-            'is_recipe' => false,
-            'is_supply' => false,
         ]);
 
         return redirect()->route('ingredients.index')->with('success', 'Bahan baku berhasil ditambahkan!');
@@ -107,7 +104,6 @@ class IngredientController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products,barcode,' . $ingredient->id,
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',

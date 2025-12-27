@@ -1,6 +1,6 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, usePage } from '@inertiajs/react'
+import { Head, usePage, Link, router } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
 import { IconCirclePlus, IconDatabaseOff, IconEye, IconPencilCog, IconTrash } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
@@ -48,8 +48,8 @@ export default function Index({ suppliers, filters }) {
                             <Table.Th>Perusahaan</Table.Th>
                             <Table.Th>Telepon</Table.Th>
                             <Table.Th>Email</Table.Th>
-                            <Table.Th className='w-20'>Produk</Table.Th>
-                            <Table.Th></Table.Th>
+                            <Table.Th className='w-24'>Transaksi</Table.Th>
+                            <Table.Th className='w-24 text-center'>Aksi</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -65,29 +65,36 @@ export default function Index({ suppliers, filters }) {
                                     <Table.Td>{supplier.email || '-'}</Table.Td>
                                     <Table.Td className='text-center'>
                                         <span className='bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-blue-900 dark:text-blue-300'>
-                                            {supplier.products_count}
+                                            {supplier.stock_movements_count}
                                         </span>
                                     </Table.Td>
                                     <Table.Td>
-                                        <div className='flex gap-1'>
-                                            <Button
-                                                type={'link'}
-                                                icon={<IconEye size={14} strokeWidth={1.5} />}
-                                                className={'border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900'}
+                                        <div className='flex justify-center gap-1'>
+                                            <Link
                                                 href={route('suppliers.show', supplier.id)}
-                                            />
-                                            <Button
-                                                type={'edit'}
-                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
-                                                className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
+                                                className='p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                                title='Lihat Detail'
+                                            >
+                                                <IconEye size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <Link
                                                 href={route('suppliers.edit', supplier.id)}
-                                            />
-                                            <Button
-                                                type={'delete'}
-                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
-                                                className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
-                                                url={route('suppliers.destroy', supplier.id)}
-                                            />
+                                                className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'
+                                                title='Edit'
+                                            >
+                                                <IconPencilCog size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Apakah Anda yakin ingin menghapus supplier ini?')) {
+                                                        router.delete(route('suppliers.destroy', supplier.id))
+                                                    }
+                                                }}
+                                                className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                title='Hapus'
+                                            >
+                                                <IconTrash size={14} strokeWidth={1.5} />
+                                            </button>
                                         </div>
                                     </Table.Td>
                                 </tr>

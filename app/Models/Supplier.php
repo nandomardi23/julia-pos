@@ -24,10 +24,19 @@ class Supplier extends Model
     ];
 
     /**
-     * Get all products from this supplier.
+     * Get all stock movements from this supplier.
      */
-    public function products()
+    public function stockMovements()
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * Get unique products that were purchased from this supplier.
+     */
+    public function getProductsAttribute()
+    {
+        $productIds = $this->stockMovements()->distinct()->pluck('product_id');
+        return Product::whereIn('id', $productIds)->get();
     }
 }

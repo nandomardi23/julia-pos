@@ -29,8 +29,6 @@ export default function Dashboard({
     todayTransactions = 0,
     todayRevenue = 0,
     todayProfit = 0,
-    totalRevenue = 0,
-    totalProfit = 0,
     revenueTrend = [],
     topProducts = [],
     recentTransactions = [],
@@ -115,26 +113,59 @@ export default function Dashboard({
 
             {/* Today Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4 dark:border-blue-900 dark:from-blue-950 dark:to-blue-900">
-                    <div className="flex items-center gap-2 mb-2">
-                        <IconTrendingUp className="text-blue-500" size={20} />
-                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Transaksi Hari Ini</p>
+                <div className="rounded-xl border bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Transaksi Hari Ini
+                            </p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                                {todayTransactions}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Total hari ini
+                            </p>
+                        </div>
+                        <div className="rounded-full bg-blue-50 dark:bg-blue-900/40 p-3 text-blue-600 dark:text-blue-200">
+                            <IconTrendingUp size={22} />
+                        </div>
                     </div>
-                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{todayTransactions}</p>
                 </div>
-                <div className="rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 p-4 dark:border-green-900 dark:from-green-950 dark:to-green-900">
-                    <div className="flex items-center gap-2 mb-2">
-                        <IconCoin className="text-green-500" size={20} />
-                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">Pendapatan Hari Ini</p>
+                <div className="rounded-xl border bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Pendapatan Hari Ini
+                            </p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                                {formatCurrency(todayRevenue)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Revenue hari ini
+                            </p>
+                        </div>
+                        <div className="rounded-full bg-emerald-50 dark:bg-emerald-900/40 p-3 text-emerald-600 dark:text-emerald-200">
+                            <IconCoin size={22} />
+                        </div>
                     </div>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{formatCurrency(todayRevenue)}</p>
                 </div>
-                <div className="rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 p-4 dark:border-purple-900 dark:from-purple-950 dark:to-purple-900">
-                    <div className="flex items-center gap-2 mb-2">
-                        <IconMoneybag className="text-purple-500" size={20} />
-                        <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Profit Hari Ini</p>
+                <div className="rounded-xl border bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Profit Hari Ini
+                            </p>
+                            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                                {formatCurrency(todayProfit)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Keuntungan bersih
+                            </p>
+                        </div>
+                        <div className="rounded-full bg-purple-50 dark:bg-purple-900/40 p-3 text-purple-600 dark:text-purple-200">
+                            <IconMoneybag size={22} />
+                        </div>
                     </div>
-                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{formatCurrency(todayProfit)}</p>
                 </div>
             </div>
 
@@ -168,18 +199,6 @@ export default function Dashboard({
                     icon={<IconUsers size={20} strokeWidth={1.5} />}
                     total={totalUsers}
                 />
-            </div>
-
-            {/* Financial Summary */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Total Pendapatan (All-time)</p>
-                    <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
-                </div>
-                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
-                    <p className="text-sm text-gray-500">Total Profit (All-time)</p>
-                    <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(totalProfit)}</p>
-                </div>
             </div>
 
             {/* Charts & Lists */}

@@ -50,7 +50,6 @@ class SupplyController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products',
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
@@ -68,17 +67,15 @@ class SupplyController extends Controller
 
         Product::create([
             'image' => $imageName,
-            'barcode' => $validated['barcode'],
+            'sku' => null, // Supplies don't need SKU
+            'barcode' => null, // Supplies don't need barcode
             'title' => $validated['title'],
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'buy_price' => $validated['buy_price'],
-            'sell_price' => 0, // Supply tidak dijual
+            'sell_price' => 0,
             'unit' => $validated['unit'],
             'product_type' => Product::TYPE_SUPPLY,
-            'is_supply' => true,
-            'is_recipe' => false,
-            'is_ingredient' => false,
         ]);
 
         return redirect()->route('supplies.index')->with('success', 'Supply berhasil ditambahkan!');
@@ -106,7 +103,6 @@ class SupplyController extends Controller
     {
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-            'barcode' => 'required|unique:products,barcode,' . $supply->id,
             'title' => 'required',
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',

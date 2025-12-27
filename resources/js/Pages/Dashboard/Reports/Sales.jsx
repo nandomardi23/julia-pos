@@ -38,7 +38,6 @@ const defaultFilterState = {
     end_date: "",
     invoice: "",
     cashier_id: "",
-    customer_id: "",
 };
 
 const formatCurrency = (value = 0) =>
@@ -51,45 +50,31 @@ const formatCurrency = (value = 0) =>
 const castFilterString = (value) =>
     typeof value === "number" ? String(value) : value ?? "";
 
-const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
+const Sales = ({ transactions, summary, filters, cashiers }) => {
     const [filterData, setFilterData] = useState({
         ...defaultFilterState,
         start_date: castFilterString(filters?.start_date),
         end_date: castFilterString(filters?.end_date),
         invoice: castFilterString(filters?.invoice),
         cashier_id: castFilterString(filters?.cashier_id),
-        customer_id: castFilterString(filters?.customer_id),
     });
 
     const cashierFromFilters = useMemo(
         () =>
-            cashiers.find(
+            (cashiers ?? []).find(
                 (cashier) =>
                     castFilterString(cashier.id) === filterData.cashier_id
             ) ?? null,
         [cashiers, filterData.cashier_id]
     );
 
-    const customerFromFilters = useMemo(
-        () =>
-            customers.find(
-                (customer) =>
-                    castFilterString(customer.id) === filterData.customer_id
-            ) ?? null,
-        [customers, filterData.customer_id]
-    );
-
     const [selectedCashier, setSelectedCashier] = useState(cashierFromFilters);
-    const [selectedCustomer, setSelectedCustomer] =
-        useState(customerFromFilters);
 
     useEffect(() => {
         setSelectedCashier(cashierFromFilters);
     }, [cashierFromFilters]);
 
-    useEffect(() => {
-        setSelectedCustomer(customerFromFilters);
-    }, [customerFromFilters]);
+
 
     useEffect(() => {
         setFilterData({
@@ -98,7 +83,6 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
             end_date: castFilterString(filters?.end_date),
             invoice: castFilterString(filters?.invoice),
             cashier_id: castFilterString(filters?.cashier_id),
-            customer_id: castFilterString(filters?.customer_id),
         });
     }, [filters]);
 
@@ -114,10 +98,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
         handleChange("cashier_id", value ? String(value.id) : "");
     };
 
-    const handleSelectCustomer = (value) => {
-        setSelectedCustomer(value);
-        handleChange("customer_id", value ? String(value.id) : "");
-    };
+
 
     const applyFilters = (event) => {
         event.preventDefault();
@@ -130,7 +111,6 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
     const resetFilters = () => {
         setFilterData(defaultFilterState);
         setSelectedCashier(null);
-        setSelectedCustomer(null);
 
         router.get(route("reports.sales.index"), defaultFilterState, {
             preserveScroll: true,
@@ -197,165 +177,116 @@ const Sales = ({ transactions, summary, filters, cashiers, customers }) => {
                     ))}
                 </div>
 
-                <Card
-                    title="Filter Laporan"
-                    className="border-gray-200"
-                    form={applyFilters}
-                    footer={
-                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                            <Button
-                                type="button"
-                                label="Reset"
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                onClick={resetFilters}
-                            />
-                            <Button
-                                type="submit"
-                                label="Terapkan Filter"
-                                icon={<IconTrendingUp size={18} />}
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                            />
-                        </div>
-                    }
+                <Table.Card 
+                    title="Laporan Penjualan"
+                    links={paginationLinks}
+                    meta={{
+                        from: transactions?.from,
+                        to: transactions?.to,
+                        total: transactions?.total,
+                        per_page: transactions?.per_page
+                    }}
+                    url={route('reports.sales.index')}
                 >
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Input
-                            type="date"
-                            label="Mulai"
-                            value={filterData.start_date}
-                            onChange={(event) =>
-                                handleChange("start_date", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="date"
-                            label="Selesai"
-                            value={filterData.end_date}
-                            onChange={(event) =>
-                                handleChange("end_date", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="text"
-                            label="No. Resi"
-                            placeholder="Cari berdasarkan resi"
-                            value={filterData.invoice}
-                            onChange={(event) =>
-                                handleChange("invoice", event.target.value)
-                            }
-                        />
-                        <InputSelect
-                            label="Kasir"
-                            data={cashiers}
-                            selected={selectedCashier}
-                            setSelected={handleSelectCashier}
-                            placeholder="Semua kasir"
-                            searchable
-                        />
-                        <InputSelect
-                            label="Pelanggan"
-                            data={customers}
-                            selected={selectedCustomer}
-                            setSelected={handleSelectCustomer}
-                            placeholder="Semua pelanggan"
-                            searchable
-                        />
-                    </div>
-                </Card>
+                    {/* Filter Section */}
+                    <form onSubmit={applyFilters} className="px-5 py-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Input
+                                type="date"
+                                label="Mulai"
+                                value={filterData.start_date}
+                                onChange={(event) =>
+                                    handleChange("start_date", event.target.value)
+                                }
+                            />
+                            <Input
+                                type="date"
+                                label="Selesai"
+                                value={filterData.end_date}
+                                onChange={(event) =>
+                                    handleChange("end_date", event.target.value)
+                                }
+                            />
+                            <InputSelect
+                                label="Kasir"
+                                data={cashiers ?? []}
+                                selected={selectedCashier}
+                                setSelected={handleSelectCashier}
+                                placeholder="Semua kasir"
+                                searchable
+                            />
+                            <div className="flex items-end gap-2">
+                                <Button
+                                    type="button"
+                                    label="Reset"
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                    onClick={resetFilters}
+                                />
+                                <Button
+                                    type="submit"
+                                    label="Filter"
+                                    icon={<IconTrendingUp size={18} />}
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                />
+                            </div>
+                        </div>
+                    </form>
 
-                <Table.Card title={"Ringkasan Penjualan"}>
+                    {/* Table Section */}
                     <Table>
                         <Table.Thead>
                             <tr>
-                                <Table.Th className="w-16 text-center">
-                                    No
-                                </Table.Th>
-                                <Table.Th>No. Resi</Table.Th>
+                                <Table.Th className="w-12 text-center">No</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
-                                <Table.Th>Pelanggan</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th className="text-center">
-                                    Item
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Diskon
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Total
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Profit
-                                </Table.Th>
+                                <Table.Th className="text-center">Item</Table.Th>
+                                <Table.Th className="text-right">Diskon</Table.Th>
+                                <Table.Th className="text-right">Total</Table.Th>
+                                <Table.Th className="text-right">Profit</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
                             {rows.length > 0 ? (
                                 rows.map((transaction, index) => (
-                                    <tr
+                                    <tr 
                                         key={transaction.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                                     >
-                                        <Table.Td className="text-center">
-                                            {index +
-                                                1 +
-                                                (currentPage - 1) * perPage}
+                                        <Table.Td className="text-center font-medium">
+                                            {index + 1 + (currentPage - 1) * perPage}
                                         </Table.Td>
-                                        <Table.Td className="font-semibold text-gray-900 dark:text-gray-100">
-                                            {transaction.invoice}
-                                        </Table.Td>
-                                        <Table.Td>
-                                            {transaction.created_at}
-                                        </Table.Td>
-                                        <Table.Td>
-                                            {transaction.customer?.name ?? "-"}
-                                        </Table.Td>
-                                        <Table.Td>
-                                            {transaction.cashier?.name ?? "-"}
-                                        </Table.Td>
+                                        <Table.Td>{transaction.created_at}</Table.Td>
+                                        <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
                                             {transaction.total_items ?? 0}
                                         </Table.Td>
                                         <Table.Td className="text-right">
-                                            {formatCurrency(
-                                                transaction.discount ?? 0
-                                            )}
+                                            {formatCurrency(transaction.discount ?? 0)}
                                         </Table.Td>
-                                        <Table.Td className="text-right font-semibold text-gray-900 dark:text-gray-100">
-                                            {formatCurrency(
-                                                transaction.grand_total ?? 0
-                                            )}
+                                        <Table.Td className="text-right font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrency(transaction.grand_total ?? 0)}
                                         </Table.Td>
-                                        <Table.Td className="text-right text-emerald-500">
-                                            {formatCurrency(
-                                                transaction.total_profit ?? 0
-                                            )}
+                                        <Table.Td className="text-right text-emerald-500 font-medium">
+                                            {formatCurrency(transaction.total_profit ?? 0)}
                                         </Table.Td>
                                     </tr>
                                 ))
                             ) : (
-                                <Table.Empty
-                                    colSpan={9}
+                                <Table.Empty 
+                                    colSpan={7} 
                                     message={
                                         <>
-                                            <div className="flex justify-center">
-                                                <IconDatabaseOff
-                                                    size={26}
-                                                    className="text-gray-400"
-                                                />
+                                            <div className="flex justify-center items-center text-center mb-2">
+                                                <IconDatabaseOff size={48} strokeWidth={1} className="text-gray-300 dark:text-gray-600" />
                                             </div>
-                                            <p className="text-gray-500">
-                                                Tidak ada data sesuai filter.
-                                            </p>
+                                            <span className="text-gray-500 dark:text-gray-400">Tidak ada data sesuai filter.</span>
                                         </>
-                                    }
+                                    } 
                                 />
                             )}
                         </Table.Tbody>
                     </Table>
                 </Table.Card>
-                {paginationLinks.length > 0 && (
-                    <Pagination links={paginationLinks} />
-                )}
             </div>
         </>
     );

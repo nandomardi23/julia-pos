@@ -125,16 +125,15 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
             </div>
 
             {/* Mobile Sidebar Overlay */}
-            {mobileSidebarOpen && (
-                <div 
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                    onClick={closeMobileSidebar}
-                />
-            )}
+            <div 
+                className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300
+                    ${mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                onClick={closeMobileSidebar}
+            />
             
             {/* Mobile Sidebar Drawer */}
             <div 
-                className={`fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform duration-300 ease-in-out lg:hidden
+                className={`fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform duration-300 ease-in-out
                     ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                     bg-white dark:bg-gray-950 border-r dark:border-gray-900 overflow-y-auto`}
             >

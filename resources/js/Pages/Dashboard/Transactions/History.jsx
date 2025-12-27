@@ -31,14 +31,16 @@ const formatCurrency = (value = 0) =>
 
 const History = ({ transactions, filters }) => {
     const [filterData, setFilterData] = useState({
-        ...defaultFilters,
-        ...filters,
+        invoice: filters?.invoice ?? "",
+        start_date: filters?.start_date ?? "",
+        end_date: filters?.end_date ?? "",
     });
 
     useEffect(() => {
         setFilterData({
-            ...defaultFilters,
-            ...filters,
+            invoice: filters?.invoice ?? "",
+            start_date: filters?.start_date ?? "",
+            end_date: filters?.end_date ?? "",
         });
     }, [filters]);
 
@@ -90,81 +92,75 @@ const History = ({ transactions, filters }) => {
         <>
             <Head title="Riwayat Transaksi" />
             <div className="space-y-6">
-                <Card
-                    title="Filter Riwayat"
-                    icon={<IconClockHour6 size={18} />}
-                    form={applyFilters}
-                    footer={
-                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                            <Button
-                                type="button"
-                                label="Reset"
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                onClick={resetFilters}
-                            />
-                            <Button
-                                type="submit"
-                                label="Cari"
-                                icon={<IconSearch size={18} />}
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                            />
-                        </div>
-                    }
+                <Table.Card 
+                    title="Riwayat Transaksi"
+                    links={links}
+                    meta={{
+                        from: transactions?.from,
+                        to: transactions?.to,
+                        total: transactions?.total,
+                        per_page: transactions?.per_page
+                    }}
+                    url={route('transactions.history')}
                 >
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Input
-                            type="text"
-                            label="No. Resi"
-                            placeholder="Contoh: TRX-"
-                            value={filterData.invoice}
-                            onChange={(event) =>
-                                handleChange("invoice", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="date"
-                            label="Tanggal Mulai"
-                            value={filterData.start_date}
-                            onChange={(event) =>
-                                handleChange("start_date", event.target.value)
-                            }
-                        />
-                        <Input
-                            type="date"
-                            label="Tanggal Selesai"
-                            value={filterData.end_date}
-                            onChange={(event) =>
-                                handleChange("end_date", event.target.value)
-                            }
-                        />
-                    </div>
-                </Card>
+                    {/* Filter Section */}
+                    <form onSubmit={applyFilters} className="px-5 py-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Input
+                                type="text"
+                                label="No. Resi"
+                                placeholder="Contoh: TRX-"
+                                value={filterData.invoice}
+                                onChange={(event) =>
+                                    handleChange("invoice", event.target.value)
+                                }
+                            />
+                            <Input
+                                type="date"
+                                label="Tanggal Mulai"
+                                value={filterData.start_date}
+                                onChange={(event) =>
+                                    handleChange("start_date", event.target.value)
+                                }
+                            />
+                            <Input
+                                type="date"
+                                label="Tanggal Selesai"
+                                value={filterData.end_date}
+                                onChange={(event) =>
+                                    handleChange("end_date", event.target.value)
+                                }
+                            />
+                            <div className="flex items-end gap-2">
+                                <Button
+                                    type="button"
+                                    label="Reset"
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                    onClick={resetFilters}
+                                />
+                                <Button
+                                    type="submit"
+                                    label="Cari"
+                                    icon={<IconSearch size={18} />}
+                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                />
+                            </div>
+                        </div>
+                    </form>
 
-                <Table.Card title="Riwayat Transaksi">
-                    <Table>
+                    {/* Table Section */}
+                    <Table className="my-10 mt-5">
                         <Table.Thead>
                             <tr>
-                                <Table.Th className="w-16 text-center">
-                                    No
-                                </Table.Th>
+                                <Table.Th className="w-12 text-center">No</Table.Th>
                                 <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th className="text-center">
-                                    Item
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Diskon
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Total
-                                </Table.Th>
-                                <Table.Th className="text-right">
-                                    Profit
-                                </Table.Th>
-                                <Table.Th className="text-center">
-                                    Action
-                                </Table.Th>
+                                <Table.Th className="text-center">Item</Table.Th>
+                                <Table.Th className="text-right">Diskon</Table.Th>
+                                <Table.Th className="text-right">Total</Table.Th>
+                                <Table.Th className="text-right">Profit</Table.Th>
+                                <Table.Th className="text-center">Aksi</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -172,39 +168,27 @@ const History = ({ transactions, filters }) => {
                                 rows.map((transaction, index) => (
                                     <tr
                                         key={transaction.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                                     >
-                                        <Table.Td className="text-center">
-                                            {index +
-                                                1 +
-                                                (currentPage - 1) * perPage}
+                                        <Table.Td className="text-center font-medium">
+                                            {index + 1 + (currentPage - 1) * perPage}
                                         </Table.Td>
                                         <Table.Td className="font-semibold text-gray-900 dark:text-gray-100">
                                             {transaction.invoice}
                                         </Table.Td>
-                                        <Table.Td>
-                                            {transaction.created_at}
-                                        </Table.Td>
-                                        <Table.Td>
-                                            {transaction.cashier?.name ?? "-"}
-                                        </Table.Td>
+                                        <Table.Td>{transaction.created_at}</Table.Td>
+                                        <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
                                             {transaction.total_items ?? 0}
                                         </Table.Td>
                                         <Table.Td className="text-right">
-                                            {formatCurrency(
-                                                transaction.discount ?? 0
-                                            )}
+                                            {formatCurrency(transaction.discount ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right font-semibold text-gray-900 dark:text-gray-100">
-                                            {formatCurrency(
-                                                transaction.grand_total ?? 0
-                                            )}
+                                            {formatCurrency(transaction.grand_total ?? 0)}
                                         </Table.Td>
-                                        <Table.Td className="text-right text-emerald-500">
-                                            {formatCurrency(
-                                                transaction.total_profit ?? 0
-                                            )}
+                                        <Table.Td className="text-right text-emerald-500 font-medium">
+                                            {formatCurrency(transaction.total_profit ?? 0)}
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex items-center justify-center gap-1">
@@ -219,7 +203,7 @@ const History = ({ transactions, filters }) => {
                                                     href={route('transactions.print', transaction.invoice)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                                                    className="p-1.5 rounded-md text-cyan-600 hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/30"
                                                     title="Cetak Struk"
                                                 >
                                                     <IconPrinter size={14} />
@@ -252,8 +236,6 @@ const History = ({ transactions, filters }) => {
                         </Table.Tbody>
                     </Table>
                 </Table.Card>
-
-                {links.length > 0 && <Pagination links={links} />}
             </div>
         </>
     );

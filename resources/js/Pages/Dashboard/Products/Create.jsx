@@ -36,6 +36,7 @@ export default function Create({ categories }) {
 
     const { data, setData, post, processing } = useForm({
         image: '',
+        sku: '',
         barcode: '',
         title: '',
         category_id: '',
@@ -137,14 +138,24 @@ export default function Create({ categories }) {
                         />
                     </div>
 
-                    <div className='col-span-12'>
+                    <div className='col-span-6'>
                         <Input
                             type={'text'}
-                            label={'Kode Produk/Barcode'}
+                            label={'SKU (otomatis)'}
+                            value={data.sku}
+                            onChange={e => setData('sku', e.target.value)}
+                            errors={errors.sku}
+                            placeholder={'Kosongkan untuk auto-generate'}
+                        />
+                    </div>
+                    <div className='col-span-6'>
+                        <Input
+                            type={'text'}
+                            label={'Barcode (opsional)'}
                             value={data.barcode}
                             onChange={e => setData('barcode', e.target.value)}
                             errors={errors.barcode}
-                            placeholder={'Barcode'}
+                            placeholder={'EAN-13 untuk scan'}
                         />
                     </div>
                     <div className='col-span-6'>

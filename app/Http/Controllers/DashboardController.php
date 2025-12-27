@@ -33,9 +33,6 @@ class DashboardController extends Controller
             ->whereDate('transactions.created_at', $today)
             ->sum('profits.total');
 
-        // All-time totals
-        $totalRevenue = Transaction::sum('grand_total');
-        $totalProfit = Profit::sum('total');
 
         // Revenue trend (last 7 days only for performance)
         $revenueTrend = Transaction::selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
@@ -97,8 +94,6 @@ class DashboardController extends Controller
             'todayTransactions'  => (int) $todayTransactions,
             'todayRevenue'       => (int) $todayRevenue,
             'todayProfit'        => (int) $todayProfit,
-            'totalRevenue'       => (int) $totalRevenue,
-            'totalProfit'        => (int) $totalProfit,
             'revenueTrend'       => $revenueTrend,
             'topProducts'        => $topProducts,
             'recentTransactions' => $recentTransactions,

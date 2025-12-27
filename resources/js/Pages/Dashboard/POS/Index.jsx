@@ -535,58 +535,74 @@ export default function Index({
                             ) : (
                                 <>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                        {paginatedProducts.map((product) => (
-                                            <div
-                                                key={product.id}
-                                                onClick={() =>
-                                                    handleAddToCart(product)
-                                                }
-                                                className={`bg-white dark:bg-gray-950 rounded-xl border dark:border-gray-800 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${
-                                                    product.display_qty < 1
-                                                        ? "opacity-50 cursor-not-allowed"
-                                                        : ""
-                                                }`}
-                                            >
-                                                {/* Product Image */}
-                                                <div className="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.title}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src =
-                                                                "https://via.placeholder.com/200x200?text=No+Image";
-                                                        }}
-                                                    />
-                                                    {/* Stock Badge */}
-                                                    <span
-                                                        className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium ${
-                                                            product.display_qty > 10
-                                                                ? "bg-emerald-500 text-white"
-                                                                : product.display_qty > 0
-                                                                ? "bg-amber-500 text-white"
-                                                                : "bg-rose-500 text-white"
-                                                        }`}
-                                                    >
-                                                        {product.display_qty > 0 
-                                                            ? (product.is_recipe || product.product_type === 'recipe' 
-                                                                ? '✓' 
-                                                                : product.display_qty)
-                                                            : 'Habis'}
-                                                    </span>
-                                                </div>
+                                        {paginatedProducts.map((product) => {
+                                            const isOutOfStock = product.display_qty <= 0 || product.is_available === false;
+                                            
+                                            return (
+                                                <div
+                                                    key={product.id}
+                                                    onClick={() => {
+                                                        if (isOutOfStock) {
+                                                            toast.error("Produk tidak tersedia!");
+                                                            return;
+                                                        }
+                                                        handleAddToCart(product);
+                                                    }}
+                                                    className={`bg-white dark:bg-gray-950 rounded-xl border dark:border-gray-800 overflow-hidden transition-all ${
+                                                        isOutOfStock
+                                                            ? "opacity-60 cursor-not-allowed"
+                                                            : "cursor-pointer hover:shadow-lg hover:scale-[1.02]"
+                                                    }`}
+                                                >
+                                                    {/* Product Image */}
+                                                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
+                                                        <img
+                                                            src={product.image}
+                                                            alt={product.title}
+                                                            className={`w-full h-full object-cover ${isOutOfStock ? "grayscale" : ""}`}
+                                                            onError={(e) => {
+                                                                e.target.src =
+                                                                    "https://via.placeholder.com/200x200?text=No+Image";
+                                                            }}
+                                                        />
+                                                        {/* Stock Badge */}
+                                                        <span
+                                                            className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                                isOutOfStock
+                                                                    ? "bg-rose-500 text-white"
+                                                                    : product.display_qty > 10
+                                                                    ? "bg-emerald-500 text-white"
+                                                                    : "bg-amber-500 text-white"
+                                                            }`}
+                                                        >
+                                                            {isOutOfStock 
+                                                                ? 'Habis'
+                                                                : (product.is_recipe || product.product_type === 'recipe' 
+                                                                    ? '✓' 
+                                                                    : product.display_qty)}
+                                                        </span>
+                                                        {/* Out of Stock Overlay */}
+                                                        {isOutOfStock && (
+                                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                                                <span className="bg-rose-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">
+                                                                    Tidak Tersedia
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                                {/* Product Info */}
-                                                <div className="p-3">
-                                                    <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-1">
-                                                        {product.title}
-                                                    </h4>
-                                                    <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                                                        {formatPrice(product.sell_price)}
-                                                    </p>
+                                                    {/* Product Info */}
+                                                    <div className="p-3">
+                                                        <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-1">
+                                                            {product.title}
+                                                        </h4>
+                                                        <p className={`text-sm font-bold ${isOutOfStock ? "text-gray-400" : "text-blue-600 dark:text-blue-400"}`}>
+                                                            {formatPrice(product.sell_price)}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
                                     {/* Pagination */}
@@ -687,9 +703,12 @@ export default function Index({
                                                                     handleUpdateCartQty(cart.id, val, false);
                                                                 }}
                                                                 onBlur={(e) => {
-                                                                    const val = e.target.value;
-                                                                    if (val && val != cart.qty) {
+                                                                    const val = parseFloat(e.target.value);
+                                                                    if (!isNaN(val) && val > 0) {
                                                                          handleUpdateCartQty(cart.id, val, true);
+                                                                    } else {
+                                                                         // Reset to 1 if invalid
+                                                                         handleUpdateCartQty(cart.id, 1, true);
                                                                     }
                                                                 }}
                                                                 onKeyDown={(e) => {

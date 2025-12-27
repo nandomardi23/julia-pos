@@ -204,10 +204,10 @@ export default function Print({ transaction }) {
                                         {items.map((item, index) => {
                                             const quantity =
                                                 Number(item.qty) || 1;
-                                            const subtotal =
-                                                Number(item.price) || 0;
                                             const unitPrice =
-                                                subtotal / quantity;
+                                                Number(item.price) || 0;
+                                            const subtotal =
+                                                unitPrice * quantity;
                                             const unit = item.product?.unit || 'pcs';
 
                                             return (

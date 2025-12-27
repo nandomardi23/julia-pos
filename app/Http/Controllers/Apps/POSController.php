@@ -27,7 +27,6 @@ class POSController extends Controller
         $products = collect();
         if ($display) {
             $displayStocks = DisplayStock::where('display_id', $display->id)
-                ->where('quantity', '>', 0)
                 ->with(['product.category', 'product.variants'])
                 ->get();
             

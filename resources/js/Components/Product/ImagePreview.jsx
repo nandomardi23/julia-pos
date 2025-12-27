@@ -27,7 +27,18 @@ export default function ImagePreview({ currentImage, onImageChange, errors }) {
         }
     }, [currentImage])
 
-    const displayImage = preview || (currentImage ? `/storage/products/${currentImage}` : null)
+    // Check if currentImage is already a full URL or just a filename
+    const getImageUrl = (image) => {
+        if (!image) return null
+        // If it's already a full URL (starts with http or /), use it directly
+        if (image.startsWith('http') || image.startsWith('/storage')) {
+            return image
+        }
+        // Otherwise, construct the URL
+        return `/storage/products/${image}`
+    }
+
+    const displayImage = preview || getImageUrl(currentImage)
 
     return (
         <div className='space-y-3'>

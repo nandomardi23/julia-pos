@@ -163,6 +163,10 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/settings/payments', [PaymentSettingController::class, 'edit'])->middleware('permission:payment-settings-access')->name('settings.payments.edit');
     Route::put('/settings/payments', [PaymentSettingController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.payments.update');
 
+    // Application Settings Routes
+    Route::get('/settings', [\App\Http\Controllers\Apps\SettingsController::class, 'index'])->middleware('permission:payment-settings-access')->name('settings.index');
+    Route::put('/settings', [\App\Http\Controllers\Apps\SettingsController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.update');
+
     //reports
     Route::get('/reports/sales', [SalesReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.sales.index');
     Route::get('/reports/profits', [ProfitReportController::class, 'index'])->middleware('permission:profits-access')->name('reports.profits.index');

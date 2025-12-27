@@ -83,14 +83,30 @@ export default function Show({ product, priceHistories = [], salesStats, variant
                         label={'Kembali'}
                         icon={<IconArrowLeft size={18} strokeWidth={1.5} />}
                         className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
-                        onClick={() => router.visit(route('products.index'))}
+                        onClick={() => {
+                            const indexRoutes = {
+                                'recipe': 'recipes.index',
+                                'ingredient': 'ingredients.index',
+                                'supply': 'supplies.index',
+                                'sellable': 'products.index'
+                            }
+                            router.visit(route(indexRoutes[product.product_type] || 'products.index'))
+                        }}
                     />
                     <Button
                         type={'button'}
                         label={'Edit'}
                         icon={<IconPencil size={18} strokeWidth={1.5} />}
                         className={'border bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:border-blue-700 dark:text-white dark:hover:bg-blue-700'}
-                        onClick={() => router.visit(route('products.edit', product.id))}
+                        onClick={() => {
+                            const editRoutes = {
+                                'recipe': 'recipes.edit',
+                                'ingredient': 'ingredients.edit',
+                                'supply': 'supplies.edit',
+                                'sellable': 'products.edit'
+                            }
+                            router.visit(route(editRoutes[product.product_type] || 'products.edit', product.id))
+                        }}
                     />
                 </div>
             </div>

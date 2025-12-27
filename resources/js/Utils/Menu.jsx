@@ -21,6 +21,7 @@ import {
     IconLeaf,
     IconCup,
     IconToolsKitchen2,
+    IconSettings,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -220,6 +221,13 @@ export default function Menu() {
                     href: route("settings.payments.edit"),
                     active: url === "/dashboard/settings/payments",
                     icon: <IconCreditCard size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["payment-settings-access"]),
+                },
+                {
+                    title: "Pengaturan Aplikasi",
+                    href: route("settings.index"),
+                    active: url === "/dashboard/settings",
+                    icon: <IconSettings size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["payment-settings-access"]),
                 },
             ],

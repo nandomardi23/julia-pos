@@ -16,27 +16,27 @@ Julia POS adalah sistem Point of Sale (Kasir) berbasis web modern yang dirancang
 ### 1. Dashboard & Statistik
 Monitor performa toko secara real-time dengan metrik pendapatan, transaksi, kategori, dan tren penjualan dalam 7 hari terakhir.
 
-![Dashboard](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/dashboard_1766894369209.png)
+![Dashboard](./images/dashboard.png)
 
 ### 2. Point of Sale (POS / Kasir)
 Antarmuka kasir yang cepat dan responsif dengan fitur pencarian produk, scan barcode, filter kategori, dan manajemen keranjang belanja yang optimis (tanpa reload).
 
-![POS Interface](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/pos_1766894386547.png)
+![POS Interface](./images/pos.png)
 
 ### 3. Manajemen Produk & Variasi
 Mendukung berbagai jenis produk (Sellable, Recipe, Ingredient, Supply) dengan sistem variasi (seperti ukuran R, L, XL) yang masing-masing dapat memiliki harga dan resep tersendiri.
 
-![Manajemen Produk](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/products_1766894413226.png)
+![Manajemen Produk](./images/products.png)
 
 ### 4. Inventaris & Penggudangan
 Sistem stok terbagi menjadi dua lokasi: **Gudang (Warehouse)** untuk stok besar dan **Display** untuk stok di area penjualan. Fitur transfer stok antar gudang dan display memastikan akurasi data.
 
-![Gudang](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/warehouses_1766894464064.png)
+![Gudang](./images/warehouses.png)
 
 ### 5. Laporan & Riwayat Stok
 Laporan penjualan lengkap dengan filter tanggal, pencarian, dan fitur ekspor ke Excel. Riwayat stok mencatat setiap pergerakan barang (In/Out/Transfer).
 
-![Laporan Penjualan](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/sales_reports_1766894515502.png)
+![Laporan Penjualan](./images/sales_reports.png)
 
 ---
 
@@ -121,7 +121,7 @@ erDiagram
 ## ⚙️ Konfigurasi
 Anda dapat mengatur informasi toko pada menu **Pengaturan**. Logo yang diunggah akan muncul secara otomatis di Struk, Sidebar, dan Halaman POS.
 
-![Settings](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/settings_1766894542067.png)
+![Settings](./images/settings.png)
 
 ---
 *Dokumentasi ini dihasilkan secara otomatis oleh sistem Julia POS.*

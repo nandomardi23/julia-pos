@@ -408,4 +408,22 @@ class ProductController extends Controller
         //redirect
         return back();
     }
+    /**
+     * Print barcodes for a specific product.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
+     */
+    public function printBarcode(Request $request)
+    {
+        $productId = $request->query('product_id');
+        $qty = $request->query('qty', 10);
+
+        $product = Product::findOrFail($productId);
+
+        return Inertia::render('Dashboard/Products/PrintBarcode', [
+            'product' => $product,
+            'qty' => (int) $qty,
+        ]);
+    }
 }

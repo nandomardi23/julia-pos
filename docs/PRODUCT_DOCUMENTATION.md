@@ -6,8 +6,10 @@ Julia POS adalah sistem Point of Sale (Kasir) berbasis web modern yang dirancang
 1. [Fitur Utama](#-fitur-utama)
 2. [Arsitektur Teknis](#-arsitektur-teknis)
 3. [Skema Database](#-skema-database)
-4. [ERD (Entity Relationship Diagram)](#-erd-entity-relationship-diagram)
-5. [Panduan Penggunaan](#-panduan-penggunaan)
+4. [Cetak Barcode Produk](#-cetak-barcode-produk)
+5. [Inventaris & Penggudangan](#-inventaris--penggudangan)
+6. [Laporan & Riwayat Stok](#-laporan--riwayat-stok)
+7. [Panduan Penggunaan](#-panduan-penggunaan)
 
 ---
 
@@ -26,9 +28,14 @@ Antarmuka kasir yang cepat dan responsif dengan fitur pencarian produk, scan bar
 ### 3. Manajemen Produk & Variasi
 Mendukung berbagai jenis produk (Sellable, Recipe, Ingredient, Supply) dengan sistem variasi (seperti ukuran R, L, XL) yang masing-masing dapat memiliki harga dan resep tersendiri.
 
-![Manajemen Produk](./images/products.png)
+![Manajemen Produk](./images/products_barcode.png)
 
-### 4. Inventaris & Penggudangan
+### 4. Cetak Barcode Produk
+Memungkinkan pencetakan label barcode untuk setiap produk. Pengguna dapat menentukan jumlah label yang ingin dicetak sesuai kebutuhan stok.
+
+![Cetak Barcode](./images/products_barcode.png)
+
+### 5. Inventaris & Penggudangan
 Sistem stok terbagi menjadi dua lokasi: **Gudang (Warehouse)** untuk stok besar dan **Display** untuk stok di area penjualan. Fitur transfer stok antar gudang dan display memastikan akurasi data.
 
 ![Gudang](./images/warehouses.png)
@@ -69,6 +76,7 @@ Sistem ini menggunakan struktur database relasional yang mendukung manajemen res
 | `transactions` | Header transaksi (ID, Total, Kasir). |
 | `transaction_details` | Item baris transaksi (Produk, Qty, Harga). |
 | `stock_movements` | Log audit setiap perubahan stok. |
+| `profits` | Data keuntungan per transaksi. |
 | `settings` | Konfigurasi sistem (Nama Toko, Logo). |
 
 ---

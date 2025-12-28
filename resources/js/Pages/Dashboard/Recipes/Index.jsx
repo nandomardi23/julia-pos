@@ -1,21 +1,39 @@
-import React from 'react'
+import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, router, Link } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
-import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye } from '@tabler/icons-react'
+import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye, IconBarcode } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
+import BarcodeModal from '@/Components/Common/BarcodeModal'
 
 export default function Index({ recipes }) {
+    const [barcodeModal, setBarcodeModal] = useState({ show: false, product: null });
+
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0
     }).format(value || 0);
 
+    const handlePrintBarcode = (qty) => {
+        if (barcodeModal.product) {
+            window.open(route('products.print_barcode', { product_id: barcodeModal.product.id, qty: qty }), '_blank');
+            setBarcodeModal({ show: false, product: null });
+        }
+    };
+
     return (
         <>
             <Head title="Resep" />
+            
+            <BarcodeModal
+                show={barcodeModal.show}
+                onClose={() => setBarcodeModal({ show: false, product: null })}
+                onConfirm={handlePrintBarcode}
+                productName={barcodeModal.product?.title || ''}
+            />
+
             <div className='mb-4'>
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
                     <Button
@@ -108,6 +126,13 @@ export default function Index({ recipes }) {
                                             >
                                                 <IconEye size={14} strokeWidth={1.5} />
                                             </Link>
+                                            <button
+                                                onClick={() => setBarcodeModal({ show: true, product: recipe })}
+                                                className='p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30'
+                                                title='Cetak Barcode'
+                                            >
+                                                <IconBarcode size={14} strokeWidth={1.5} />
+                                            </button>
                                             <Link
                                                 href={route('recipes.edit', recipe.id)}
                                                 className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'

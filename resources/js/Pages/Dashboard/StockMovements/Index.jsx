@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, router } from '@inertiajs/react'
-import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash } from '@tabler/icons-react'
+import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet } from '@tabler/icons-react'
 import Table from '@/Components/Common/Table'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
@@ -15,6 +15,16 @@ export default function Index({ movements, filters }) {
         start_date: filters.start_date || '',
         end_date: filters.end_date || ''
     })
+    const handleExport = () => {
+        const params = new URLSearchParams(filterData).toString();
+        window.open(route("stock-movements.export") + "?" + params, "_blank");
+    }
+
+    const resetFilters = () => {
+        router.get(route('stock-movements.index'), filterData, {
+            preserveState: true
+        })
+    }
 
     const handleFilter = () => {
         router.get(route('stock-movements.index'), filterData, {
@@ -126,12 +136,19 @@ export default function Index({ movements, filters }) {
                             onChange={e => setFilterData({...filterData, end_date: e.target.value})}
                         />
                     </div>
-                    <div className='col-span-3 flex items-end'>
+                    <div className='col-span-3 flex items-end gap-2'>
                         <Button
                             type={'button'}
                             label={'Filter'}
                             className={'border bg-gray-700 text-white hover:bg-gray-800'}
                             onClick={handleFilter}
+                        />
+                        <Button
+                            type={'button'}
+                            label={'Export'}
+                            icon={<IconFileSpreadsheet size={18} />}
+                            className={'border bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800'}
+                            onClick={handleExport}
                         />
                     </div>
                 </div>

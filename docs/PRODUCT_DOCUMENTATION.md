@@ -1,398 +1,127 @@
-# Dokumentasi Fitur Product - POS Julia
+# Julia POS - Project Documentation
 
-Dokumentasi lengkap tentang fitur Product pada sistem Point of Sale.
+Julia POS adalah sistem Point of Sale (Kasir) berbasis web modern yang dirancang untuk efisiensi operasional toko atau kafe. Sistem ini mencakup manajemen inventaris yang kompleks (Gudang & Display), manajemen resep, hingga pelaporan keuangan real-time.
 
----
-
-## 1. Struktur Database
-
-### Tabel `products`
-
-| Kolom | Tipe | Deskripsi |
-|-------|------|-----------|
-| `id` | bigint | Primary key |
-| `category_id` | FK | Kategori produk |
-| `supplier_id` | FK (nullable) | Supplier produk |
-| `image` | varchar | Nama file gambar |
-| `barcode` | varchar (unique) | Kode barcode |
-| `title` | varchar | Nama produk |
-| `description` | text | Deskripsi |
-| `buy_price` | bigint | **Harga Beli/Modal** |
-| `sell_price` | bigint | **Harga Jual** |
-| `unit` | varchar | Satuan (pcs, kg, liter) |
-| `is_recipe` | boolean | Produk komposit/resep |
-| `is_supply` | boolean | Alat pendukung |
-| `is_ingredient` | boolean | Bahan baku |
-| `created_at` | timestamp | Waktu dibuat |
-| `updated_at` | timestamp | Waktu diupdate |
-
-### Tabel `product_ingredients`
-
-| Kolom | Tipe | Deskripsi |
-|-------|------|-----------|
-| `id` | bigint | Primary key |
-| `product_id` | FK | Produk utama (resep) |
-| `ingredient_id` | FK | Bahan/ingredient |
-| `quantity` | decimal(10,3) | Jumlah bahan per 1 produk |
+## 📑 Daftar Isi
+1. [Fitur Utama](#-fitur-utama)
+2. [Arsitektur Teknis](#-arsitektur-teknis)
+3. [Skema Database](#-skema-database)
+4. [ERD (Entity Relationship Diagram)](#-erd-entity-relationship-diagram)
+5. [Panduan Penggunaan](#-panduan-penggunaan)
 
 ---
 
-## 2. Jenis-Jenis Product
+## 🚀 Fitur Utama
 
-### 🛒 **Produk Reguler**
-Produk standar yang dijual langsung.
-- `is_recipe = false`
-- `is_supply = false`
-- `is_ingredient = false`
+### 1. Dashboard & Statistik
+Monitor performa toko secara real-time dengan metrik pendapatan, transaksi, kategori, dan tren penjualan dalam 7 hari terakhir.
 
-**Contoh:** Snack kemasan, minuman botol
+![Dashboard](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/dashboard_1766894369209.png)
 
-### 🍳 **Produk Resep (is_recipe = true)**
-Produk komposit yang dibuat dari bahan-bahan lain.
+### 2. Point of Sale (POS / Kasir)
+Antarmuka kasir yang cepat dan responsif dengan fitur pencarian produk, scan barcode, filter kategori, dan manajemen keranjang belanja yang optimis (tanpa reload).
 
-**Contoh:** Es Kopi Susu
-```
-Es Kopi Susu (1 porsi)
-├── Kopi Espresso: 50ml
-├── Susu: 100ml
-├── Gula: 10g
-└── Es Batu: 100g
-```
+![POS Interface](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/pos_1766894386547.png)
 
-**Penting:** Saat produk resep terjual, stok SEMUA ingredient akan dikurangi otomatis.
+### 3. Manajemen Produk & Variasi
+Mendukung berbagai jenis produk (Sellable, Recipe, Ingredient, Supply) dengan sistem variasi (seperti ukuran R, L, XL) yang masing-masing dapat memiliki harga dan resep tersendiri.
 
-### 🧪 **Bahan Baku (is_ingredient = true)**
-Produk yang bisa digunakan sebagai bahan di resep lain.
+![Manajemen Produk](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/products_1766894413226.png)
 
-**Contoh:** Susu, Kopi, Gula, Tepung
+### 4. Inventaris & Penggudangan
+Sistem stok terbagi menjadi dua lokasi: **Gudang (Warehouse)** untuk stok besar dan **Display** untuk stok di area penjualan. Fitur transfer stok antar gudang dan display memastikan akurasi data.
 
-### 🥤 **Alat Pendukung (is_supply = true)**
-Barang pendukung yang tidak dijual langsung dan **stoknya dipotong dari Warehouse** (bukan Display) saat transaksi.
+![Gudang](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/warehouses_1766894464064.png)
 
-**Contoh:** Cup plastik, Sedotan, Kantong belanja
+### 5. Laporan & Riwayat Stok
+Laporan penjualan lengkap dengan filter tanggal, pencarian, dan fitur ekspor ke Excel. Riwayat stok mencatat setiap pergerakan barang (In/Out/Transfer).
 
-> ⚠️ **Catatan Penting:** Saat produk resep terjual, supply akan dipotong dari warehouse pertama yang memiliki stok mencukupi. Pastikan stok supply selalu ada di warehouse.
-
-### 🔄 **Produk Dual-Role (is_ingredient = true + sell_price > 0)**
-Produk yang **BISA** digunakan sebagai bahan di resep lain, namun juga **BISA dijual langsung** di POS.
-
-**Contoh:** Apel Fuji, Coffee Beans, Fresh Milk
-
-```
-Apel Fuji (per kg)
-├── Dijual langsung: Rp 55.000/kg di POS
-└── Sebagai bahan: Jus Apel, Salad Buah, dll
-
-Coffee Beans (per kg)
-├── Dijual langsung: Rp 220.000/kg di POS
-└── Sebagai bahan: Espresso, Latte, dll
-```
-
-> 💡 **Tips:** Untuk membuat produk dual-role, set `is_ingredient = true` DAN isi `sell_price` dengan harga jual yang diinginkan. Produk akan muncul di POS dan juga bisa dipilih sebagai bahan di resep.
+![Laporan Penjualan](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/sales_reports_1766894515502.png)
 
 ---
 
-## 3. Relasi Product
+## 🛠 Arsitektur Teknis
 
-```
-Product
-│
-├──→ Category (belongsTo)
-│    Setiap produk punya 1 kategori
-│
-├──→ Supplier (belongsTo, nullable)
-│    Produk bisa punya supplier atau tidak
-│
-├──→ WarehouseStock (hasMany)
-│    Stok di berbagai gudang
-│
-├──→ DisplayStock (hasMany)
-│    Stok di berbagai etalase/toko
-│
-├──→ StockMovement (hasMany)
-│    Riwayat pergerakan stok
-│
-├──→ ProductIngredient (hasMany) - sebagai "parent recipe"
-│    Bahan-bahan yang dibutuhkan (jika is_recipe = true)
-│
-└──→ ProductIngredient (hasMany) - sebagai "ingredient"
-     Digunakan oleh resep lain (jika is_ingredient = true)
-```
+Sistem ini dibangun menggunakan stack modern yang menjamin kecepatan dan kemudahan pemeliharaan:
+- **Backend**: Laravel 11.x (PHP 8.2+)
+- **Frontend**: React.js dengan Inertia.js (Single Page Application feel)
+- **Database**: MySQL/PostgreSQL
+- **Styling**: Vanilla CSS & Tailwind CSS (Custom components)
+- **Komponen**: Shadcn UI inspired components, Tabler Icons
 
 ---
 
-## 4. Alur CRUD Product
+## 🗄 Skema Database
 
-### 4.1 CREATE - Tambah Produk Baru
+Sistem ini menggunakan struktur database relasional yang mendukung manajemen resep dan stok yang kompleks.
+
+| Tabel | Deskripsi |
+|-------|-----------|
+| `users` | Autentikasi dan hak akses (Role/Permission). |
+| `products` | Data master produk (SKU, Nama, Tipe). |
+| `product_variants` | Variasi produk (Size/Varian) dengan harga beli/jual sendiri. |
+| `product_variant_ingredients` | Resep (penggunaan bahan baku per varian). |
+| `categories` | Pengelompokan produk. |
+| `warehouses` | Lokasi penyimpanan stok utama. |
+| `warehouse_stocks` | Saldo stok per produk di gudang tertentu. |
+| `displays` | Lokasi stok di area POS. |
+| `display_stocks` | Saldo stok per produk di area POS. |
+| `transactions` | Header transaksi (ID, Total, Kasir). |
+| `transaction_details` | Item baris transaksi (Produk, Qty, Harga). |
+| `stock_movements` | Log audit setiap perubahan stok. |
+| `settings` | Konfigurasi sistem (Nama Toko, Logo). |
+
+---
+
+## 📊 ERD (Entity Relationship Diagram)
 
 ```mermaid
-flowchart TD
-    A[User klik "Tambah Produk"] --> B[Isi Form]
-    B --> C{Validasi Input}
-    C -->|Error| D[Tampilkan Error]
-    D --> B
-    C -->|Valid| E[Upload Gambar ke storage/products/]
-    E --> F[Simpan ke tabel products]
-    F --> G{is_recipe = true?}
-    G -->|Ya| H[Simpan ingredients ke product_ingredients]
-    G -->|Tidak| I[Redirect ke Index]
-    H --> I
-```
+erDiagram
+    USER ||--o{ TRANSACTION : "handles"
+    CATEGORY ||--o{ PRODUCT : "contains"
+    PRODUCT ||--|{ PRODUCT_VARIANT : "has"
+    PRODUCT_VARIANT ||--o{ PRODUCT_VARIANT_INGREDIENT : "uses"
+    PRODUCT_VARIANT ||--o{ TRANSACTION_DETAIL : "sold_as"
+    WAREHOUSE ||--o{ WAREHOUSE_STOCK : "holds"
+    DISPLAY ||--o{ DISPLAY_STOCK : "holds"
+    PRODUCT ||--o{ WAREHOUSE_STOCK : "stored_in"
+    PRODUCT ||--o{ DISPLAY_STOCK : "shown_on"
+    TRANSACTION ||--|{ TRANSACTION_DETAIL : "comprises"
+    TRANSACTION ||--o{ PROFIT : "generates"
+    PRODUCT ||--o{ STOCK_MOVEMENT : "logs"
+    SUPPLIER ||--o{ STOCK_MOVEMENT : "provides"
 
-**File terkait:**
-- Controller: `app/Http/Controllers/Apps/ProductController.php` → `store()`
-- View: `resources/js/Pages/Dashboard/Products/Create.jsx`
-
-### 4.2 READ - Lihat Daftar Produk
-
-```mermaid
-flowchart LR
-    A[User akses /products] --> B[Query products dengan relasi category]
-    B --> C[Pagination]
-    C --> D[Tampilkan tabel]
-```
-
-**Fitur:**
-- Pencarian berdasarkan nama
-- Pagination (default 10 per halaman)
-- Tampilkan gambar, barcode, nama, kategori, harga
-
-### 4.3 UPDATE - Edit Produk
-
-```mermaid
-flowchart TD
-    A[User klik Edit] --> B[Load data produk + ingredients]
-    B --> C[Tampilkan Form terisi]
-    C --> D[User edit data]
-    D --> E{Ada perubahan?}
-    E -->|Tidak| F[Toast: Tidak ada perubahan]
-    E -->|Ya| G[Konfirmasi Update]
-    G --> H{Gambar berubah?}
-    H -->|Ya| I[Hapus gambar lama, upload baru]
-    H -->|Tidak| J[Update data produk]
-    I --> J
-    J --> K{is_recipe = true?}
-    K -->|Ya| L[Hapus ingredients lama]
-    L --> M[Simpan ingredients baru]
-    K -->|Tidak| N[Hapus semua ingredients jika ada]
-    M --> O[Redirect ke Index]
-    N --> O
-```
-
-**File terkait:**
-- Controller: `ProductController.php` → `edit()`, `update()`
-- View: `resources/js/Pages/Dashboard/Products/Edit.jsx`
-
-### 4.4 DELETE - Hapus Produk
-
-```mermaid
-flowchart TD
-    A[User klik Hapus] --> B[Konfirmasi]
-    B -->|Batal| C[Cancel]
-    B -->|Ya| D[Hapus gambar dari storage]
-    D --> E[Hapus record product]
-    E --> F[Cascade: hapus product_ingredients]
-    F --> G[Redirect ke Index]
+    USER {
+        bigint id
+        string name
+        string email
+    }
+    PRODUCT {
+        bigint id
+        string name
+        string type
+        bigint category_id
+    }
+    PRODUCT_VARIANT {
+        bigint id
+        string name
+        decimal buy_price
+        decimal sell_price
+    }
+    TRANSACTION {
+        bigint id
+        string invoice
+        decimal grand_total
+        bigint cashier_id
+    }
 ```
 
 ---
 
-## 5. Alur Stok Product
+## ⚙️ Konfigurasi
+Anda dapat mengatur informasi toko pada menu **Pengaturan**. Logo yang diunggah akan muncul secara otomatis di Struk, Sidebar, dan Halaman POS.
 
-### 5.1 Struktur Lokasi Stok
-
-```
-                    ┌─────────────────┐
-                    │    SUPPLIER     │
-                    └────────┬────────┘
-                             │ Stock In (Pembelian)
-                             ▼
-                    ┌─────────────────┐
-                    │    WAREHOUSE    │ ← Gudang penyimpanan
-                    └────────┬────────┘
-                             │ Transfer
-                             ▼
-                    ┌─────────────────┐
-                    │     DISPLAY     │ ← Etalase/Toko
-                    └────────┬────────┘
-                             │ Penjualan
-                             ▼
-                    ┌─────────────────┐
-                    │   TRANSACTION   │ ← Transaksi POS
-                    └─────────────────┘
-```
-
-### 5.2 Pergerakan Stok (StockMovement)
-
-| Tipe | Dari | Ke | Deskripsi |
-|------|------|----|-----------|
-| Stock In | Supplier | Warehouse | Pembelian barang |
-| Transfer | Warehouse | Display | Kirim ke toko |
-| Transfer | Warehouse | Warehouse | Pindah gudang |
-| Sale | Display | Transaction | Penjualan |
-| Stock Out | Display | - | Barang rusak/expired |
+![Settings](file:///C:/Users/Nando/.gemini/antigravity/brain/fa6ca58b-dab4-4560-bb90-0e1aec8f2451/settings_1766894542067.png)
 
 ---
-
-## 6. Alur Transaksi & Pemotongan Stok
-
-### 6.1 Alur Lengkap Transaksi
-
-```mermaid
-flowchart TD
-    A[Kasir buka halaman POS] --> B[Scan/Pilih produk]
-    B --> C[Produk masuk ke Cart]
-    C --> D{Tambah produk lain?}
-    D -->|Ya| B
-    D -->|Tidak| E[Input diskon jika ada]
-    E --> F[Pilih metode pembayaran]
-    F --> G{Cash?}
-    G -->|Ya| H[Input jumlah uang]
-    G -->|Tidak| I[Pilih Payment Gateway]
-    H --> J[Hitung kembalian]
-    I --> J
-    J --> K[Klik Bayar]
-    K --> L[Proses Transaksi]
-    L --> M[Buat Invoice]
-    M --> N[Loop setiap item di Cart]
-    
-    N --> O[Simpan TransactionDetail]
-    O --> P[Hitung Profit]
-    P --> Q{Produk is_recipe?}
-    
-    Q -->|Tidak| R[Kurangi DisplayStock produk]
-    Q -->|Ya| S[Loop setiap ingredient]
-    S --> T[Kurangi DisplayStock ingredient]
-    T --> U[Catat StockMovement ingredient]
-    
-    R --> V[Catat StockMovement produk]
-    U --> V
-    V --> W{Item berikutnya?}
-    W -->|Ya| N
-    W -->|Tidak| X[Hapus Cart]
-    X --> Y[Tampilkan Receipt]
-```
-
-### 6.2 Contoh Kasus: Penjualan Produk Resep
-
-**Skenario:** Customer beli 2 Es Kopi Susu
-
-**Data Resep:**
-| Ingredient | Qty per porsi |
-|------------|---------------|
-| Kopi Espresso | 50ml |
-| Susu | 100ml |
-| Gula | 10g |
-
-**Stok Sebelum:**
-| Produk | Stok Display |
-|--------|--------------|
-| Kopi Espresso | 500ml |
-| Susu | 1000ml |
-| Gula | 200g |
-
-**Proses:**
-1. Es Kopi Susu × 2 ditambah ke cart
-2. Kasir proses pembayaran
-3. Sistem mendeteksi `is_recipe = true`
-4. Kurangi stok per ingredient:
-   - Kopi: 50ml × 2 = 100ml
-   - Susu: 100ml × 2 = 200ml
-   - Gula: 10g × 2 = 20g
-
-**Stok Sesudah:**
-| Produk | Stok Display |
-|--------|--------------|
-| Kopi Espresso | 400ml |
-| Susu | 800ml |
-| Gula | 180g |
-
----
-
-## 7. Perhitungan Profit
-
-### Formula Dasar
-
-```
-Profit = (Harga Jual × Qty) - (Harga Beli × Qty)
-```
-
-### Contoh Perhitungan
-
-| Produk | Buy Price | Sell Price | Qty | Total Buy | Total Sell | Profit |
-|--------|-----------|------------|-----|-----------|------------|--------|
-| Es Kopi | Rp 8.000 | Rp 15.000 | 2 | Rp 16.000 | Rp 30.000 | Rp 14.000 |
-| Snack | Rp 5.000 | Rp 7.000 | 3 | Rp 15.000 | Rp 21.000 | Rp 6.000 |
-| **Total** | | | | **Rp 31.000** | **Rp 51.000** | **Rp 20.000** |
-
-### Kode Perhitungan (TransactionController.php)
-
-```php
-foreach ($carts as $cart) {
-    // Hitung profit per item
-    $total_buy_price = $cart->product->buy_price * $cart->qty;
-    $total_sell_price = $cart->product->sell_price * $cart->qty;
-    $profits = $total_sell_price - $total_buy_price;
-
-    // Simpan ke tabel profits
-    $transaction->profits()->create([
-        'transaction_id' => $transaction->id,
-        'total' => $profits,
-    ]);
-}
-```
-
-> ⚠️ **Catatan:** Untuk produk resep, profit dihitung dari `buy_price` produk jadi (Es Kopi Susu), BUKAN dari total harga ingredient. Pastikan `buy_price` produk resep mencerminkan biaya bahan + operasional.
-
----
-
-## 8. File-File Terkait
-
-### Backend (Laravel)
-
-| File | Fungsi |
-|------|--------|
-| `app/Models/Product.php` | Model dengan relasi dan accessor |
-| `app/Models/ProductIngredient.php` | Model pivot untuk resep |
-| `app/Http/Controllers/Apps/ProductController.php` | CRUD operations |
-| `app/Http/Controllers/Apps/TransactionController.php` | Pemotongan stok saat transaksi |
-| `database/migrations/2024_01_01_000002_create_products_table.php` | Schema database |
-
-### Frontend (React/Inertia)
-
-| File | Fungsi |
-|------|--------|
-| `resources/js/Pages/Dashboard/Products/Index.jsx` | Daftar produk |
-| `resources/js/Pages/Dashboard/Products/Create.jsx` | Form tambah produk |
-| `resources/js/Pages/Dashboard/Products/Edit.jsx` | Form edit produk |
-| `resources/js/Pages/Dashboard/POS/Index.jsx` | Halaman kasir/POS |
-
----
-
-## 9. Tips & Best Practices
-
-### Membuat Produk Resep
-
-1. Buat dulu semua ingredient sebagai produk dengan `is_ingredient = true`
-2. Buat produk resep dengan `is_recipe = true`
-3. Tambahkan ingredient dengan quantity yang benar
-4. Set `buy_price` = estimasi biaya bahan per porsi
-5. Set `sell_price` = harga jual ke customer
-
-### Manajemen Stok
-
-1. Stock In selalu ke **Warehouse** dulu
-2. Transfer ke **Display** untuk dijual
-3. Transaksi mengurangi stok dari **Display**
-4. Monitor produk dengan stok rendah di Dashboard
-
-### Perhitungan Modal yang Akurat
-
-Untuk produk resep, hitung manual:
-```
-buy_price Es Kopi = (Kopi × harga) + (Susu × harga) + (Gula × harga) + overhead
-```
-
----
-
-*Dokumentasi ini dibuat otomatis. Terakhir diupdate: Desember 2024*
+*Dokumentasi ini dihasilkan secara otomatis oleh sistem Julia POS.*

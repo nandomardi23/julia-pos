@@ -11,6 +11,7 @@ import {
     IconCoin,
     IconDatabaseOff,
     IconDiscount2,
+    IconFileSpreadsheet,
     IconReceipt2,
     IconShoppingBag,
     IconTrendingUp,
@@ -106,6 +107,11 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
             preserveScroll: true,
             preserveState: true,
         });
+    };
+
+    const handleExport = () => {
+        const params = new URLSearchParams(filterData).toString();
+        window.open(route("reports.sales.export") + "?" + params, "_blank");
     };
 
     const resetFilters = () => {
@@ -227,6 +233,13 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
                                     label="Filter"
                                     icon={<IconTrendingUp size={18} />}
                                     className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                />
+                                <Button
+                                    type="button"
+                                    label="Export"
+                                    icon={<IconFileSpreadsheet size={18} />}
+                                    className="flex-1 border bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800"
+                                    onClick={handleExport}
                                 />
                             </div>
                         </div>

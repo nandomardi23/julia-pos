@@ -7,8 +7,10 @@ use App\Models\Profit;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\User;
+use App\Exports\SalesExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SalesReportController extends Controller
 {
@@ -73,6 +75,29 @@ class SalesReportController extends Controller
             'filters' => $filters,
             'cashiers' => User::select('id', 'name')->orderBy('name')->get(),
         ]);
+    }
+
+    /**
+     * Export sales report to Excel.
+     */
+    public function export(Request $request)
+    {
+        $filters = [
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'invoice' => $request->input('invoice'),
+            'cashier_id' => $request->input('cashier_id'),
+        ];
+
+        $transactions = $this->applyFilters(
+            Transaction::query()
+                ->with(['cashier:id,name'])
+                ->withSum('details as total_items', 'qty')
+                ->withSum('profits as total_profit', 'total'),
+            $filters
+        )->orderByDesc('created_at')->get();
+
+        return Excel::download(new SalesExport($transactions), 'laporan_penjualan_' . date('Y-m-d') . '.xlsx');
     }
 
     /**

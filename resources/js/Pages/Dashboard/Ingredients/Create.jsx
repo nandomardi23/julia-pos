@@ -108,16 +108,6 @@ export default function Create({ categories }) {
                     <div className='col-span-12'>
                         <Input
                             type={'text'}
-                            label={'Kode/Barcode'}
-                            value={data.barcode}
-                            onChange={e => setData('barcode', e.target.value)}
-                            errors={errors.barcode}
-                            placeholder={'Kode bahan baku'}
-                        />
-                    </div>
-                    <div className='col-span-6'>
-                        <Input
-                            type={'text'}
                             label={'Nama Bahan Baku'}
                             value={data.title}
                             onChange={e => setData('title', e.target.value)}

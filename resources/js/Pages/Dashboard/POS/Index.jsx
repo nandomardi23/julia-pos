@@ -20,6 +20,7 @@ import {
     IconSun,
     IconTrash,
     IconX,
+    IconBrandLaravel,
 } from "@tabler/icons-react";
 
 export default function Index({
@@ -30,7 +31,7 @@ export default function Index({
     paymentGateways = [],
     defaultPaymentGateway = "cash",
 }) {
-    const { auth, errors } = usePage().props;
+    const { auth, errors, app_settings: settings = {} } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
 
     const [search, setSearch] = useState("");
@@ -444,9 +445,22 @@ export default function Index({
                             <span className="hidden sm:inline">Kembali</span>
                         </button>
                         <div className="h-6 w-px bg-gray-300 dark:bg-gray-700" />
-                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                            KASIR
-                        </h1>
+                        <div className="flex items-center gap-2">
+                            {settings.store_logo ? (
+                                <img 
+                                    src={`/storage/settings/${settings.store_logo}`} 
+                                    className="w-7 h-7 object-contain"
+                                    alt="Logo"
+                                />
+                            ) : (
+                                <div className="p-1 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+                                    <IconBrandLaravel size={18} strokeWidth={2} />
+                                </div>
+                            )}
+                            <h1 className="text-lg font-bold text-gray-900 dark:text-white uppercase truncate max-w-[150px] sm:max-w-none">
+                                {settings.store_name || "KASIR"}
+                            </h1>
+                        </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">

@@ -290,8 +290,13 @@ class ProductController extends Controller
         /**
          * validate
          */
+        $isSellableOrRecipe = in_array($request->product_type, [Product::TYPE_SELLABLE, Product::TYPE_RECIPE]);
+
         $request->validate([
-            'sku' => 'required|unique:products,sku,' . $product->id,
+            'sku' => [
+                $isSellableOrRecipe ? 'required' : 'nullable',
+                'unique:products,sku,' . $product->id
+            ],
             'barcode' => 'nullable|unique:products,barcode,' . $product->id,
             'title' => 'required',
             'description' => 'required',

@@ -108,6 +108,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/stock-movements', [StockMovementController::class, 'index'])
         ->middleware('permission:stock-movements-access')
         ->name('stock-movements.index');
+    Route::get('/stock-movements/export', [StockMovementController::class, 'export'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.export');
     Route::get('/stock-movements/create', [StockMovementController::class, 'create'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.create');
@@ -148,6 +151,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->name('stock-movements.processImport');
 
     // Transaction routes (print and history only)
+    Route::get('/transactions', fn() => redirect()->route('transactions.history'));
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
@@ -166,9 +170,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // Application Settings Routes
     Route::get('/settings', [\App\Http\Controllers\Apps\SettingsController::class, 'index'])->middleware('permission:payment-settings-access')->name('settings.index');
     Route::put('/settings', [\App\Http\Controllers\Apps\SettingsController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.update');
+    Route::get('/settings/backup', [\App\Http\Controllers\Apps\BackupController::class, 'download'])->middleware('permission:payment-settings-access')->name('settings.backup');
 
     //reports
     Route::get('/reports/sales', [SalesReportController::class, 'index'])->middleware('permission:reports-access')->name('reports.sales.index');
+    Route::get('/reports/sales/export', [SalesReportController::class, 'export'])->middleware('permission:reports-access')->name('reports.sales.export');
     Route::get('/reports/profits', [ProfitReportController::class, 'index'])->middleware('permission:profits-access')->name('reports.profits.index');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

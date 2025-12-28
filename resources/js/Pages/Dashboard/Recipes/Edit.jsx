@@ -30,6 +30,7 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
     const { data, setData, post, processing } = useForm({
         _method: 'PUT',
         image: '',
+        sku: recipe.sku || '',
         barcode: recipe.barcode || '',
         title: recipe.title || '',
         category_id: recipe.category_id || '',
@@ -95,7 +96,8 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
         const formData = new FormData()
         formData.append('_method', 'PUT')
         if (data.image) formData.append('image', data.image)
-        formData.append('barcode', data.barcode)
+        formData.append('sku', data.sku || '')
+        formData.append('barcode', data.barcode || '')
         formData.append('title', data.title)
         formData.append('category_id', data.category_id)
         formData.append('description', data.description || '')
@@ -168,10 +170,21 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
                         <div className='col-span-6'>
                             <Input
                                 type={'text'}
-                                label={'Kode/Barcode'}
+                                label={'SKU (otomatis)'}
+                                value={data.sku}
+                                onChange={e => setData('sku', e.target.value)}
+                                errors={errors.sku}
+                                placeholder={'Kosongkan untuk auto-generate'}
+                            />
+                        </div>
+                        <div className='col-span-6'>
+                            <Input
+                                type={'text'}
+                                label={'Barcode (opsional)'}
                                 value={data.barcode}
                                 onChange={e => setData('barcode', e.target.value)}
                                 errors={errors.barcode}
+                                placeholder={'EAN-13 untuk scan'}
                             />
                         </div>
                         <div className='col-span-6'>

@@ -1,12 +1,12 @@
 import React from "react";
 import { usePage } from "@inertiajs/react";
-import { IconBrandReact, IconX } from "@tabler/icons-react";
+import { IconBrandLaravel, IconBrandReact, IconX } from "@tabler/icons-react";
 import LinkItem from "@/Layouts/Partials/LinkItem";
 import LinkItemDropdown from "@/Layouts/Partials/LinkItemDropdown";
 import Menu from "@/Utils/Menu";
 
 export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMobileSidebarOpen }) {
-    const { auth } = usePage().props;
+    const { auth, app_settings: settings = {} } = usePage().props;
     const menuNavigation = Menu();
 
     const closeMobileSidebar = () => {
@@ -21,9 +21,20 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
             <div className={`${sidebarOpen ? 'w-[260px]' : 'w-[100px]'} hidden lg:block min-h-screen overflow-y-auto border-r transition-all duration-300 bg-white dark:bg-gray-950 dark:border-gray-900`}>
                 {sidebarOpen ? (
                     <>
-                        <div className="flex justify-center items-center px-6 py-2 h-16">
-                            <div className="text-2xl font-bold text-center leading-loose tracking-wider text-gray-900 dark:text-gray-200">
-                                KASIR
+                        <div className="flex items-center gap-3 px-6 py-2 h-16 border-b dark:border-gray-900 bg-gray-50/50 dark:bg-gray-950">
+                            {settings.store_logo ? (
+                                <img 
+                                    src={`/storage/settings/${settings.store_logo}`} 
+                                    className="w-8 h-8 object-contain"
+                                    alt="Logo"
+                                />
+                            ) : (
+                                <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+                                    <IconBrandLaravel size={20} strokeWidth={2} />
+                                </div>
+                            )}
+                            <div className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100 uppercase truncate">
+                                {settings.store_name || 'KASIR'}
                             </div>
                         </div>
                         <div className="w-full p-3 flex items-center gap-4 border-b border-t dark:bg-gray-950/50 dark:border-gray-900">
@@ -74,8 +85,18 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                     </>
                 ) : (
                     <>
-                        <div className="flex justify-center items-center px-6 py-2 h-16 border-b dark:border-gray-900">
-                            <IconBrandReact size={20} strokeWidth={1.5} className="sidebar-title" />
+                        <div className="flex justify-center items-center px-6 py-2 h-16 border-b dark:border-gray-900 bg-gray-50/50 dark:bg-gray-950">
+                            {settings.store_logo ? (
+                                <img 
+                                    src={`/storage/settings/${settings.store_logo}`} 
+                                    className="w-7 h-7 object-contain"
+                                    alt="Logo"
+                                />
+                            ) : (
+                                <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+                                    <IconBrandLaravel size={18} strokeWidth={2} />
+                                </div>
+                            )}
                         </div>
                         <div className='w-full px-6 py-3 flex justify-center items-center gap-4 border-b bg-white dark:bg-gray-950/50 dark:border-gray-900'>
                             <img src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} className='w-8 h-8 rounded-full' />
@@ -138,9 +159,22 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                     bg-white dark:bg-gray-950 border-r dark:border-gray-900 overflow-y-auto`}
             >
                 {/* Header with close button */}
-                <div className="flex justify-between items-center px-4 py-3 h-16 border-b dark:border-gray-900">
-                    <div className="text-xl font-bold text-gray-900 dark:text-gray-200">
-                        KASIR
+                <div className="flex items-center gap-3 px-4 py-3 h-16 border-b dark:border-gray-900 bg-gray-50/50 dark:bg-gray-950">
+                    <div className="flex items-center gap-2 flex-1">
+                        {settings.store_logo ? (
+                            <img 
+                                src={`/storage/settings/${settings.store_logo}`} 
+                                className="w-8 h-8 object-contain"
+                                alt="Logo"
+                            />
+                        ) : (
+                            <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+                                <IconBrandLaravel size={20} strokeWidth={2} />
+                            </div>
+                        )}
+                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100 uppercase truncate">
+                            {settings.store_name || 'KASIR'}
+                        </div>
                     </div>
                     <button 
                         onClick={closeMobileSidebar}

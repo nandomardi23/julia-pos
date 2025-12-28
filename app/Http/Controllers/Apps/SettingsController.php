@@ -34,18 +34,28 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'group' => 'required|string|in:store,receipt,sales,display,notification',
+            'group' => 'required|string|in:store,receipt,sales,maintenance',
             'settings' => 'required|array',
         ]);
 
         $group = $validated['group'];
         $settings = $validated['settings'];
 
+        // Remove logo from settings array to prevent saving it as a string
+        unset($settings['logo']);
+
         // Handle logo upload for store group
-        if ($group === 'store' && $request->hasFile('logo')) {
-            $logo = $request->file('logo');
+        if ($group === 'store' && $request->hasFile('settings.logo')) {
+            $logo = $request->file('settings.logo');
             $logoName = 'store_logo.' . $logo->getClientOriginalExtension();
-            $logo->storeAs('public/settings', $logoName);
+            
+            // Delete old logo if exists with different extension
+            $oldLogo = Setting::get('store_logo');
+            if ($oldLogo && $oldLogo !== $logoName) {
+                Storage::disk('public')->delete('settings/' . $oldLogo);
+            }
+
+            $logo->storeAs('settings', $logoName, 'public');
             $settings['store_logo'] = $logoName;
         }
 

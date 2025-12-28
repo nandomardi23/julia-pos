@@ -43,7 +43,8 @@ export default function Create({ categories }) {
         description: '',
         buy_price: '',
         sell_price: '',
-        unit: 'pcs'
+        unit: 'pcs',
+        product_type: 'sellable'
     })
 
     const [selectedCategory, setSelectedCategory] = useState(null)

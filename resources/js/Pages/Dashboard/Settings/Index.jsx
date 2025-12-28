@@ -14,15 +14,17 @@ import {
     IconShoppingCart, 
     IconPalette, 
     IconBell,
-    IconDeviceFloppy
+    IconPhoto,
+    IconDeviceFloppy,
+    IconDatabaseExport,
+    IconTool
 } from '@tabler/icons-react'
 
 const tabs = [
     { id: 'store', label: 'Informasi Toko', icon: IconBuildingStore },
     { id: 'receipt', label: 'Pengaturan Struk', icon: IconReceipt },
     { id: 'sales', label: 'Pengaturan Penjualan', icon: IconShoppingCart },
-    { id: 'display', label: 'Pengaturan Tampilan', icon: IconPalette },
-    { id: 'notification', label: 'Notifikasi', icon: IconBell },
+    { id: 'maintenance', label: 'Pemeliharaan', icon: IconTool },
 ]
 
 export default function Index({ settings }) {
@@ -31,11 +33,14 @@ export default function Index({ settings }) {
     // Form untuk masing-masing tab
     const storeForm = useForm({
         group: 'store',
+        _method: 'PUT',
         settings: {
             store_name: settings.store?.store_name || '',
             store_address: settings.store?.store_address || '',
             store_phone: settings.store?.store_phone || '',
             store_email: settings.store?.store_email || '',
+            store_logo: settings.store?.store_logo || null,
+            logo: null, // for file upload
         }
     })
 
@@ -57,29 +62,11 @@ export default function Index({ settings }) {
         }
     })
 
-    const displayForm = useForm({
-        group: 'display',
-        settings: {
-            default_theme: settings.display?.default_theme || 'system',
-            products_per_page: settings.display?.products_per_page || '12',
-        }
-    })
-
-    const notificationForm = useForm({
-        group: 'notification',
-        settings: {
-            notify_low_stock: settings.notification?.notify_low_stock === '1',
-            notification_email: settings.notification?.notification_email || '',
-        }
-    })
-
     const getActiveForm = () => {
         switch (activeTab) {
             case 'store': return storeForm
             case 'receipt': return receiptForm
             case 'sales': return salesForm
-            case 'display': return displayForm
-            case 'notification': return notificationForm
             default: return storeForm
         }
     }
@@ -87,10 +74,20 @@ export default function Index({ settings }) {
     const handleSubmit = (e) => {
         e.preventDefault()
         const form = getActiveForm()
-        form.put(route('settings.update'), {
-            onSuccess: () => toast.success('Pengaturan berhasil disimpan!'),
-            onError: () => toast.error('Gagal menyimpan pengaturan!'),
-        })
+        
+        // Use post for store tab to handle file upload correctly with _method simulation
+        if (activeTab === 'store') {
+            form.post(route('settings.update'), {
+                forceFormData: true,
+                onSuccess: () => toast.success('Pengaturan berhasil disimpan!'),
+                onError: () => toast.error('Gagal menyimpan pengaturan!'),
+            })
+        } else {
+            form.put(route('settings.update'), {
+                onSuccess: () => toast.success('Pengaturan berhasil disimpan!'),
+                onError: () => toast.error('Gagal menyimpan pengaturan!'),
+            })
+        }
     }
 
     const updateSetting = (key, value) => {
@@ -137,6 +134,49 @@ export default function Index({ settings }) {
                     {/* Tab 1: Informasi Toko */}
                     {activeTab === 'store' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2 space-y-4 mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Logo Toko
+                                </label>
+                                <div className="flex items-center gap-6">
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                            {storeForm.data.settings.logo ? (
+                                                <img 
+                                                    src={URL.createObjectURL(storeForm.data.settings.logo)} 
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            ) : storeForm.data.settings.store_logo ? (
+                                                <img 
+                                                    src={`/storage/settings/${storeForm.data.settings.store_logo}`} 
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            ) : (
+                                                <IconPhoto className="text-gray-400" size={32} />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            id="logo-upload"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => updateSetting('logo', e.target.files[0])}
+                                        />
+                                        <label 
+                                            htmlFor="logo-upload"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                                        >
+                                            <IconPhoto size={18} />
+                                            Pilih Logo
+                                        </label>
+                                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                            Rekomendasi ukuran 512x512px. Format PNG, JPG, GIF max 2MB.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="md:col-span-2">
                                 <Input
                                     label="Nama Toko"
@@ -238,66 +278,40 @@ export default function Index({ settings }) {
                         </div>
                     )}
 
-                    {/* Tab 4: Pengaturan Tampilan */}
-                    {activeTab === 'display' && (
-                        <div className="space-y-4">
-                            <Select
-                                label="Tema Default"
-                                value={displayForm.data.settings.default_theme}
-                                onChange={(e) => updateSetting('default_theme', e.target.value)}
-                            >
-                                <option value="system">Ikuti Sistem</option>
-                                <option value="light">Terang</option>
-                                <option value="dark">Gelap</option>
-                            </Select>
-                            <Input
-                                label="Produk Per Halaman (POS)"
-                                type="number"
-                                value={displayForm.data.settings.products_per_page}
-                                onChange={(e) => updateSetting('products_per_page', e.target.value)}
-                                placeholder="12"
-                            />
-                        </div>
-                    )}
-
-                    {/* Tab 5: Notifikasi */}
-                    {activeTab === 'notification' && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="notify_low_stock"
-                                    checked={notificationForm.data.settings.notify_low_stock}
-                                    onChange={(e) => updateSetting('notify_low_stock', e.target.checked)}
-                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <label htmlFor="notify_low_stock" className="text-sm text-gray-700 dark:text-gray-300">
-                                    Aktifkan notifikasi stok rendah
-                                </label>
+                    {/* Tab 4: Pemeliharaan */}
+                    {activeTab === 'maintenance' && (
+                        <div className="space-y-6">
+                            <div className="p-4 border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900/30 rounded-lg">
+                                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
+                                    <IconDatabaseExport size={18} />
+                                    Backup Database
+                                </h4>
+                                <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
+                                    Unduh salinan basis data Anda untuk cadangan. File ini berisi semua data produk, transaksi, dan pengaturan.
+                                </p>
+                                <a 
+                                    href={route('settings.backup')}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                    <IconDatabaseExport size={18} />
+                                    Download Backup (.sql)
+                                </a>
                             </div>
-                            <Input
-                                label="Email Notifikasi"
-                                type="email"
-                                value={notificationForm.data.settings.notification_email}
-                                onChange={(e) => updateSetting('notification_email', e.target.value)}
-                                placeholder="admin@example.com"
-                            />
-                            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
-                                Email untuk menerima notifikasi sistem (opsional)
-                            </p>
                         </div>
                     )}
 
                     {/* Submit Button */}
-                    <div className="mt-6 pt-4 border-t dark:border-gray-800">
-                        <Button
-                            type="submit"
-                            label="Simpan Pengaturan"
-                            icon={<IconDeviceFloppy size={18} />}
-                            className="bg-blue-600 text-white hover:bg-blue-700"
-                            disabled={getActiveForm().processing}
-                        />
-                    </div>
+                    {activeTab !== 'maintenance' && (
+                        <div className="mt-6 pt-4 border-t dark:border-gray-800">
+                            <Button
+                                type="submit"
+                                label="Simpan Pengaturan"
+                                icon={<IconDeviceFloppy size={18} />}
+                                className="bg-blue-600 text-white hover:bg-blue-700"
+                                disabled={getActiveForm().processing}
+                            />
+                        </div>
+                    )}
                 </form>
             </Card>
         </>

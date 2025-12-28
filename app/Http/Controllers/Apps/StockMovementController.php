@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Exports\StockImportTemplateExport;
+use App\Exports\StockMovementsExport;
 use App\Imports\StockImport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -64,6 +65,50 @@ class StockMovementController extends Controller
             'movements' => $movements,
             'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Export stock movements to Excel.
+     */
+    public function export(Request $request)
+    {
+        $filters = [
+            'product' => $request->input('product'),
+            'type' => $request->input('type'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+        ];
+
+        $movements = StockMovement::query()
+            ->with(['product:id,title,barcode,sku', 'user:id,name', 'supplier:id,name,company'])
+            ->when($filters['product'], function ($query, $product) {
+                $query->whereHas('product', function ($q) use ($product) {
+                    $q->where('title', 'like', '%' . $product . '%')
+                        ->orWhere('barcode', 'like', '%' . $product . '%')
+                        ->orWhere('sku', 'like', '%' . $product . '%');
+                });
+            })
+            ->when($filters['type'], function ($query, $type) {
+                if ($type === 'in') {
+                    $query->where('to_type', 'warehouse');
+                } elseif ($type === 'transfer') {
+                    $query->where('from_type', 'warehouse')->where('to_type', 'display');
+                } elseif ($type === 'sale') {
+                    $query->where('to_type', 'transaction');
+                } elseif ($type === 'stockout') {
+                    $query->where('to_type', 'out');
+                }
+            })
+            ->when($filters['start_date'], function ($query, $date) {
+                $query->whereDate('created_at', '>=', $date);
+            })
+            ->when($filters['end_date'], function ($query, $date) {
+                $query->whereDate('created_at', '<=', $date);
+            })
+            ->latest()
+            ->get();
+
+        return Excel::download(new StockMovementsExport($movements), 'riwayat_stok_' . date('Y-m-d') . '.xlsx');
     }
 
     /**

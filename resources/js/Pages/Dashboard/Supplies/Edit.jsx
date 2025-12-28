@@ -109,15 +109,6 @@ export default function Edit({ supply, categories, priceHistories = [] }) {
                     <div className='col-span-12'>
                         <Input
                             type={'text'}
-                            label={'Kode/Barcode'}
-                            value={data.barcode}
-                            onChange={e => setData('barcode', e.target.value)}
-                            errors={errors.barcode}
-                        />
-                    </div>
-                    <div className='col-span-6'>
-                        <Input
-                            type={'text'}
                             label={'Nama Supply'}
                             value={data.title}
                             onChange={e => setData('title', e.target.value)}

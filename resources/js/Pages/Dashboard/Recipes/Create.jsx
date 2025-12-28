@@ -19,6 +19,7 @@ export default function Create({ categories, ingredients, supplies }) {
 
     const { data, setData, post, processing } = useForm({
         image: '',
+        sku: '',
         barcode: '',
         title: '',
         category_id: '',
@@ -85,13 +86,31 @@ export default function Create({ categories, ingredients, supplies }) {
     const submit = (e) => {
         e.preventDefault()
         
-        const formData = {
-            ...data,
-            variants: variants
-        }
+        // Manual FormData because Inertia's post with 'data' param sometimes struggles with deep arrays
+        const formData = new FormData()
+        if (data.image) formData.append('image', data.image)
+        formData.append('sku', data.sku || '')
+        formData.append('barcode', data.barcode || '')
+        formData.append('title', data.title)
+        formData.append('category_id', data.category_id)
+        formData.append('description', data.description || '')
+        formData.append('buy_price', data.buy_price || 0)
+        formData.append('sell_price', data.sell_price)
         
-        post(route('recipes.store'), {
-            data: formData,
+        // Add variants and ingredients
+        variants.forEach((variant, vIndex) => {
+            formData.append(`variants[${vIndex}][name]`, variant.name)
+            formData.append(`variants[${vIndex}][buy_price]`, variant.buy_price || 0)
+            formData.append(`variants[${vIndex}][sell_price]`, variant.sell_price)
+            
+            variant.ingredients.forEach((ing, iIndex) => {
+                formData.append(`variants[${vIndex}][ingredients][${iIndex}][ingredient_id]`, ing.ingredient_id)
+                formData.append(`variants[${vIndex}][ingredients][${iIndex}][quantity]`, ing.quantity)
+            })
+        })
+
+        router.post(route('recipes.store'), formData, {
+            forceFormData: true,
             onSuccess: () => {
                 toast.success('Resep berhasil ditambahkan!')
             },
@@ -136,11 +155,21 @@ export default function Create({ categories, ingredients, supplies }) {
                         <div className='col-span-6'>
                             <Input
                                 type={'text'}
-                                label={'Kode/Barcode'}
+                                label={'SKU (otomatis)'}
+                                value={data.sku}
+                                onChange={e => setData('sku', e.target.value)}
+                                errors={errors.sku}
+                                placeholder={'Kosongkan untuk auto-generate'}
+                            />
+                        </div>
+                        <div className='col-span-6'>
+                            <Input
+                                type={'text'}
+                                label={'Barcode (opsional)'}
                                 value={data.barcode}
                                 onChange={e => setData('barcode', e.target.value)}
                                 errors={errors.barcode}
-                                placeholder={'Kode resep'}
+                                placeholder={'EAN-13 untuk scan'}
                             />
                         </div>
                         <div className='col-span-6'>

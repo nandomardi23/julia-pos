@@ -112,17 +112,20 @@ class TransactionController extends Controller
      */
     public function store(Request $request, PaymentGatewayManager $paymentGatewayManager)
     {
-        
-        $paymentGateway = $request->input('payment_gateway');
-        if ($paymentGateway) {
-            $paymentGateway = strtolower($paymentGateway);
+        // Accept either payment_gateway (for gateway payments) or payment_method (for display)
+        $paymentMethod = $request->input('payment_method') ?? $request->input('payment_gateway');
+        if ($paymentMethod) {
+            $paymentMethod = strtolower($paymentMethod);
         }
         $paymentSetting = null;
 
-        if ($paymentGateway) {
+        // Only check gateway for external payments (midtrans, xendit, etc)
+        $isExternalGateway = $paymentMethod && !in_array($paymentMethod, ['cash', 'transfer', 'qris']);
+        
+        if ($isExternalGateway) {
             $paymentSetting = PaymentSetting::first();
 
-            if (!$paymentSetting || !$paymentSetting->isGatewayReady($paymentGateway)) {
+            if (!$paymentSetting || !$paymentSetting->isGatewayReady($paymentMethod)) {
                 return redirect()
                     ->route('pos.index')
                     ->with('error', 'Gateway pembayaran belum dikonfigurasi.');
@@ -136,7 +139,7 @@ class TransactionController extends Controller
         }
 
         $invoice = 'TRX-' . Str::upper($random);
-        $isCashPayment = empty($paymentGateway);
+        $isCashPayment = empty($paymentMethod) || $paymentMethod === 'cash';
         $cashAmount = $isCashPayment ? $request->cash : $request->grand_total;
         $changeAmount = $isCashPayment ? $request->change : 0;
 
@@ -145,7 +148,7 @@ class TransactionController extends Controller
             $invoice,
             $cashAmount,
             $changeAmount,
-            $paymentGateway,
+            $paymentMethod,
             $isCashPayment
         ) {
             $transaction = Transaction::create([
@@ -155,7 +158,7 @@ class TransactionController extends Controller
                 'change' => $changeAmount,
                 'discount' => $request->discount,
                 'grand_total' => $request->grand_total,
-                'payment_method' => $paymentGateway ?: 'cash',
+                'payment_method' => $paymentMethod ?: 'cash',
                 'payment_status' => $isCashPayment ? 'paid' : 'pending',
             ]);
 
@@ -225,9 +228,9 @@ class TransactionController extends Controller
             return $transaction->fresh();
         });
 
-        if ($paymentGateway) {
+        if ($isExternalGateway) {
             try {
-                $paymentResponse = $paymentGatewayManager->createPayment($transaction, $paymentGateway, $paymentSetting);
+                $paymentResponse = $paymentGatewayManager->createPayment($transaction, $paymentMethod, $paymentSetting);
 
                 $transaction->update([
                     'payment_reference' => $paymentResponse['reference'] ?? null,
@@ -241,6 +244,20 @@ class TransactionController extends Controller
         }
 
         return to_route('transactions.print', $transaction->invoice);
+    }
+
+    /**
+     * Display transaction detail.
+     */
+    public function show($invoice)
+    {
+        $transaction = Transaction::with(['details.product', 'cashier'])
+            ->where('invoice', $invoice)
+            ->firstOrFail();
+
+        return Inertia::render('Dashboard/Transactions/Show', [
+            'transaction' => $transaction
+        ]);
     }
 
     public function print($invoice)

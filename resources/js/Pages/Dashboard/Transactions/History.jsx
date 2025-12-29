@@ -193,7 +193,7 @@ const History = ({ transactions, filters }) => {
                                         <Table.Td>
                                             <div className="flex items-center justify-center gap-1">
                                                 <Link
-                                                    href={route('transactions.print', transaction.invoice)}
+                                                    href={route('transactions.show', transaction.invoice)}
                                                     className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
                                                     title="Lihat Detail"
                                                 >

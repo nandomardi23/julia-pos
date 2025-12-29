@@ -53,7 +53,7 @@ export default function AuthDropdown({ auth, isMobile }) {
             {isMobile === false ?
                 <Menu className='relative z-10' as="div">
                     <Menu.Button className='flex items-center rounded-full'>
-                        <img src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} alt={auth.user.name} className='w-10 h-10 rounded-full' />
+                        <img src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} alt={auth.user.name} className='w-10 h-10 rounded-full' />
                     </Menu.Button>
                     <Transition
                         enter="transition duration-100 ease-out"
@@ -65,11 +65,13 @@ export default function AuthDropdown({ auth, isMobile }) {
                     >
                         <Menu.Items className='absolute rounded-lg w-48 border mt-2 py-2 right-0 z-[100] bg-white dark:bg-gray-950 dark:border-gray-900'>
                             <div className='flex flex-col gap-1.5 divide-y divide-gray-100 dark:divide-gray-900'>
-                                {/* <Menu.Item>
-                                    <Link href="/apps/profile" className='px-3 py-1.5 text-sm flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'>
-                                        <IconUserCog strokeWidth={'1.5'} size={'20'} /> Profile
-                                    </Link>
-                                </Menu.Item> */}
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <Link href={route('profile.edit')} className={`px-3 py-1.5 text-sm flex items-center gap-2 ${active ? 'text-gray-900 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>
+                                            <IconUserCog strokeWidth={'1.5'} size={'20'} /> Profile
+                                        </Link>
+                                    )}
+                                </Menu.Item>
                                 <Menu.Item>
                                     <button onClick={logout} className='px-3 py-1.5 text-sm flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'>
                                         <IconLogout strokeWidth={'1.5'} size={'20'} />
@@ -83,7 +85,7 @@ export default function AuthDropdown({ auth, isMobile }) {
                 :
                 <div ref={dropdownRef}>
                     <button className="flex items-center group" onClick={() => setIsToggle(!isToggle)}>
-                        <img src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} alt={auth.user.name} className='w-10 h-10 rounded-full' />
+                        <img src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} alt={auth.user.name} className='w-10 h-10 rounded-full' />
                     </button>
                     <div className={`${isToggle ? 'translate-x-0 opacity-100' : '-translate-x-full'} fixed top-0 left-0 z-50 w-[300px] h-full transition-all duration-300 transform border-r bg-white dark:bg-gray-950 dark:border-gray-900`}>
                         <div className="flex justify-center items-center px-6 py-2 h-16">
@@ -93,7 +95,7 @@ export default function AuthDropdown({ auth, isMobile }) {
                         </div>
                         <div className="w-full p-3 flex items-center gap-4 border-b border-t dark:bg-gray-950/50 dark:border-gray-900">
                             <img
-                                src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name}
+                                src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name}
                                 className="w-12 h-12 rounded-full"
                             />
                             <div className="flex flex-col gap-0.5">

@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, useForm, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 
 export default function Login({ status, canResetPassword }) {
+    const { app_settings: settings = {} } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -30,9 +31,17 @@ export default function Login({ status, canResetPassword }) {
                 <div className="flex items-center justify-center p-8">
                     <div className="w-full max-w-md">
                         <div className="mb-8">
-                            <ApplicationLogo className="w-16 h-16 mb-4" />
+                            {settings.store_logo ? (
+                                <img 
+                                    src={`/storage/settings/${settings.store_logo}`} 
+                                    alt={settings.store_name || 'Logo'}
+                                    className="w-16 h-16 mb-4 object-contain"
+                                />
+                            ) : (
+                                <ApplicationLogo className="w-16 h-16 mb-4" />
+                            )}
                             <h1 className="text-3xl font-bold">
-                                Aplikasi Kasir
+                                {settings.store_name || 'Aplikasi Kasir'}
                             </h1>
                             <p className="text-gray-600 dark:text-gray-400">
                                 Masuk ke Dashboard

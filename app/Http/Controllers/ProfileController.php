@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +19,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->avatar_url,
+            ],
         ]);
     }
 
@@ -29,15 +39,36 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        
+        $user->fill($request->safe()->only(['name', 'email']));
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar
+            if ($user->avatar) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            }
 
-        return Redirect::route('profile.edit');
+            $avatar = $request->file('avatar');
+            $avatarName = $user->id . '_' . time() . '.' . $avatar->getClientOriginalExtension();
+            $avatar->storeAs('avatars', $avatarName, 'public');
+            $user->avatar = $avatarName;
+        }
+
+        // Handle avatar removal
+        if ($request->boolean('remove_avatar') && $user->avatar) {
+            Storage::disk('public')->delete('avatars/' . $user->avatar);
+            $user->avatar = null;
+        }
+
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
@@ -50,6 +81,11 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        // Delete avatar file
+        if ($user->avatar) {
+            Storage::disk('public')->delete('avatars/' . $user->avatar);
+        }
 
         Auth::logout();
 

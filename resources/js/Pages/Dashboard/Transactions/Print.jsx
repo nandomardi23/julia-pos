@@ -1,300 +1,208 @@
-import React from "react";
-import { Head, Link } from "@inertiajs/react";
-import {
-    IconArrowLeft,
-    IconPrinter,
-    IconExternalLink,
-} from "@tabler/icons-react";
+import React, { useEffect } from "react";
+import { Head, Link, usePage } from "@inertiajs/react";
+import { IconArrowLeft, IconPrinter } from "@tabler/icons-react";
 
 export default function Print({ transaction }) {
+    const { app_settings: settings = {} } = usePage().props;
+
+    useEffect(() => {
+        // Auto print after a short delay
+        const timer = setTimeout(() => {
+            window.print();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
+
     const formatPrice = (price = 0) =>
-        Number(price || 0).toLocaleString("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
+        Number(price || 0).toLocaleString("id-ID");
+
+    const formatDate = (value) =>
+        new Date(value).toLocaleDateString("id-ID", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
         });
 
-    const formatDateTime = (value) =>
-        new Date(value).toLocaleString("id-ID", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
+    const formatTime = (value) =>
+        new Date(value).toLocaleTimeString("id-ID", {
             hour: "2-digit",
             minute: "2-digit",
+            second: "2-digit",
         });
 
     const items = transaction?.details ?? [];
+    const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
 
     const paymentLabels = {
-        cash: "Tunai",
-        midtrans: "Midtrans",
-        xendit: "Xendit",
+        cash: "Cash",
+        transfer: "Transfer",
+        qris: "QRIS",
     };
-    const paymentMethodKey = (
-        transaction?.payment_method || "cash"
-    ).toLowerCase();
-    const paymentMethodLabel = paymentLabels[paymentMethodKey] ?? "Tunai";
-
-    const paymentStatuses = {
-        paid: "Lunas",
-        pending: "Menunggu Pembayaran",
-        failed: "Pembayaran Gagal",
-        expired: "Pembayaran Kedaluwarsa",
-    };
-    const paymentStatusKey = (transaction?.payment_status || "").toLowerCase();
-    const paymentStatusLabel =
-        paymentStatuses[paymentStatusKey] ??
-        (paymentMethodKey === "cash" ? "Lunas" : "Menunggu Pembayaran");
-    const paymentStatusColor =
-        paymentStatusKey === "paid"
-            ? "text-emerald-600"
-            : paymentStatusKey === "failed"
-            ? "text-rose-600"
-            : "text-amber-600";
-
-    const isNonCash = paymentMethodKey !== "cash";
-    const showPaymentLink = isNonCash && transaction.payment_url;
+    const paymentMethodLabel = paymentLabels[transaction?.payment_method?.toLowerCase()] ?? "Cash";
 
     return (
         <>
-            <Head title="Resi Penjualan" />
+            <Head title="Struk Penjualan" />
 
-            <div className="min-h-screen bg-gray-100 py-8 px-4 print:bg-white print:p-0">
-                <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-                        <Link
-                            href={route("pos.index")}
-                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
-                        >
-                            <IconArrowLeft size={16} />
-                            Kembali ke kasir
-                        </Link>
+            {/* Print Styles */}
+            <style>{`
+                @media print {
+                    @page {
+                        size: 80mm auto;
+                        margin: 0;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        -webkit-print-color-adjust: exact;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                    .receipt-container {
+                        width: 80mm;
+                        margin: 0;
+                        padding: 8px;
+                        box-shadow: none;
+                        border: none;
+                    }
+                }
+                .receipt-container {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    line-height: 1.4;
+                }
+                .divider {
+                    border-top: 1px dashed #333;
+                    margin: 8px 0;
+                }
+            `}</style>
 
-                        {showPaymentLink && (
-                            <a
-                                href={transaction.payment_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-full border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
-                            >
-                                <IconExternalLink size={16} />
-                                Buka pembayaran
-                            </a>
+            <div className="min-h-screen bg-gray-100 py-8 px-4">
+                {/* Action Buttons */}
+                <div className="max-w-md mx-auto mb-4 flex items-center justify-between no-print">
+                    <Link
+                        href={route("pos.index")}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                    >
+                        <IconArrowLeft size={16} />
+                        Kembali
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
+                        <IconPrinter size={16} />
+                        Cetak
+                    </button>
+                </div>
+
+                {/* Receipt */}
+                <div className="receipt-container max-w-md mx-auto bg-white p-6 shadow-lg rounded-lg">
+                    {/* Header - Logo & Store Info */}
+                    <div className="text-center mb-4">
+                        {settings.store_logo ? (
+                            <img 
+                                src={`/storage/settings/${settings.store_logo}`}
+                                alt="Logo"
+                                className="w-16 h-16 mx-auto mb-2 object-contain"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded flex items-center justify-center">
+                                <span className="text-2xl font-bold text-gray-500">
+                                    {(settings.store_name || 'S').charAt(0)}
+                                </span>
+                            </div>
                         )}
-
-                        <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
-                        >
-                            <IconPrinter size={16} />
-                            Cetak resi
-                        </button>
+                        <h1 className="font-bold text-lg">{settings.store_name || 'Toko'}</h1>
+                        {settings.store_address && (
+                            <p className="text-xs text-gray-600">{settings.store_address}</p>
+                        )}
+                        {settings.store_phone && (
+                            <p className="text-xs text-gray-600">No. Telp {settings.store_phone}</p>
+                        )}
+                        <p className="text-xs text-gray-600">{transaction.invoice}</p>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-xl print:border-gray-400 print:shadow-none">
-                        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 bg-gray-50 px-6 py-5">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    No. Resi
-                                </p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {transaction.invoice}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    Tanggal dibuat -{" "}
-                                    {formatDateTime(transaction.created_at)}
-                                </p>
-                            </div>
+                    <div className="divider"></div>
 
-                            <div className="text-right text-sm text-gray-600">
-                                <p className="font-semibold text-gray-800">
-                                    Kasir
-                                </p>
-                                <p>{transaction.cashier?.name ?? "-"}</p>
-                                <p className="mt-3 font-semibold text-gray-800">
-                                    Metode Pembayaran
-                                </p>
-                                <p>{paymentMethodLabel}</p>
-                                <p className={`text-xs ${paymentStatusColor}`}>
-                                    {paymentStatusLabel}
-                                </p>
-                                {transaction.payment_reference && (
-                                    <p className="text-xs text-gray-400">
-                                        Ref: {transaction.payment_reference}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                    {/* Transaction Info */}
+                    <div className="flex justify-between text-xs mb-1">
+                        <span>{formatDate(transaction.created_at)}</span>
+                        <span>{transaction.cashier?.name || 'Kasir'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs mb-2">
+                        <span>{formatTime(transaction.created_at)}</span>
+                    </div>
 
-                        <div className="grid gap-4 border-b border-gray-100 px-6 py-5 md:grid-cols-2">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Pelanggan
-                                </p>
-                                <p className="mt-1 text-base font-semibold text-gray-900">
-                                    {transaction.customer?.name ?? "Umum"}
-                                </p>
-                                {transaction.customer?.address && (
-                                    <p className="text-sm text-gray-600">
-                                        {transaction.customer.address}
-                                    </p>
-                                )}
-                                {transaction.customer?.phone && (
-                                    <p className="text-sm text-gray-600">
-                                        {transaction.customer.phone}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="md:text-right">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Ringkasan Pembayaran
-                                </p>
-                                <dl className="mt-2 space-y-1 text-sm text-gray-600">
-                                    <div className="flex items-center justify-between md:justify-end md:gap-6">
-                                        <dt>Subtotal</dt>
-                                        <dd className="font-semibold text-gray-900">
-                                            {formatPrice(
-                                                transaction.grand_total +
-                                                    (transaction.discount || 0)
-                                            )}
-                                        </dd>
+                    <div className="divider"></div>
+
+                    {/* Items */}
+                    <div className="space-y-2 mb-2">
+                        {items.map((item, index) => {
+                            const qty = Number(item.qty) || 1;
+                            const price = Number(item.price) || 0;
+                            const subtotal = qty * price;
+
+                            return (
+                                <div key={item.id ?? index}>
+                                    <div className="font-semibold text-sm">
+                                        {index + 1}. {item.product?.title}
+                                        {item.variant_name && (
+                                            <span className="font-normal text-gray-600"> ({item.variant_name})</span>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between md:justify-end md:gap-6">
-                                        <dt>Diskon</dt>
-                                        <dd>
-                                            {formatPrice(transaction.discount)}
-                                        </dd>
+                                    <div className="flex justify-between text-xs pl-4">
+                                        <span>{qty} x {formatPrice(price)}</span>
+                                        <span>Rp {formatPrice(subtotal)}</span>
                                     </div>
-                                    <div className="flex items-center justify-between md:justify-end md:gap-6">
-                                        <dt>Total Bayar</dt>
-                                        <dd className="font-semibold text-gray-900">
-                                            {formatPrice(
-                                                transaction.grand_total
-                                            )}
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </div>
-                        </div>
-
-                        <div className="px-6 py-5">
-                            <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                                <table className="min-w-full divide-y divide-gray-100 text-sm">
-                                    <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-semibold">
-                                                #
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-semibold">
-                                                Produk
-                                            </th>
-                                            <th className="px-4 py-3 text-right font-semibold">
-                                                Harga
-                                            </th>
-                                            <th className="px-4 py-3 text-center font-semibold">
-                                                Qty
-                                            </th>
-                                            <th className="px-4 py-3 text-right font-semibold">
-                                                Subtotal
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50 text-gray-700">
-                                        {items.map((item, index) => {
-                                            const quantity =
-                                                Number(item.qty) || 1;
-                                            const unitPrice =
-                                                Number(item.price) || 0;
-                                            const subtotal =
-                                                unitPrice * quantity;
-                                            const unit = item.product?.unit || 'pcs';
-
-                                            return (
-                                                <tr key={item.id ?? index}>
-                                                    <td className="px-4 py-3">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <p className="font-semibold text-gray-900">
-                                                            {
-                                                                item.product
-                                                                    ?.title
-                                                            }
-                                                        </p>
-                                                        {item.product
-                                                            ?.barcode && (
-                                                            <p className="text-xs text-gray-500">
-                                                                {
-                                                                    item.product
-                                                                        .barcode
-                                                                }
-                                                            </p>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        {formatPrice(unitPrice)}
-                                                        <span className="text-xs text-gray-500">/{unit}</span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        {quantity} {unit}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                                                        {formatPrice(subtotal)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="mt-6 grid gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600 md:grid-cols-2">
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        Pembayaran
-                                    </p>
-                                    <dl className="mt-2 space-y-1">
-                                        <div className="flex items-center justify-between">
-                                            <dt>Status</dt>
-                                            <dd
-                                                className={`font-semibold ${paymentStatusColor}`}
-                                            >
-                                                {paymentStatusLabel}
-                                            </dd>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <dt>Uang diterima</dt>
-                                            <dd className="font-semibold text-gray-900">
-                                                {formatPrice(transaction.cash)}
-                                            </dd>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <dt>Kembalian</dt>
-                                            <dd className="font-semibold text-gray-900">
-                                                {formatPrice(
-                                                    transaction.change
-                                                )}
-                                            </dd>
-                                        </div>
-                                    </dl>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                        Catatan
-                                    </p>
-                                    <p className="mt-2 text-gray-700">
-                                        {isNonCash
-                                            ? "Bagikan tautan pembayaran ini kepada pelanggan dan tunggu konfirmasi sistem gateway."
-                                            : "Simpan resi ini sebagai bukti transaksi resmi. Silakan hubungi kasir jika terdapat kekeliruan."}
-                                    </p>
-                                </div>
-                            </div>
+                            );
+                        })}
+                    </div>
 
-                            <p className="mt-8 text-center text-xs uppercase tracking-[0.2em] text-gray-400">
-                                Terima kasih telah berbelanja
-                            </p>
+                    <div className="divider"></div>
+
+                    {/* Totals */}
+                    <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                            <span>Total QTY : {totalQty}</span>
                         </div>
+                        <div className="divider"></div>
+                        
+                        <div className="flex justify-between">
+                            <span>Sub Total</span>
+                            <span>Rp {formatPrice(transaction.grand_total + (transaction.discount || 0))}</span>
+                        </div>
+                        {(transaction.discount || 0) > 0 && (
+                            <div className="flex justify-between text-red-600">
+                                <span>Diskon</span>
+                                <span>- Rp {formatPrice(transaction.discount)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between font-bold text-base">
+                            <span>Total</span>
+                            <span>Rp {formatPrice(transaction.grand_total)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Bayar ({paymentMethodLabel})</span>
+                            <span>Rp {formatPrice(transaction.cash)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Kembali</span>
+                            <span>Rp {formatPrice(transaction.change)}</span>
+                        </div>
+                    </div>
+
+                    <div className="divider"></div>
+
+                    {/* Footer */}
+                    <div className="text-center text-xs text-gray-600 mt-4">
+                        <p className="font-semibold">Terimakasih Telah Berbelanja</p>
+                        {settings.store_website && (
+                            <p className="mt-2 text-gray-500">{settings.store_website}</p>
+                        )}
                     </div>
                 </div>
             </div>

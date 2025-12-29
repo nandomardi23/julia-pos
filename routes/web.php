@@ -156,8 +156,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     // Transaction routes (print and history only)
     Route::get('/transactions', fn() => redirect()->route('transactions.history'));
     Route::post('/transactions/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('transactions.store');
-    Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
+    Route::get('/transactions/{invoice}', [TransactionController::class, 'show'])->middleware('permission:transactions-access')->name('transactions.show');
+    Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::delete('/transactions/{invoice}', [TransactionController::class, 'destroy'])->middleware('permission:transactions-access')->name('transactions.destroy');
 
     // POS Routes

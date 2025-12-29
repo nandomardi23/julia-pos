@@ -21,7 +21,19 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
     ];
+
+    /**
+     * Get the avatar URL.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar) {
+            return asset('storage/avatars/' . $this->avatar);
+        }
+        return null;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

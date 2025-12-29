@@ -1,5 +1,5 @@
 import React from "react";
-import { usePage } from "@inertiajs/react";
+import { usePage, Link } from "@inertiajs/react";
 import { IconBrandLaravel, IconBrandReact, IconX } from "@tabler/icons-react";
 import LinkItem from "@/Layouts/Partials/LinkItem";
 import LinkItemDropdown from "@/Layouts/Partials/LinkItemDropdown";
@@ -37,8 +37,11 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                                 {settings.store_name || 'KASIR'}
                             </div>
                         </div>
-                        <div className="w-full p-3 flex items-center gap-4 border-b border-t dark:bg-gray-950/50 dark:border-gray-900">
-                            <img src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} className="w-12 h-12 rounded-full" />
+                        <Link 
+                            href={route('profile.edit')} 
+                            className="w-full p-3 flex items-center gap-4 border-b border-t dark:bg-gray-950/50 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                        >
+                            <img src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} className="w-12 h-12 rounded-full" />
                             <div className="flex flex-col gap-0.5">
                                 <div className="text-sm font-semibold capitalize text-gray-700 dark:text-gray-50">
                                     {auth.user.name}
@@ -47,7 +50,7 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                                     {auth.user.email}
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                         <div className="w-full flex flex-col overflow-y-auto">
                             {menuNavigation.map((item, index) => (
                                 item.details.some(detail => detail.permissions === true) && (
@@ -98,9 +101,9 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                                 </div>
                             )}
                         </div>
-                        <div className='w-full px-6 py-3 flex justify-center items-center gap-4 border-b bg-white dark:bg-gray-950/50 dark:border-gray-900'>
-                            <img src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} className='w-8 h-8 rounded-full' />
-                        </div>
+                        <Link href={route('profile.edit')} className='w-full px-6 py-3 flex justify-center items-center gap-4 border-b bg-white dark:bg-gray-950/50 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors'>
+                            <img src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} className='w-8 h-8 rounded-full' />
+                        </Link>
                         <div className="w-full flex flex-col overflow-y-auto items-center justify-center">
                             {menuNavigation.map((link, i) => {
                                 const visibleDetails = link.details.filter(
@@ -185,9 +188,12 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                 </div>
                 
                 {/* User Info */}
-                <div className="w-full p-3 flex items-center gap-4 border-b dark:bg-gray-950/50 dark:border-gray-900">
+                <Link 
+                    href={route('profile.edit')}
+                    className="w-full p-3 flex items-center gap-4 border-b dark:bg-gray-950/50 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                >
                     <img 
-                        src={auth.user.avatar ? auth.user.avatar : "https://ui-avatars.com/api/?name=" + auth.user.name} 
+                        src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} 
                         className="w-12 h-12 rounded-full" 
                     />
                     <div className="flex flex-col gap-0.5">
@@ -198,7 +204,7 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
                             {auth.user.email}
                         </div>
                     </div>
-                </div>
+                </Link>
                 
                 {/* Menu Items */}
                 <div className="w-full flex flex-col overflow-y-auto pb-20">

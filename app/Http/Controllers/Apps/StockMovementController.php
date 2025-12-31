@@ -376,8 +376,9 @@ class StockMovementController extends Controller
         ];
         
         if (in_array($validated['reason'], $lossReasons)) {
-            // Kerugian = quantity × buy_price
-            $lossAmount = $validated['quantity'] * $product->buy_price;
+            // Kerugian = quantity × (average_cost atau buy_price)
+            $costPerUnit = $product->average_cost ?: ($product->buy_price ?: 0);
+            $lossAmount = $validated['quantity'] * $costPerUnit;
         }
 
         DB::transaction(function () use ($validated, $stock, $fromType, $reasonLabel, $lossAmount) {

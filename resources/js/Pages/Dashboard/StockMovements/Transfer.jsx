@@ -58,7 +58,9 @@ export default function Transfer({ warehouses, displays, products }) {
     // Format products untuk react-select
     const productOptions = productsWithStock.map(product => ({
         value: product.id,
-        label: `${product.title} (${product.barcode})`
+        label: product.barcode 
+            ? `${product.title} (${product.barcode})` 
+            : product.title
     }))
 
     // Find selected product option

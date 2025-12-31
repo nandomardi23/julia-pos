@@ -73,7 +73,9 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
     // Format products untuk react-select
     const productOptions = filteredProducts.map(product => ({
         value: product.id,
-        label: `${product.title} (${product.barcode})`
+        label: product.barcode 
+            ? `${product.title} (${product.barcode})` 
+            : product.title
     }))
 
     // Find selected product option

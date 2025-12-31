@@ -23,10 +23,14 @@ export default function Create({ warehouses, products, suppliers }) {
     })
 
     // Format products untuk react-select
-    const productOptions = products.map(product => ({
-        value: product.id,
-        label: `${product.title} (${product.barcode}) - ${product.category?.name || 'Tanpa Kategori'}`
-    }))
+    const productOptions = products.map(product => {
+        const barcodeText = product.barcode ? ` (${product.barcode})` : '';
+        const categoryText = product.category?.name || 'Tanpa Kategori';
+        return {
+            value: product.id,
+            label: `${product.title}${barcodeText} - ${categoryText}`
+        };
+    })
 
     // Format suppliers untuk react-select
     const supplierOptions = suppliers.map(supplier => ({

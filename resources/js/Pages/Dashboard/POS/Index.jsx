@@ -24,23 +24,28 @@ import {
 } from "@tabler/icons-react";
 
 export default function Index({
-    products = [],
+    products = { data: [] },
     categories = [],
     carts = [],
     carts_total = 0,
     paymentGateways = [],
     defaultPaymentGateway = "cash",
+    filters = {},
 }) {
     const { auth, errors, app_settings: settings = {} } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
 
-    const [search, setSearch] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState(null);
+    // Get products data from paginated response
+    const productsList = products?.data || products || [];
+    const pagination = products?.links ? products : null;
+
+    const [search, setSearch] = useState(filters?.search || "");
+    const [selectedCategory, setSelectedCategory] = useState(
+        filters?.category ? categories.find(c => c.id == filters.category) : null
+    );
     const [discountInput, setDiscountInput] = useState("");
     const [discountType, setDiscountType] = useState("nominal");
     const [cashInput, setCashInput] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const PRODUCTS_PER_PAGE = 12;
     const [paymentMethod, setPaymentMethod] = useState(
         defaultPaymentGateway ?? "cash"
     );
@@ -92,25 +97,42 @@ export default function Index({
         setPaymentMethod(defaultPaymentGateway ?? "cash");
     }, [defaultPaymentGateway]);
 
-    // Filter products
-    const filteredProducts = useMemo(() => {
-        return products.filter((product) => {
-            const searchLower = search.toLowerCase();
-            const matchesSearch =
-                product.title.toLowerCase().includes(searchLower) ||
-                (product.barcode &&
-                    product.barcode.toLowerCase().includes(searchLower));
-            const matchesCategory =
-                !selectedCategory ||
-                product.category_id === selectedCategory.id;
-            return matchesSearch && matchesCategory;
-        });
-    }, [products, search, selectedCategory]);
+    // Debounced search to server
+    const searchTimeoutRef = useRef(null);
+    const handleSearchChange = (value) => {
+        setSearch(value);
+        
+        // Clear previous timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        
+        // Debounce 500ms before sending to server
+        searchTimeoutRef.current = setTimeout(() => {
+            router.get(route('pos.index'), {
+                search: value || undefined,
+                category: selectedCategory?.id || undefined,
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 500);
+    };
 
-    // Reset page when filter changes
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [search, selectedCategory]);
+    // Handle category change - immediate server request
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        router.get(route('pos.index'), {
+            search: search || undefined,
+            category: category?.id || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    // Products are already filtered from server
+    const filteredProducts = productsList;
 
     // Barcode scanner detection - auto-add when Enter is pressed after fast input
     useEffect(() => {
@@ -126,8 +148,8 @@ export default function Index({
             if (e.key === "Enter" && search.trim()) {
                 e.preventDefault();
                 
-                // Find product by exact barcode match
-                const product = products.find(
+                // Find product by exact barcode match from current products
+                const product = productsList.find(
                     (p) => p.barcode && p.barcode.toLowerCase() === search.trim().toLowerCase()
                 );
                 
@@ -144,17 +166,12 @@ export default function Index({
         
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [search, products, playBeep]);
+    }, [search, productsList, playBeep]);
 
-    // Paginated products
-    const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-    const paginatedProducts = useMemo(() => {
-        const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-        return filteredProducts.slice(
-            startIndex,
-            startIndex + PRODUCTS_PER_PAGE
-        );
-    }, [filteredProducts, currentPage]);
+    // Server-side pagination
+    const totalPages = pagination?.last_page || 1;
+    const currentServerPage = pagination?.current_page || 1;
+    const paginatedProducts = filteredProducts;
 
     const discount = useMemo(() => {
         const value = Number(discountInput) || 0;
@@ -496,12 +513,12 @@ export default function Index({
                                     type="text"
                                     placeholder="Cari produk atau scan barcode... (Enter untuk tambah)"
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                                 {search && (
                                     <button
-                                        onClick={() => setSearch("")}
+                                        onClick={() => handleSearchChange("")}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                     >
                                         <IconX size={16} />
@@ -512,7 +529,7 @@ export default function Index({
                             {/* Category Tabs */}
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                 <button
-                                    onClick={() => setSelectedCategory(null)}
+                                    onClick={() => handleCategoryChange(null)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                                         !selectedCategory
                                             ? "bg-blue-600 text-white"
@@ -524,9 +541,7 @@ export default function Index({
                                 {categories.map((category) => (
                                     <button
                                         key={category.id}
-                                        onClick={() =>
-                                            setSelectedCategory(category)
-                                        }
+                                        onClick={() => handleCategoryChange(category)}
                                         className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                                             selectedCategory?.id === category.id
                                                 ? "bg-blue-600 text-white"
@@ -620,21 +635,35 @@ export default function Index({
                                     </div>
 
                                     {/* Pagination */}
-                                    {totalPages > 1 && (
+                                    {pagination && totalPages > 1 && (
                                         <div className="flex justify-center items-center gap-2 mt-4 pt-4 border-t dark:border-gray-800">
                                             <button
-                                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                                disabled={currentPage === 1}
+                                                onClick={() => {
+                                                    if (pagination.prev_page_url) {
+                                                        router.get(pagination.prev_page_url, {}, {
+                                                            preserveState: true,
+                                                            preserveScroll: true,
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={!pagination.prev_page_url}
                                                 className="p-2 rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-700 disabled:opacity-50"
                                             >
                                                 <IconArrowLeft size={16} />
                                             </button>
                                             <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                {currentPage} / {totalPages}
+                                                {currentServerPage} / {totalPages}
                                             </span>
                                             <button
-                                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                                disabled={currentPage === totalPages}
+                                                onClick={() => {
+                                                    if (pagination.next_page_url) {
+                                                        router.get(pagination.next_page_url, {}, {
+                                                            preserveState: true,
+                                                            preserveScroll: true,
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={!pagination.next_page_url}
                                                 className="p-2 rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-700 disabled:opacity-50"
                                             >
                                                 <IconArrowRight size={16} />

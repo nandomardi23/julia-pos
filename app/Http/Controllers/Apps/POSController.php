@@ -16,31 +16,17 @@ use Inertia\Inertia;
 class POSController extends Controller
 {
     /**
-     * Display POS page with product cards
+     * Display POS page with product cards (paginated)
      */
-    public function index()
+    public function index(Request $request)
     {
         // Get active display (since we use single display)
         $display = Display::active()->first();
 
-        // Get products that have display stock (non-recipe products)
-        $products = collect();
-        if ($display) {
-            $displayStocks = DisplayStock::where('display_id', $display->id)
-                ->with(['product.category', 'product.variants'])
-                ->get();
-            
-            $products = $displayStocks->map(function ($stock) {
-                $product = $stock->product;
-                // Skip recipe products from display stock (they are handled separately)
-                if ($product->product_type === Product::TYPE_RECIPE) {
-                    return null;
-                }
-                $product->display_qty = $stock->quantity;
-                $product->is_available = true;
-                return $product;
-            })->filter();
-        }
+        // Pagination settings
+        $perPage = 10;
+        $categoryFilter = $request->get('category');
+        $searchQuery = $request->get('search');
 
         // Preload ALL display stocks to prevent N+1 queries
         $displayStockMap = [];
@@ -50,21 +36,52 @@ class POSController extends Controller
                 ->toArray();
         }
 
-        // Get RECIPE products and check ingredient availability
-        $recipeProducts = Product::where('product_type', Product::TYPE_RECIPE)
-            ->where('sell_price', '>', 0)
-            ->with(['category', 'variants.ingredients'])
-            ->get()
-            ->map(function ($product) use ($display, $displayStockMap) {
+        // Base query for products
+        $productsQuery = Product::query()
+            ->where(function ($q) {
+                // Get sellable products OR recipe products with sell_price > 0
+                $q->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
+                  ->where('sell_price', '>', 0);
+            })
+            ->with(['category', 'variants.ingredients']);
+
+        // Apply category filter
+        if ($categoryFilter && $categoryFilter !== 'all') {
+            $productsQuery->where('category_id', $categoryFilter);
+        }
+
+        // Apply search filter
+        if ($searchQuery) {
+            $productsQuery->where(function ($q) use ($searchQuery) {
+                $q->where('title', 'like', "%{$searchQuery}%")
+                  ->orWhere('sku', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        // Filter: only products that have display stock OR are recipes
+        $productsQuery->where(function ($q) use ($displayStockMap) {
+            $productIdsWithStock = array_keys($displayStockMap);
+            $q->whereIn('id', $productIdsWithStock)
+              ->orWhere('product_type', Product::TYPE_RECIPE);
+        });
+
+        // Paginate
+        $productsPaginated = $productsQuery->orderBy('title')->paginate($perPage)->withQueryString();
+
+        // Process products to add display_qty and is_available
+        $products = $productsPaginated->through(function ($product) use ($display, $displayStockMap) {
+            if ($product->product_type === Product::TYPE_RECIPE) {
                 // Check if all ingredients are available
                 $isAvailable = $this->checkRecipeIngredients($product, $display, $displayStockMap);
                 $product->display_qty = $isAvailable ? 999 : 0;
                 $product->is_available = $isAvailable;
-                return $product;
-            });
-
-        // Merge all products
-        $products = $products->merge($recipeProducts);
+            } else {
+                // Get display stock quantity
+                $product->display_qty = $displayStockMap[$product->id] ?? 0;
+                $product->is_available = $product->display_qty > 0;
+            }
+            return $product;
+        });
 
         // Get all categories for filter
         $categories = Category::orderBy('name')->get();
@@ -96,6 +113,10 @@ class POSController extends Controller
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
             'display' => $display,
+            'filters' => [
+                'category' => $categoryFilter,
+                'search' => $searchQuery,
+            ],
         ]);
     }
 

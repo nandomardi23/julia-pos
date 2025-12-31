@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Head, useForm, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 export default function Login({ status, canResetPassword }) {
     const { app_settings: settings = {} } = usePage().props;
+    const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -90,19 +92,33 @@ export default function Login({ status, canResetPassword }) {
                                 <label className="block text-sm font-medium">
                                     Password
                                 </label>
-                                <input
-                                    type="password"
-                                    value={data.password}
-                                    onChange={(e) =>
-                                        setData("password", e.target.value)
-                                    }
-                                    disabled={processing}
-                                    className={`mt-1 block w-full px-4 py-2 rounded-md border bg-white dark:bg-neutral-800 focus:ring-2 focus:ring-neutral-700 focus:border-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                        errors.password
-                                            ? "border-red-400 dark:border-red-600"
-                                            : "border-gray-300 dark:border-neutral-700"
-                                    }`}
-                                />
+                                <div className="relative mt-1">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={data.password}
+                                        onChange={(e) =>
+                                            setData("password", e.target.value)
+                                        }
+                                        disabled={processing}
+                                        className={`block w-full px-4 py-2 pr-10 rounded-md border bg-white dark:bg-neutral-800 focus:ring-2 focus:ring-neutral-700 focus:border-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            errors.password
+                                                ? "border-red-400 dark:border-red-600"
+                                                : "border-gray-300 dark:border-neutral-700"
+                                        }`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                        tabIndex={-1}
+                                    >
+                                        {showPassword ? (
+                                            <IconEyeOff size={20} />
+                                        ) : (
+                                            <IconEye size={20} />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex items-center justify-between">

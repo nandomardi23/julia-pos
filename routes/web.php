@@ -12,6 +12,7 @@ use App\Http\Controllers\Apps\StockMovementController;
 use App\Http\Controllers\Apps\IngredientController;
 use App\Http\Controllers\Apps\SupplyController;
 use App\Http\Controllers\Apps\RecipeController;
+use App\Http\Controllers\Apps\StockOpnameController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -155,6 +156,26 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/stock-movements/process-import', [StockMovementController::class, 'processImport'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.processImport');
+
+    // Stock Opname Routes
+    Route::get('/stock-opnames', [StockOpnameController::class, 'index'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-opnames.index');
+    Route::get('/stock-opnames/create', [StockOpnameController::class, 'create'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-opnames.create');
+    Route::post('/stock-opnames', [StockOpnameController::class, 'store'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-opnames.store');
+    Route::get('/stock-opnames/{id}', [StockOpnameController::class, 'show'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-opnames.show');
+    Route::post('/stock-opnames/{id}/complete', [StockOpnameController::class, 'complete'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-opnames.complete');
+    Route::delete('/stock-opnames/{id}', [StockOpnameController::class, 'destroy'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-opnames.destroy');
 
     // Transaction routes (print and history only)
     Route::get('/transactions', fn() => redirect()->route('transactions.history'));

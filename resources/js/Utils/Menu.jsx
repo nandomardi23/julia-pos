@@ -22,6 +22,7 @@ import {
     IconCup,
     IconToolsKitchen2,
     IconSettings,
+    IconClipboardCheck,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -152,6 +153,13 @@ export default function Menu() {
                     active: url === "/dashboard/stock-movements/bulk-import",
                     icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-movements-create"]),
+                },
+                {
+                    title: "Stock Opname",
+                    href: route("stock-opnames.index"),
+                    active: url.startsWith("/dashboard/stock-opnames"),
+                    icon: <IconClipboardCheck size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["stock-movements-access"]),
                 },
             ],
         },

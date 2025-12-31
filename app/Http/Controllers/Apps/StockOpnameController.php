@@ -85,7 +85,7 @@ class StockOpnameController extends Controller
             }
             
             $totalProducts = $stocksQuery->count();
-            $stocks = $stocksQuery->limit(50)->get();
+            $stocks = $stocksQuery->get();
 
             $products = $stocks->map(function ($stock) {
                 return [

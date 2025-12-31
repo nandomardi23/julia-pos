@@ -371,8 +371,34 @@ export default function Index({
     };
 
     const handleUpdateCartQty = (cartId, newQty, sync = true) => {
-        if (newQty === '' || newQty < 0) newQty = 0; // Allow 0 for input typing, handle validation later? No, stick to logic
-        if (newQty <= 0 && sync) return; // Don't sync invalid
+        if (newQty === '' || newQty < 0) newQty = 0;
+        if (newQty <= 0 && sync) return;
+
+        // Find the cart item and corresponding product
+        const cartItem = localCarts.find(c => c.id === cartId);
+        if (!cartItem) return;
+
+        // Find product in productsList to get available stock
+        const product = productsList.find(p => p.id === cartItem.product_id);
+        const isRecipe = product?.product_type === 'recipe';
+        const availableStock = product?.display_qty || 0;
+
+        // Validate stock for non-recipe products before sync
+        if (sync && !isRecipe && newQty > availableStock) {
+            toast.error(`Stok tidak mencukupi! (Tersedia: ${availableStock})`);
+            // Revert to max available stock
+            setLocalCarts(prevCarts => 
+                prevCarts.map(cart => 
+                    cart.id === cartId 
+                        ? { ...cart, qty: availableStock } 
+                        : cart
+                )
+            );
+            return;
+        }
+
+        // Save previous qty for potential rollback
+        const previousQty = cartItem.qty;
 
         // Optimistic update
         setLocalCarts(prevCarts => 
@@ -393,8 +419,16 @@ export default function Index({
                 {
                     preserveScroll: true,
                     preserveState: true,
-                    onFinish: () => {
-                        // Optional: handle completion
+                    onError: (errors) => {
+                        // Rollback on error
+                        toast.error(errors.message || "Stok tidak mencukupi!");
+                        setLocalCarts(prevCarts => 
+                            prevCarts.map(cart => 
+                                cart.id === cartId 
+                                    ? { ...cart, qty: previousQty } 
+                                    : cart
+                            )
+                        );
                     }
                 }
             );

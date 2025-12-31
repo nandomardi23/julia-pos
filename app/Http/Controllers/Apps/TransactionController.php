@@ -162,15 +162,19 @@ class TransactionController extends Controller
                 'payment_status' => $isCashPayment ? 'paid' : 'pending',
             ]);
 
-            $carts = Cart::where('cashier_id', auth()->user()->id)->get();
+            $carts = Cart::with(['product', 'variant'])->where('cashier_id', auth()->user()->id)->get();
 
             foreach ($carts as $cart) {
                 // Simpan buy_price saat transaksi agar profit tetap akurat meski harga berubah
-                $currentBuyPrice = $cart->product->buy_price;
+                // Use variant buy_price if available
+                $currentBuyPrice = $cart->variant 
+                    ? ($cart->variant->buy_price ?? $cart->product->buy_price)
+                    : $cart->product->buy_price;
                 
                 $transaction->details()->create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $cart->product_id,
+                    'variant_name' => $cart->variant?->name,
                     'qty' => $cart->qty,
                     'price' => $cart->price,
                     'buy_price' => $currentBuyPrice,

@@ -32,6 +32,12 @@ export default function Print({ transaction }) {
 
     const items = transaction?.details ?? [];
     const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+    // Calculate subTotal from item details for accuracy
+    const calculatedSubTotal = items.reduce((sum, item) => {
+        const qty = Number(item.qty) || 0;
+        const price = Number(item.price) || 0;
+        return sum + (qty * price);
+    }, 0);
 
     const paymentLabels = {
         cash: "Cash",
@@ -173,7 +179,7 @@ export default function Print({ transaction }) {
                         
                         <div className="flex justify-between">
                             <span>Sub Total</span>
-                            <span>Rp {formatPrice(transaction.grand_total + (transaction.discount || 0))}</span>
+                            <span>Rp {formatPrice(calculatedSubTotal)}</span>
                         </div>
                         {(transaction.discount || 0) > 0 && (
                             <div className="flex justify-between text-red-600">

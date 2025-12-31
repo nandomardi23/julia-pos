@@ -11,6 +11,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Exports\StockImportTemplateExport;
 use App\Exports\StockMovementsExport;
+use App\Exports\StockReportExport;
 use App\Imports\StockImport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -109,6 +110,23 @@ class StockMovementController extends Controller
             ->get();
 
         return Excel::download(new StockMovementsExport($movements), 'riwayat_stok_' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export stock report to Excel.
+     * Includes: Nama Produk, Stok Warehouse, Stok Display, Stok Rusak, Terjual
+     */
+    public function exportStockReport(Request $request)
+    {
+        $filters = [
+            'category_id' => $request->input('category_id'),
+            'search' => $request->input('search'),
+        ];
+
+        return Excel::download(
+            new StockReportExport($filters), 
+            'laporan_stok_' . date('Y-m-d') . '.xlsx'
+        );
     }
 
     /**

@@ -114,6 +114,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/stock-movements/export', [StockMovementController::class, 'export'])
         ->middleware('permission:stock-movements-access')
         ->name('stock-movements.export');
+    Route::get('/stock-movements/export-stock-report', [StockMovementController::class, 'exportStockReport'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.exportStockReport');
     Route::get('/stock-movements/create', [StockMovementController::class, 'create'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.create');

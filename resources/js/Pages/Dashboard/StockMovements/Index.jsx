@@ -20,6 +20,10 @@ export default function Index({ movements, filters }) {
         window.open(route("stock-movements.export") + "?" + params, "_blank");
     }
 
+    const handleExportStockReport = () => {
+        window.open(route("stock-movements.exportStockReport"), "_blank");
+    }
+
     const resetFilters = () => {
         router.get(route('stock-movements.index'), filterData, {
             preserveState: true
@@ -68,34 +72,53 @@ export default function Index({ movements, filters }) {
         <>
             <Head title='Riwayat Stok' />
             
-            <div className='mb-4 flex flex-wrap gap-2'>
-                <Button
-                    type={'link'}
-                    icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                    className={'border bg-green-500 text-white hover:bg-green-600'}
-                    label={'Barang Masuk'}
-                    href={route('stock-movements.create')}
-                />
-                <Button
-                    type={'link'}
-                    icon={<IconMinus size={20} strokeWidth={1.5} />}
-                    className={'border bg-red-500 text-white hover:bg-red-600'}
-                    label={'Barang Keluar'}
-                    href={route('stock-movements.stockOut')}
-                />
-                <Button
-                    type={'link'}
-                    icon={<IconArrowsExchange size={20} strokeWidth={1.5} />}
-                    className={'border bg-blue-500 text-white hover:bg-blue-600'}
-                    label={'Transfer Stok'}
-                    href={route('stock-movements.transfer')}
-                />
+            {/* Action Buttons */}
+            <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
+                <div className='flex flex-wrap gap-2'>
+                    <Button
+                        type={'link'}
+                        icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                        className={'border bg-green-500 text-white hover:bg-green-600'}
+                        label={'Barang Masuk'}
+                        href={route('stock-movements.create')}
+                    />
+                    <Button
+                        type={'link'}
+                        icon={<IconMinus size={18} strokeWidth={1.5} />}
+                        className={'border bg-red-500 text-white hover:bg-red-600'}
+                        label={'Barang Keluar'}
+                        href={route('stock-movements.stockOut')}
+                    />
+                    <Button
+                        type={'link'}
+                        icon={<IconArrowsExchange size={18} strokeWidth={1.5} />}
+                        className={'border bg-blue-500 text-white hover:bg-blue-600'}
+                        label={'Transfer Stok'}
+                        href={route('stock-movements.transfer')}
+                    />
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                    <Button
+                        type={'button'}
+                        label={'Export Laporan Stok'}
+                        icon={<IconFileSpreadsheet size={18} />}
+                        className={'border bg-indigo-600 text-white hover:bg-indigo-700'}
+                        onClick={handleExportStockReport}
+                    />
+                    <Button
+                        type={'button'}
+                        label={'Export Riwayat'}
+                        icon={<IconFileSpreadsheet size={18} />}
+                        className={'border bg-emerald-600 text-white hover:bg-emerald-700'}
+                        onClick={handleExport}
+                    />
+                </div>
             </div>
 
             {/* Filters */}
             <div className='bg-white dark:bg-gray-900 p-4 rounded-lg border dark:border-gray-800 mb-4'>
-                <div className='grid grid-cols-12 gap-4'>
-                    <div className='col-span-3'>
+                <div className='flex flex-wrap items-end gap-4'>
+                    <div className='flex-1 min-w-[200px]'>
                         <Input
                             name='product'
                             label='Produk'
@@ -105,7 +128,7 @@ export default function Index({ movements, filters }) {
                             onChange={e => setFilterData({...filterData, product: e.target.value})}
                         />
                     </div>
-                    <div className='col-span-2'>
+                    <div className='w-40'>
                         <Select
                             label="Tipe"
                             value={filterData.type}
@@ -118,7 +141,7 @@ export default function Index({ movements, filters }) {
                             <option value="stockout">Barang Keluar</option>
                         </Select>
                     </div>
-                    <div className='col-span-2'>
+                    <div className='w-40'>
                         <Input
                             name='start_date'
                             label='Dari Tanggal'
@@ -127,7 +150,7 @@ export default function Index({ movements, filters }) {
                             onChange={e => setFilterData({...filterData, start_date: e.target.value})}
                         />
                     </div>
-                    <div className='col-span-2'>
+                    <div className='w-40'>
                         <Input
                             name='end_date'
                             label='Sampai Tanggal'
@@ -136,21 +159,12 @@ export default function Index({ movements, filters }) {
                             onChange={e => setFilterData({...filterData, end_date: e.target.value})}
                         />
                     </div>
-                    <div className='col-span-3 flex items-end gap-2'>
-                        <Button
-                            type={'button'}
-                            label={'Filter'}
-                            className={'border bg-gray-700 text-white hover:bg-gray-800'}
-                            onClick={handleFilter}
-                        />
-                        <Button
-                            type={'button'}
-                            label={'Export'}
-                            icon={<IconFileSpreadsheet size={18} />}
-                            className={'border bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800'}
-                            onClick={handleExport}
-                        />
-                    </div>
+                    <Button
+                        type={'button'}
+                        label={'Filter'}
+                        className={'border bg-gray-700 text-white hover:bg-gray-800'}
+                        onClick={handleFilter}
+                    />
                 </div>
             </div>
 

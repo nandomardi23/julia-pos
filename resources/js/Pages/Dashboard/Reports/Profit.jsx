@@ -174,7 +174,7 @@ const ProfitReport = ({
                 >
                     {/* Filter Section */}
                     <form onSubmit={applyFilters} className="px-5 py-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                             <Input
                                 type="date"
                                 label="Mulai"
@@ -214,30 +214,30 @@ const ProfitReport = ({
                                 placeholder="Semua kasir"
                                 searchable
                             />
-                            <div className="flex items-end gap-2">
-                                <Button
-                                    type="button"
-                                    label="Reset"
-                                    className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                    onClick={resetFilters}
-                                />
-                                <Button
-                                    type="submit"
-                                    label="Cari"
-                                    icon={<IconArrowDownRight size={18} />}
-                                    className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                                />
-                                <Button
-                                    type="button"
-                                    label="Export"
-                                    icon={<IconFileSpreadsheet size={18} />}
-                                    className="border bg-emerald-600 text-white hover:bg-emerald-700"
-                                    onClick={() => {
-                                        const params = new URLSearchParams(filterData).toString();
-                                        window.open(route("reports.profits.export") + "?" + params, "_blank");
-                                    }}
-                                />
-                            </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                            <Button
+                                type="button"
+                                label="Reset"
+                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                onClick={resetFilters}
+                            />
+                            <Button
+                                type="submit"
+                                label="Cari"
+                                icon={<IconArrowDownRight size={18} />}
+                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                            />
+                            <Button
+                                type="button"
+                                label="Export"
+                                icon={<IconFileSpreadsheet size={18} />}
+                                className="border bg-emerald-600 text-white hover:bg-emerald-700"
+                                onClick={() => {
+                                    const params = new URLSearchParams(filterData).toString();
+                                    window.open(route("reports.profits.export") + "?" + params, "_blank");
+                                }}
+                            />
                         </div>
                     </form>
 

@@ -13,6 +13,7 @@ use App\Exports\StockImportTemplateExport;
 use App\Exports\StockMovementsExport;
 use App\Exports\StockReportExport;
 use App\Imports\StockImport;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,12 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class StockMovementController extends Controller
 {
+    protected StockService $stockService;
+
+    public function __construct(StockService $stockService)
+    {
+        $this->stockService = $stockService;
+    }
     /**
      * Display a listing of stock movements.
      */
@@ -159,39 +166,9 @@ class StockMovementController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($validated) {
-            // Add or update warehouse stock
-            $stock = WarehouseStock::firstOrCreate(
-                [
-                    'warehouse_id' => $validated['warehouse_id'],
-                    'product_id' => $validated['product_id'],
-                ],
-                ['quantity' => 0]
-            );
-            $stock->increment('quantity', $validated['quantity']);
+        $result = $this->stockService->addToWarehouse($validated);
 
-            // Create stock movement record
-            StockMovement::create([
-                'product_id' => $validated['product_id'],
-                'from_type' => StockMovement::TYPE_SUPPLIER,
-                'from_id' => $validated['supplier_id'] ?? null,
-                'supplier_id' => $validated['supplier_id'] ?? null,
-                'to_type' => StockMovement::TYPE_WAREHOUSE,
-                'to_id' => $validated['warehouse_id'],
-                'quantity' => $validated['quantity'],
-                'purchase_price' => $validated['purchase_price'] ?? null,
-                'note' => $validated['note'] ?? 'Barang masuk dari supplier',
-                'user_id' => auth()->id(),
-            ]);
-        });
-
-        // Recalculate average cost after stock in
-        $product = Product::find($validated['product_id']);
-        if ($product) {
-            $product->updateAverageCost();
-        }
-
-        return redirect()->route('stock-movements.index')->with('success', 'Stok berhasil ditambahkan ke gudang!');
+        return redirect()->route('stock-movements.index')->with('success', $result['message']);
     }
 
     /**
@@ -229,43 +206,13 @@ class StockMovementController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        // Check warehouse stock
-        $warehouseStock = WarehouseStock::where('warehouse_id', $validated['warehouse_id'])
-            ->where('product_id', $validated['product_id'])
-            ->first();
+        $result = $this->stockService->transferToDisplay($validated);
 
-        if (!$warehouseStock || $warehouseStock->quantity < $validated['quantity']) {
-            return redirect()->back()->with('error', 'Stok gudang tidak mencukupi!');
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        DB::transaction(function () use ($validated, $warehouseStock) {
-            // Decrease warehouse stock
-            $warehouseStock->decrement('quantity', $validated['quantity']);
-
-            // Add or update display stock
-            $displayStock = DisplayStock::firstOrCreate(
-                [
-                    'display_id' => $validated['display_id'],
-                    'product_id' => $validated['product_id'],
-                ],
-                ['quantity' => 0]
-            );
-            $displayStock->increment('quantity', $validated['quantity']);
-
-            // Create stock movement record
-            StockMovement::create([
-                'product_id' => $validated['product_id'],
-                'from_type' => StockMovement::TYPE_WAREHOUSE,
-                'from_id' => $validated['warehouse_id'],
-                'to_type' => StockMovement::TYPE_DISPLAY,
-                'to_id' => $validated['display_id'],
-                'quantity' => $validated['quantity'],
-                'note' => $validated['note'] ?? 'Transfer dari gudang ke display',
-                'user_id' => auth()->id(),
-            ]);
-        });
-
-        return redirect()->route('stock-movements.index')->with('success', 'Stok berhasil ditransfer ke display!');
+        return redirect()->route('stock-movements.index')->with('success', $result['message']);
     }
 
     /**
@@ -341,71 +288,13 @@ class StockMovementController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        // Get product to calculate loss
-        $product = Product::findOrFail($validated['product_id']);
+        $result = $this->stockService->stockOut($validated);
 
-        // Check stock based on location type
-        if ($validated['location_type'] === 'warehouse') {
-            $stock = WarehouseStock::where('warehouse_id', $validated['location_id'])
-                ->where('product_id', $validated['product_id'])
-                ->first();
-            $fromType = StockMovement::TYPE_WAREHOUSE;
-        } else {
-            $stock = DisplayStock::where('display_id', $validated['location_id'])
-                ->where('product_id', $validated['product_id'])
-                ->first();
-            $fromType = StockMovement::TYPE_DISPLAY;
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        if (!$stock || $stock->quantity < $validated['quantity']) {
-            return redirect()->back()->with('error', 'Stok tidak mencukupi!');
-        }
-
-        // Get reason label
-        $reasons = StockMovement::getStockOutReasons();
-        $reasonLabel = $reasons[$validated['reason']] ?? $validated['reason'];
-
-        // Calculate loss amount (only for damaged/expired, not for returns)
-        $lossAmount = null;
-        $lossReasons = [
-            StockMovement::REASON_DAMAGED,
-            StockMovement::REASON_EXPIRED,
-            StockMovement::REASON_INTERNAL_USE,
-            StockMovement::REASON_ADJUSTMENT,
-            StockMovement::REASON_OTHER,
-        ];
-        
-        if (in_array($validated['reason'], $lossReasons)) {
-            // Kerugian = quantity × (average_cost atau buy_price)
-            $costPerUnit = $product->average_cost ?: ($product->buy_price ?: 0);
-            $lossAmount = $validated['quantity'] * $costPerUnit;
-        }
-
-        DB::transaction(function () use ($validated, $stock, $fromType, $reasonLabel, $lossAmount) {
-            // Decrease stock
-            $stock->decrement('quantity', $validated['quantity']);
-
-            // Create stock movement record with loss amount
-            StockMovement::create([
-                'product_id' => $validated['product_id'],
-                'from_type' => $fromType,
-                'from_id' => $validated['location_id'],
-                'to_type' => StockMovement::TYPE_OUT,
-                'to_id' => null,
-                'quantity' => $validated['quantity'],
-                'loss_amount' => $lossAmount,
-                'note' => '[' . $reasonLabel . '] ' . ($validated['note'] ?? ''),
-                'user_id' => auth()->id(),
-            ]);
-        });
-
-        $message = 'Barang keluar berhasil dicatat!';
-        if ($lossAmount) {
-            $formattedLoss = 'Rp ' . number_format($lossAmount, 0, ',', '.');
-            $message .= ' Kerugian: ' . $formattedLoss;
-        }
-
-        return redirect()->route('stock-movements.index')->with('success', $message);
+        return redirect()->route('stock-movements.index')->with('success', $result['message']);
     }
 
     /**

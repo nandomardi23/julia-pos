@@ -12,6 +12,7 @@ import {
     IconArrowUpRight,
     IconCoin,
     IconDatabaseOff,
+    IconFileSpreadsheet,
     IconPercentage,
     IconReceipt,
 } from "@tabler/icons-react";
@@ -217,14 +218,24 @@ const ProfitReport = ({
                                 <Button
                                     type="button"
                                     label="Reset"
-                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                    className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
                                     onClick={resetFilters}
                                 />
                                 <Button
                                     type="submit"
                                     label="Cari"
                                     icon={<IconArrowDownRight size={18} />}
-                                    className="flex-1 border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                    className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                />
+                                <Button
+                                    type="button"
+                                    label="Export"
+                                    icon={<IconFileSpreadsheet size={18} />}
+                                    className="border bg-emerald-600 text-white hover:bg-emerald-700"
+                                    onClick={() => {
+                                        const params = new URLSearchParams(filterData).toString();
+                                        window.open(route("reports.profits.export") + "?" + params, "_blank");
+                                    }}
                                 />
                             </div>
                         </div>

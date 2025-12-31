@@ -12,6 +12,7 @@ use App\Models\DisplayStock;
 use App\Models\WarehouseStock;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
+use App\Services\TransactionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -22,7 +23,12 @@ use Inertia\Inertia;
 
 class TransactionController extends Controller
 {
+    protected TransactionService $transactionService;
 
+    public function __construct(TransactionService $transactionService)
+    {
+        $this->transactionService = $transactionService;
+    }
 
     /**
      * Recursively deduct ingredient stocks for recipe products.
@@ -321,42 +327,8 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::where('invoice', $invoice)->firstOrFail();
 
-        DB::transaction(function () use ($transaction) {
-            // Get display for restoring stock
-            $display = Display::active()->first();
+        $result = $this->transactionService->deleteTransaction($transaction);
 
-            // Restore stock for each transaction detail
-            foreach ($transaction->details as $detail) {
-                $product = Product::find($detail->product_id);
-                
-                if ($product && $display) {
-                    // Kembalikan stok ke display
-                    $displayStock = DisplayStock::firstOrCreate(
-                        [
-                            'display_id' => $display->id,
-                            'product_id' => $detail->product_id,
-                        ],
-                        ['quantity' => 0]
-                    );
-                    $displayStock->increment('quantity', $detail->qty);
-                }
-            }
-
-            // Delete related stock movements
-            StockMovement::where('to_type', StockMovement::TYPE_TRANSACTION)
-                ->where('to_id', $transaction->id)
-                ->delete();
-
-            // Delete profits
-            $transaction->profits()->delete();
-
-            // Delete transaction details
-            $transaction->details()->delete();
-
-            // Delete transaction
-            $transaction->delete();
-        });
-
-        return redirect()->route('transactions.history')->with('success', 'Transaksi berhasil dihapus dan stok dikembalikan!');
+        return redirect()->route('transactions.history')->with('success', $result['message']);
     }
 }

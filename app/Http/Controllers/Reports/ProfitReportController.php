@@ -7,8 +7,10 @@ use App\Models\Profit;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\User;
+use App\Exports\ProfitsExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProfitReportController extends Controller
 {
@@ -75,5 +77,28 @@ class ProfitReportController extends Controller
             ->when($filters['cashier_id'] ?? null, fn ($q, $cashier) => $q->where('cashier_id', $cashier))
             ->when($filters['start_date'] ?? null, fn ($q, $start) => $q->whereDate('created_at', '>=', $start))
             ->when($filters['end_date'] ?? null, fn ($q, $end) => $q->whereDate('created_at', '<=', $end));
+    }
+
+    /**
+     * Export profit report to Excel.
+     */
+    public function export(Request $request)
+    {
+        $filters = [
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'invoice' => $request->input('invoice'),
+            'cashier_id' => $request->input('cashier_id'),
+        ];
+
+        $transactions = $this->applyFilters(
+            Transaction::query()
+                ->with(['cashier:id,name'])
+                ->withSum('profits as total_profit', 'total')
+                ->withSum('details as total_items', 'qty'),
+            $filters
+        )->orderByDesc('created_at')->get();
+
+        return Excel::download(new ProfitsExport($transactions), 'laporan_profit_' . date('Y-m-d') . '.xlsx');
     }
 }

@@ -160,12 +160,14 @@ class PrintService {
     }
 
     /**
-     * Generate ESC/POS receipt commands for 80mm paper
+     * Generate ESC/POS receipt commands for 80mm paper (48 chars width)
+     * Format matches web preview exactly
      */
     static generateReceiptCommands(transaction, settings = {}) {
         const ESC = '\x1B';
         const GS = '\x1D';
         const LF = '\x0A';
+        const WIDTH = 48; // 80mm paper = 48 characters
 
         let receipt = '';
 
@@ -176,55 +178,78 @@ class PrintService {
         // Center align
         receipt += ESC + 'a' + '\x01';
 
+        // Store Initial/Logo placeholder (large bold letter like web preview)
+        const storeInitial = (settings.store_name || 'S').charAt(0).toUpperCase();
+        receipt += ESC + 'E' + '\x01'; // Bold ON
+        receipt += GS + '!' + '\x33';  // 4x height + 4x width (larger)
+        receipt += storeInitial + LF;
+        receipt += GS + '!' + '\x00';  // Normal size
+        receipt += ESC + 'E' + '\x00'; // Bold OFF
+        receipt += LF;
+
         // Store name (bold, double height)
         receipt += ESC + 'E' + '\x01'; // Bold ON
         receipt += GS + '!' + '\x11';  // Double height + width
-        receipt += (settings.store_name || 'TOKO') + LF;
+        receipt += (settings.store_name || 'Toko') + LF;
         receipt += GS + '!' + '\x00';  // Normal size
         receipt += ESC + 'E' + '\x00'; // Bold OFF
 
-        // Store info
+        // Store address (if available)
         if (settings.store_address) {
             receipt += settings.store_address + LF;
         }
+
+        // Store phone (if available)
         if (settings.store_phone) {
-            receipt += 'Telp: ' + settings.store_phone + LF;
+            receipt += 'No. Telp ' + settings.store_phone + LF;
         }
 
+        // Invoice number
+        receipt += (transaction.invoice || '-') + LF;
+
         // Divider
-        receipt += '================================' + LF;
+        receipt += '------------------------------------------------' + LF;
 
         // ===== TRANSACTION INFO =====
-        // Left align
-        receipt += ESC + 'a' + '\x00';
+        // Date and Cashier on same line (left and right)
+        receipt += ESC + 'a' + '\x00'; // Left align
+        const dateStr = this.formatDateOnly(transaction.created_at);
+        const cashierName = transaction.cashier?.name || 'Kasir';
+        const dateLineSpaces = Math.max(1, WIDTH - dateStr.length - cashierName.length);
+        receipt += dateStr + ' '.repeat(dateLineSpaces) + cashierName + LF;
 
-        receipt += 'No   : ' + (transaction.invoice || '-') + LF;
-        receipt += 'Tgl  : ' + this.formatDate(transaction.created_at) + LF;
-        receipt += 'Kasir: ' + (transaction.cashier?.name || '-') + LF;
-        receipt += '--------------------------------' + LF;
+        // Time on next line
+        receipt += this.formatTimeOnly(transaction.created_at) + LF;
+
+        receipt += '------------------------------------------------' + LF;
 
         // ===== ITEMS =====
         const details = transaction.details || [];
+        let totalQty = 0;
+
         details.forEach((item, index) => {
             const productName = item.product?.title || 'Item';
             const variantName = item.variant_name ? ` (${item.variant_name})` : '';
-            const name = (productName + variantName).substring(0, 28);
+            const name = (productName + variantName).substring(0, 40); // Longer for 80mm
 
             const qty = Number(item.qty) || 1;
             const price = Number(item.price) || 0;
             const subtotal = qty * price;
+            totalQty += qty;
 
-            // Item name
+            // Item name (bold)
+            receipt += ESC + 'E' + '\x01';
             receipt += `${index + 1}. ${name}` + LF;
+            receipt += ESC + 'E' + '\x00';
 
-            // Qty x Price = Subtotal
+            // Qty x Price aligned with Rp Subtotal
             const qtyPrice = `   ${qty} x ${this.formatNumber(price)}`;
-            const subtotalStr = this.formatNumber(subtotal);
-            const spaces = Math.max(1, 32 - qtyPrice.length - subtotalStr.length);
+            const subtotalStr = 'Rp ' + this.formatNumber(subtotal);
+            const spaces = Math.max(1, WIDTH - qtyPrice.length - subtotalStr.length);
             receipt += qtyPrice + ' '.repeat(spaces) + subtotalStr + LF;
         });
 
-        receipt += '--------------------------------' + LF;
+        receipt += '================================================' + LF;
 
         // ===== TOTALS =====
         const grandTotal = Number(transaction.grand_total) || 0;
@@ -238,40 +263,42 @@ class PrintService {
             return sum + (Number(item.qty) || 1) * (Number(item.price) || 0);
         }, 0);
 
-        // Right align for totals
-        receipt += ESC + 'a' + '\x02';
+        // Total QTY (left aligned)
+        receipt += 'Total QTY : ' + totalQty + LF;
+        receipt += '------------------------------------------------' + LF;
 
+        // Sub Total
+        receipt += this.formatTotalLine('Sub Total', subtotal, 48) + LF;
+
+        // Discount (if any)
         if (discount > 0) {
-            receipt += 'Diskon : -Rp ' + this.formatNumber(discount) + LF;
+            receipt += this.formatTotalLine('Diskon', -discount, 48) + LF;
         }
 
         // Total (bold)
         receipt += ESC + 'E' + '\x01';
-        receipt += 'TOTAL  :  Rp ' + this.formatNumber(grandTotal) + LF;
+        receipt += this.formatTotalLine('Total', grandTotal, 48) + LF;
         receipt += ESC + 'E' + '\x00';
 
-        // Payment method label
+        // Payment method
         const methodLabels = {
-            'cash': 'Tunai',
-            'transfer': 'Transfer',
-            'qris': 'QRIS'
+            'cash': 'Bayar (Cash)',
+            'transfer': 'Bayar (Transfer)',
+            'qris': 'Bayar (QRIS)'
         };
         const methodLabel = methodLabels[paymentMethod] || 'Bayar';
+        receipt += this.formatTotalLine(methodLabel, cash, 48) + LF;
 
-        receipt += `${methodLabel} :  Rp ` + this.formatNumber(cash) + LF;
+        // Kembali
+        receipt += this.formatTotalLine('Kembali', change, 48) + LF;
 
-        if (paymentMethod === 'cash' && change > 0) {
-            receipt += 'Kembali:  Rp ' + this.formatNumber(change) + LF;
-        }
-
-        receipt += '--------------------------------' + LF;
+        receipt += '------------------------------------------------' + LF;
 
         // ===== FOOTER =====
         // Center align
         receipt += ESC + 'a' + '\x01';
         receipt += LF;
-        receipt += 'Terima Kasih' + LF;
-        receipt += 'Atas Kunjungan Anda' + LF;
+        receipt += 'Terimakasih Telah Berbelanja' + LF;
 
         if (settings.store_website) {
             receipt += settings.store_website + LF;
@@ -282,6 +309,20 @@ class PrintService {
         receipt += GS + 'V' + '\x00'; // Full cut
 
         return receipt;
+    }
+
+    /**
+     * Format a total line with left label and right-aligned Rp value
+     * @param {string} label - Left-aligned label
+     * @param {number} value - Monetary value
+     * @param {number} width - Line width (default 48 for 80mm paper)
+     */
+    static formatTotalLine(label, value, width = 48) {
+        const valueStr = 'Rp ' + this.formatNumber(Math.abs(value));
+        const prefix = value < 0 ? '-' : '';
+        const fullValue = prefix + valueStr;
+        const spaces = Math.max(1, width - label.length - fullValue.length);
+        return label + ' '.repeat(spaces) + fullValue;
     }
 
     /**
@@ -466,6 +507,32 @@ class PrintService {
             });
         } catch {
             return dateStr || '-';
+        }
+    }
+
+    static formatDateOnly(dateStr) {
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch {
+            return dateStr || '-';
+        }
+    }
+
+    static formatTimeOnly(dateStr) {
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        } catch {
+            return '-';
         }
     }
 }

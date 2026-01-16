@@ -121,6 +121,61 @@ class POSController extends Controller
     }
 
     /**
+     * Find product by exact barcode match (API endpoint for barcode scanner)
+     */
+    public function findByBarcode(Request $request)
+    {
+        $barcode = $request->get('barcode');
+        
+        if (!$barcode) {
+            return response()->json(['found' => false, 'message' => 'Barcode tidak boleh kosong']);
+        }
+
+        // Find product by exact barcode match (case-insensitive)
+        $product = Product::where(function ($q) use ($barcode) {
+                $q->whereRaw('LOWER(barcode) = ?', [strtolower($barcode)]);
+            })
+            ->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
+            ->where('sell_price', '>', 0)
+            ->with(['category', 'variants.ingredients'])
+            ->first();
+
+        if (!$product) {
+            return response()->json(['found' => false, 'message' => 'Produk dengan barcode "' . $barcode . '" tidak ditemukan']);
+        }
+
+        // Get display stock info
+        $display = Display::active()->first();
+        $displayStock = 0;
+        $isAvailable = false;
+
+        if ($display) {
+            if ($product->product_type === Product::TYPE_RECIPE) {
+                // Check recipe ingredients availability
+                $displayStockMap = DisplayStock::where('display_id', $display->id)
+                    ->pluck('quantity', 'product_id')
+                    ->toArray();
+                $isAvailable = $this->checkRecipeIngredients($product, $display, $displayStockMap);
+                $displayStock = $isAvailable ? 999 : 0;
+            } else {
+                $stock = DisplayStock::where('display_id', $display->id)
+                    ->where('product_id', $product->id)
+                    ->first();
+                $displayStock = $stock ? $stock->quantity : 0;
+                $isAvailable = $displayStock > 0;
+            }
+        }
+
+        $product->display_qty = $displayStock;
+        $product->is_available = $isAvailable;
+
+        return response()->json([
+            'found' => true,
+            'product' => $product,
+        ]);
+    }
+
+    /**
      * Add product to cart from POS
      */
     public function addToCart(Request $request)

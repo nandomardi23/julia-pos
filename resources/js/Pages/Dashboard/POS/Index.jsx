@@ -135,8 +135,10 @@ export default function Index({
     const filteredProducts = productsList;
 
     // Barcode scanner detection - auto-add when Enter is pressed after fast input
+    const scanningRef = useRef(false); // Lock to prevent concurrent scans
+    
     useEffect(() => {
-        const handleKeyDown = (e) => {
+        const handleKeyDown = async (e) => {
             // Only handle if search input is focused
             if (document.activeElement !== searchInputRef.current) return;
             
@@ -148,18 +150,54 @@ export default function Index({
             if (e.key === "Enter" && search.trim()) {
                 e.preventDefault();
                 
-                // Find product by exact barcode match from current products
-                const product = productsList.find(
-                    (p) => p.barcode && p.barcode.toLowerCase() === search.trim().toLowerCase()
-                );
+                // Prevent concurrent scans
+                if (scanningRef.current) {
+                    return;
+                }
                 
-                if (product) {
-                    playBeep(true);
-                    handleAddToCart(product);
-                    setSearch("");
-                } else {
+                const barcode = search.trim();
+                
+                // Clear search IMMEDIATELY to prevent barcode concatenation
+                setSearch("");
+                
+                // Cancel any pending debounced search
+                if (searchTimeoutRef.current) {
+                    clearTimeout(searchTimeoutRef.current);
+                    searchTimeoutRef.current = null;
+                }
+                
+                // Set scanning lock
+                scanningRef.current = true;
+                
+                try {
+                    // First try to find in current products list (fast)
+                    const localProduct = productsList.find(
+                        (p) => p.barcode && p.barcode.toLowerCase() === barcode.toLowerCase()
+                    );
+                    
+                    if (localProduct) {
+                        playBeep(true);
+                        handleAddToCart(localProduct);
+                        return;
+                    }
+                    
+                    // If not found locally, search in database via API
+                    const response = await fetch(`/dashboard/pos/find-by-barcode?barcode=${encodeURIComponent(barcode)}`);
+                    const data = await response.json();
+                    
+                    if (data.found && data.product) {
+                        playBeep(true);
+                        handleAddToCart(data.product);
+                    } else {
+                        playBeep(false);
+                        toast.error(data.message || "Produk tidak ditemukan!");
+                    }
+                } catch (error) {
                     playBeep(false);
-                    toast.error("Produk tidak ditemukan!");
+                    toast.error("Gagal mencari produk: " + error.message);
+                } finally {
+                    // Release scanning lock
+                    scanningRef.current = false;
                 }
             }
         };

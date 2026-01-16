@@ -99,6 +99,41 @@ class Product extends Model
     }
 
     /**
+     * Get product-level ingredients (for recipe products without variants).
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function ingredients()
+    {
+        return $this->hasMany(ProductIngredient::class);
+    }
+
+    /**
+     * Check if product is a recipe type.
+     */
+    public function isRecipe(): bool
+    {
+        return $this->product_type === self::TYPE_RECIPE;
+    }
+
+    /**
+     * Get effective ingredients for this recipe product.
+     * Returns product-level ingredients if no variants exist,
+     * or if variant doesn't have its own ingredients.
+     */
+    public function getEffectiveIngredients($variant = null)
+    {
+        // If variant provided and has ingredients, use variant ingredients
+        if ($variant && $variant->ingredients()->exists()) {
+            return $variant->ingredients()->with('ingredient')->get();
+        }
+        
+        // Otherwise use product-level ingredients
+        return $this->ingredients()->with('ingredient')->get();
+    }
+
+
+    /**
      * Get price history records.
      */
     public function priceHistories()

@@ -1,0 +1,473 @@
+/**
+ * PrintService - Client-side thermal printing via QZ Tray
+ * 
+ * QZ Tray must be installed on cashier's PC
+ * Download: https://qz.io/download/
+ * 
+ * Supported Features:
+ * - ESC/POS receipt printing (80mm paper)
+ * - Cash drawer kick (via RJ11 connected to printer)
+ * - Auto-print after transaction
+ */
+
+class PrintService {
+    static qz = null;
+    static isConnected = false;
+    static connectionPromise = null;
+    static selectedPrinter = null; // Manual printer selection
+
+    /**
+     * Set printer manually (for debugging)
+     */
+    static setSelectedPrinter(printerName) {
+        this.selectedPrinter = printerName;
+        console.log('Printer dipilih:', printerName);
+    }
+
+    /**
+     * Get the current printer (selected or auto-detected)
+     */
+    static async getCurrentPrinter() {
+        if (this.selectedPrinter) {
+            return this.selectedPrinter;
+        }
+        return await this.findThermalPrinter();
+    }
+
+    /**
+     * Initialize QZ Tray connection
+     */
+    static async connect() {
+        // Return existing connection if already connected
+        if (this.isConnected && this.qz?.websocket?.isActive()) {
+            return true;
+        }
+
+        // Return pending connection if one is in progress
+        if (this.connectionPromise) {
+            return this.connectionPromise;
+        }
+
+        this.connectionPromise = this._doConnect();
+
+        try {
+            const result = await this.connectionPromise;
+            return result;
+        } finally {
+            this.connectionPromise = null;
+        }
+    }
+
+    static async _doConnect() {
+        try {
+            if (typeof window === 'undefined' || !window.qz) {
+                console.warn('QZ Tray not loaded. Make sure qz-tray.js is included.');
+                return false;
+            }
+
+            this.qz = window.qz;
+
+            // Check if already connected
+            if (this.qz.websocket.isActive()) {
+                this.isConnected = true;
+                return true;
+            }
+
+            // IMPORTANT: For local development, we need to bypass certificate validation
+            // In production, you should use a proper signed certificate from QZ Industries
+
+            // Certificate promise - return a demo/override certificate
+            this.qz.security.setCertificatePromise(function (resolve, reject) {
+                // For local development, we can use an override
+                // This tells QZ Tray to allow unsigned requests
+                resolve(""); // Empty string = use override/demo mode
+            });
+
+            // Signature promise - skip signing for local development
+            this.qz.security.setSignaturePromise(function (toSign) {
+                return function (resolve, reject) {
+                    // Return empty signature for local development
+                    resolve("");
+                };
+            });
+
+            await this.qz.websocket.connect();
+            this.isConnected = true;
+            console.log('✓ QZ Tray terhubung');
+            return true;
+        } catch (error) {
+            console.error('✗ QZ Tray gagal terhubung:', error.message || error);
+            this.isConnected = false;
+            return false;
+        }
+    }
+
+    /**
+     * Disconnect from QZ Tray
+     */
+    static async disconnect() {
+        if (this.qz && this.isConnected) {
+            try {
+                await this.qz.websocket.disconnect();
+            } catch (e) {
+                // Ignore disconnect errors
+            }
+            this.isConnected = false;
+        }
+    }
+
+    /**
+     * Get available printers
+     */
+    static async getPrinters() {
+        const connected = await this.connect();
+        if (!connected) return [];
+
+        try {
+            return await this.qz.printers.find();
+        } catch (error) {
+            console.error('Error getting printers:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Find thermal/POS printer (Kassen, BTP, POS, etc)
+     */
+    static async findThermalPrinter() {
+        const printers = await this.getPrinters();
+
+        // Keywords to look for in printer name
+        const keywords = ['kassen', 'btp', 'pos', 'thermal', 'receipt', 'epson', 'tm-'];
+
+        const thermal = printers.find(p => {
+            const name = p.toLowerCase();
+            return keywords.some(k => name.includes(k));
+        });
+
+        if (thermal) {
+            console.log('Found thermal printer:', thermal);
+            return thermal;
+        }
+
+        // Fallback to first printer
+        if (printers.length > 0) {
+            console.log('Using default printer:', printers[0]);
+            return printers[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate ESC/POS receipt commands for 80mm paper
+     */
+    static generateReceiptCommands(transaction, settings = {}) {
+        const ESC = '\x1B';
+        const GS = '\x1D';
+        const LF = '\x0A';
+
+        let receipt = '';
+
+        // Initialize printer
+        receipt += ESC + '@'; // Reset printer
+
+        // ===== HEADER =====
+        // Center align
+        receipt += ESC + 'a' + '\x01';
+
+        // Store name (bold, double height)
+        receipt += ESC + 'E' + '\x01'; // Bold ON
+        receipt += GS + '!' + '\x11';  // Double height + width
+        receipt += (settings.store_name || 'TOKO') + LF;
+        receipt += GS + '!' + '\x00';  // Normal size
+        receipt += ESC + 'E' + '\x00'; // Bold OFF
+
+        // Store info
+        if (settings.store_address) {
+            receipt += settings.store_address + LF;
+        }
+        if (settings.store_phone) {
+            receipt += 'Telp: ' + settings.store_phone + LF;
+        }
+
+        // Divider
+        receipt += '================================' + LF;
+
+        // ===== TRANSACTION INFO =====
+        // Left align
+        receipt += ESC + 'a' + '\x00';
+
+        receipt += 'No   : ' + (transaction.invoice || '-') + LF;
+        receipt += 'Tgl  : ' + this.formatDate(transaction.created_at) + LF;
+        receipt += 'Kasir: ' + (transaction.cashier?.name || '-') + LF;
+        receipt += '--------------------------------' + LF;
+
+        // ===== ITEMS =====
+        const details = transaction.details || [];
+        details.forEach((item, index) => {
+            const productName = item.product?.title || 'Item';
+            const variantName = item.variant_name ? ` (${item.variant_name})` : '';
+            const name = (productName + variantName).substring(0, 28);
+
+            const qty = Number(item.qty) || 1;
+            const price = Number(item.price) || 0;
+            const subtotal = qty * price;
+
+            // Item name
+            receipt += `${index + 1}. ${name}` + LF;
+
+            // Qty x Price = Subtotal
+            const qtyPrice = `   ${qty} x ${this.formatNumber(price)}`;
+            const subtotalStr = this.formatNumber(subtotal);
+            const spaces = Math.max(1, 32 - qtyPrice.length - subtotalStr.length);
+            receipt += qtyPrice + ' '.repeat(spaces) + subtotalStr + LF;
+        });
+
+        receipt += '--------------------------------' + LF;
+
+        // ===== TOTALS =====
+        const grandTotal = Number(transaction.grand_total) || 0;
+        const discount = Number(transaction.discount) || 0;
+        const cash = Number(transaction.cash) || 0;
+        const change = Number(transaction.change) || 0;
+        const paymentMethod = transaction.payment_method || 'cash';
+
+        // Calculate subtotal from items
+        const subtotal = details.reduce((sum, item) => {
+            return sum + (Number(item.qty) || 1) * (Number(item.price) || 0);
+        }, 0);
+
+        // Right align for totals
+        receipt += ESC + 'a' + '\x02';
+
+        if (discount > 0) {
+            receipt += 'Diskon : -Rp ' + this.formatNumber(discount) + LF;
+        }
+
+        // Total (bold)
+        receipt += ESC + 'E' + '\x01';
+        receipt += 'TOTAL  :  Rp ' + this.formatNumber(grandTotal) + LF;
+        receipt += ESC + 'E' + '\x00';
+
+        // Payment method label
+        const methodLabels = {
+            'cash': 'Tunai',
+            'transfer': 'Transfer',
+            'qris': 'QRIS'
+        };
+        const methodLabel = methodLabels[paymentMethod] || 'Bayar';
+
+        receipt += `${methodLabel} :  Rp ` + this.formatNumber(cash) + LF;
+
+        if (paymentMethod === 'cash' && change > 0) {
+            receipt += 'Kembali:  Rp ' + this.formatNumber(change) + LF;
+        }
+
+        receipt += '--------------------------------' + LF;
+
+        // ===== FOOTER =====
+        // Center align
+        receipt += ESC + 'a' + '\x01';
+        receipt += LF;
+        receipt += 'Terima Kasih' + LF;
+        receipt += 'Atas Kunjungan Anda' + LF;
+
+        if (settings.store_website) {
+            receipt += settings.store_website + LF;
+        }
+
+        // Feed and cut
+        receipt += LF + LF + LF;
+        receipt += GS + 'V' + '\x00'; // Full cut
+
+        return receipt;
+    }
+
+    /**
+     * Print receipt to thermal printer
+     */
+    static async printReceipt(transaction, settings = {}) {
+        try {
+            const connected = await this.connect();
+            if (!connected) {
+                return {
+                    success: false,
+                    message: 'QZ Tray tidak terkoneksi. Pastikan QZ Tray sudah diinstall dan berjalan.',
+                    fallback: true
+                };
+            }
+
+            const printer = await this.getCurrentPrinter();
+            if (!printer) {
+                return {
+                    success: false,
+                    message: 'Printer thermal tidak ditemukan.',
+                    fallback: true
+                };
+            }
+
+            const config = this.qz.configs.create(printer);
+            const receiptData = this.generateReceiptCommands(transaction, settings);
+
+            await this.qz.print(config, [{
+                type: 'raw',
+                format: 'command',
+                data: receiptData
+            }]);
+
+            console.log('✓ Struk berhasil dicetak');
+            return { success: true, message: 'Struk berhasil dicetak' };
+        } catch (error) {
+            console.error('Print error:', error);
+            return {
+                success: false,
+                message: error.message || 'Gagal mencetak struk',
+                fallback: true
+            };
+        }
+    }
+
+    /**
+     * Open cash drawer via ESC/POS command
+     * Cash drawer must be connected to printer via RJ11 cable
+     * 
+     * Command: ESC p m t1 t2
+     * - ESC p = 0x1B 0x70
+     * - m = pin number (0 = pin 2, 1 = pin 5)
+     * - t1 = on time (25 = 50ms)
+     * - t2 = off time (250 = 500ms)
+     */
+    static async openCashDrawer() {
+        try {
+            const connected = await this.connect();
+            if (!connected) {
+                return {
+                    success: false,
+                    message: 'QZ Tray tidak terkoneksi'
+                };
+            }
+
+            const printer = await this.getCurrentPrinter();
+            if (!printer) {
+                return {
+                    success: false,
+                    message: 'Printer tidak ditemukan'
+                };
+            }
+
+            const config = this.qz.configs.create(printer);
+
+            // ESC p 0 25 250 - Standard cash drawer kick command
+            // Works with most RJ11-connected cash drawers
+            const drawerKick = '\x1B\x70\x00\x19\xFA';
+
+            await this.qz.print(config, [{
+                type: 'raw',
+                format: 'command',
+                data: drawerKick
+            }]);
+
+            console.log('✓ Cash drawer dibuka');
+            return { success: true, message: 'Laci kasir dibuka' };
+        } catch (error) {
+            console.error('Drawer error:', error);
+            return {
+                success: false,
+                message: error.message || 'Gagal membuka laci kasir'
+            };
+        }
+    }
+
+    /**
+     * Print receipt and optionally open cash drawer
+     * Cash drawer ONLY opens for cash payments
+     * 
+     * @param {Object} transaction - Transaction data
+     * @param {Object} settings - Store settings
+     * @param {boolean} openDrawer - Whether to open drawer (based on payment method)
+     */
+    static async printAndOpenDrawer(transaction, settings = {}, openDrawer = true) {
+        const results = {
+            print: { success: false },
+            drawer: { success: false, skipped: false }
+        };
+
+        // Print receipt
+        results.print = await this.printReceipt(transaction, settings);
+
+        // Only open drawer for CASH payments
+        const isCashPayment = transaction.payment_method?.toLowerCase() === 'cash';
+
+        if (openDrawer && isCashPayment) {
+            // Small delay before opening drawer
+            await new Promise(resolve => setTimeout(resolve, 300));
+            results.drawer = await this.openCashDrawer();
+        } else {
+            results.drawer = {
+                success: true,
+                skipped: true,
+                message: 'Laci tidak dibuka (pembayaran non-tunai)'
+            };
+        }
+
+        return results;
+    }
+
+    /**
+     * Check if QZ Tray is available
+     */
+    static isAvailable() {
+        return typeof window !== 'undefined' && window.qz !== undefined;
+    }
+
+    /**
+     * Check current connection status
+     */
+    static async checkConnection() {
+        if (!this.isAvailable()) {
+            return {
+                available: false,
+                connected: false,
+                message: 'QZ Tray tidak terinstall atau belum dimuat'
+            };
+        }
+
+        const connected = await this.connect();
+        const printers = connected ? await this.getPrinters() : [];
+        const thermalPrinter = connected ? await this.findThermalPrinter() : null;
+
+        return {
+            available: true,
+            connected,
+            printers,
+            thermalPrinter,
+            message: connected
+                ? `Terhubung. Printer: ${thermalPrinter || 'Tidak ditemukan'}`
+                : 'Tidak dapat terhubung ke QZ Tray'
+        };
+    }
+
+    // ===== HELPER FUNCTIONS =====
+
+    static formatNumber(num) {
+        return Number(num || 0).toLocaleString('id-ID');
+    }
+
+    static formatDate(dateStr) {
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return dateStr || '-';
+        }
+    }
+}
+
+export default PrintService;

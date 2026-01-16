@@ -25,9 +25,13 @@ class StockService
         $quantity = $data['quantity'];
         $purchasePrice = $data['purchase_price'] ?? null;
         $supplierId = $data['supplier_id'] ?? null;
+        $invoiceNumber = $data['invoice_number'] ?? null;
+        $batchNumber = $data['batch_number'] ?? null;
+        $expiryDate = $data['expiry_date'] ?? null;
         $note = $data['note'] ?? 'Barang masuk dari supplier';
+        $receiptId = $data['receipt_id'] ?? null;
 
-        DB::transaction(function () use ($productId, $warehouseId, $quantity, $purchasePrice, $supplierId, $note) {
+        DB::transaction(function () use ($productId, $warehouseId, $quantity, $purchasePrice, $supplierId, $invoiceNumber, $batchNumber, $expiryDate, $note, $receiptId) {
             // Add or update warehouse stock
             $warehouseStock = WarehouseStock::firstOrCreate(
                 [
@@ -40,8 +44,12 @@ class StockService
 
             // Create stock movement record
             StockMovement::create([
+                'receipt_id' => $receiptId,
                 'product_id' => $productId,
                 'supplier_id' => $supplierId,
+                'invoice_number' => $invoiceNumber,
+                'batch_number' => $batchNumber,
+                'expiry_date' => $expiryDate,
                 'from_type' => StockMovement::TYPE_SUPPLIER,
                 'from_id' => $supplierId,
                 'to_type' => StockMovement::TYPE_WAREHOUSE,
@@ -60,6 +68,91 @@ class StockService
         }
 
         return ['success' => true, 'message' => 'Stok berhasil ditambahkan ke gudang!'];
+    }
+
+    /**
+     * Add multiple items to warehouse (multi-item entry).
+     *
+     * @param array $data
+     * @return array ['success' => bool, 'message' => string]
+     */
+    public function addMultipleToWarehouse(array $data): array
+    {
+        $warehouseId = $data['warehouse_id'];
+        $supplierId = $data['supplier_id'] ?? null;
+        $invoiceNumber = $data['invoice_number'] ?? null;
+        $items = $data['items'];
+        
+        // Generate unique receipt ID to group items
+        $receiptId = 'RCP-' . date('YmdHis') . '-' . uniqid();
+        
+        $processedProducts = [];
+        
+        DB::transaction(function () use ($warehouseId, $supplierId, $invoiceNumber, $items, $receiptId, &$processedProducts) {
+            foreach ($items as $item) {
+                $productId = $item['product_id'];
+                
+                // Calculate quantity from packaging conversion
+                $packagingQty = $item['packaging_qty'] ?? 1;
+                $qtyPerPackage = $item['qty_per_package'] ?? 1;
+                $quantity = $item['quantity'] ?? ($packagingQty * $qtyPerPackage);
+                
+                // Recalculate if quantity is 0 or not set properly
+                if ($quantity <= 0) {
+                    $quantity = $packagingQty * $qtyPerPackage;
+                }
+                
+                $packagingUnit = $item['packaging_unit'] ?? 'pcs';
+                $purchasePrice = $item['purchase_price'] ?? null;
+                $batchNumber = $item['batch_number'] ?? null;
+                $expiryDate = $item['expiry_date'] ?? null;
+                $noteText = $packagingUnit !== 'pcs' 
+                    ? "{$packagingQty} {$packagingUnit} @ {$qtyPerPackage}/kemasan = {$quantity} pcs"
+                    : "{$quantity} pcs";
+                $note = $item['note'] ?? $noteText;
+                
+                // Add or update warehouse stock
+                $warehouseStock = WarehouseStock::firstOrCreate(
+                    [
+                        'warehouse_id' => $warehouseId,
+                        'product_id' => $productId,
+                    ],
+                    ['quantity' => 0]
+                );
+                $warehouseStock->increment('quantity', $quantity);
+
+                // Create stock movement record
+                StockMovement::create([
+                    'receipt_id' => $receiptId,
+                    'product_id' => $productId,
+                    'supplier_id' => $supplierId,
+                    'invoice_number' => $invoiceNumber,
+                    'batch_number' => $batchNumber,
+                    'expiry_date' => $expiryDate,
+                    'from_type' => StockMovement::TYPE_SUPPLIER,
+                    'from_id' => $supplierId,
+                    'to_type' => StockMovement::TYPE_WAREHOUSE,
+                    'to_id' => $warehouseId,
+                    'quantity' => $quantity,
+                    'purchase_price' => $purchasePrice,
+                    'note' => $note,
+                    'user_id' => auth()->id(),
+                ]);
+                
+                $processedProducts[] = $productId;
+            }
+        });
+
+        // Recalculate average cost for all processed products
+        foreach (array_unique($processedProducts) as $productId) {
+            $product = Product::find($productId);
+            if ($product) {
+                $product->updateAverageCost();
+            }
+        }
+
+        $itemCount = count($items);
+        return ['success' => true, 'message' => "Berhasil menambahkan {$itemCount} item ke gudang!"];
     }
 
     /**

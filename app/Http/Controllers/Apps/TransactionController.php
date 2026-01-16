@@ -47,15 +47,22 @@ class TransactionController extends Controller
             return;
         }
 
-        // Get ingredients from the selected variant
-        $ingredients = [];
+        // Get ingredients - first try variant, then fallback to product-level
+        $ingredients = collect();
+        
         if ($variant) {
             $variant->load('ingredients.ingredient');
             $ingredients = $variant->ingredients;
         }
 
-        // If no ingredients on variant, skip
-        if (empty($ingredients) || count($ingredients) === 0) {
+        // If no ingredients on variant, try product-level ingredients
+        if ($ingredients->isEmpty()) {
+            $product->load('ingredients.ingredient');
+            $ingredients = $product->ingredients;
+        }
+
+        // If still no ingredients, skip
+        if ($ingredients->isEmpty()) {
             return;
         }
 

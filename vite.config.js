@@ -13,10 +13,9 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: "0.0.0.0", // Or your specific IP address
-        // origin: "http://192.168.1.16:8000", // Use your local IP and port
+        host: "0.0.0.0",
         hmr: {
-            host: "192.168.1.16", // Use your local IP
+            host: "localhost",
         },
     },
 });

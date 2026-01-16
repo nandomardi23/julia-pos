@@ -15,10 +15,15 @@ class StockMovement extends Model
      * @var array
      */
     protected $fillable = [
+        'receipt_id',
+        'purchase_order_id',
         'product_id',
         'from_type',
         'from_id',
         'supplier_id',
+        'invoice_number',
+        'batch_number',
+        'expiry_date',
         'to_type',
         'to_id',
         'quantity',
@@ -29,11 +34,30 @@ class StockMovement extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'expiry_date' => 'date',
+        'purchase_price' => 'decimal:2',
+        'loss_amount' => 'decimal:2',
+    ];
+
+    /**
      * Get the supplier associated with this movement (for stock in).
      */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Get the purchase order associated with this movement.
+     */
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     /**

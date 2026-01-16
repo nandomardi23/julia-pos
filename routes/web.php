@@ -13,6 +13,7 @@ use App\Http\Controllers\Apps\IngredientController;
 use App\Http\Controllers\Apps\SupplyController;
 use App\Http\Controllers\Apps\RecipeController;
 use App\Http\Controllers\Apps\StockOpnameController;
+use App\Http\Controllers\Apps\PurchaseOrderController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -94,6 +95,30 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middlewareFor(['edit', 'update'], 'permission:suppliers-edit')
         ->middlewareFor('destroy', 'permission:suppliers-delete');
 
+    // Purchase Orders Routes
+    Route::resource('purchase-orders', PurchaseOrderController::class)
+        ->middlewareFor(['index', 'show'], 'permission:purchase-orders-access')
+        ->middlewareFor(['create', 'store'], 'permission:purchase-orders-create')
+        ->middlewareFor(['edit', 'update'], 'permission:purchase-orders-edit')
+        ->middlewareFor('destroy', 'permission:purchase-orders-delete');
+    
+    // Additional PO routes
+    Route::post('/purchase-orders/{id}/status', [PurchaseOrderController::class, 'updateStatus'])
+        ->middleware('permission:purchase-orders-edit')
+        ->name('purchase-orders.updateStatus');
+    Route::get('/purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive'])
+        ->middleware('permission:purchase-orders-edit')
+        ->name('purchase-orders.receive');
+    Route::post('/purchase-orders/{id}/receive', [PurchaseOrderController::class, 'storeReceive'])
+        ->middleware('permission:purchase-orders-edit')
+        ->name('purchase-orders.storeReceive');
+    Route::get('/purchase-orders/last-price', [PurchaseOrderController::class, 'getLastPrice'])
+        ->middleware('permission:purchase-orders-access')
+        ->name('purchase-orders.lastPrice');
+    Route::get('/purchase-orders/{id}/pdf', [PurchaseOrderController::class, 'downloadPdf'])
+        ->middleware('permission:purchase-orders-access')
+        ->name('purchase-orders.pdf');
+
     // Warehouses Routes
     Route::resource('warehouses', WarehouseController::class)
         ->middlewareFor(['index', 'show'], 'permission:warehouses-access')
@@ -156,6 +181,14 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/stock-movements/process-import', [StockMovementController::class, 'processImport'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.processImport');
+    
+    // API routes for enhanced stock movement form
+    Route::get('/stock-movements/last-price', [StockMovementController::class, 'getLastPurchasePrice'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.lastPrice');
+    Route::get('/stock-movements/product-stock', [StockMovementController::class, 'getProductStock'])
+        ->middleware('permission:stock-movements-access')
+        ->name('stock-movements.productStock');
 
     // Stock Opname Routes
     Route::get('/stock-opnames', [StockOpnameController::class, 'index'])
@@ -184,6 +217,29 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/transactions/{invoice}', [TransactionController::class, 'show'])->middleware('permission:transactions-access')->name('transactions.show');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
     Route::delete('/transactions/{invoice}', [TransactionController::class, 'destroy'])->middleware('permission:transactions-access')->name('transactions.destroy');
+
+    // Return/Refund Routes
+    Route::get('/returns', [\App\Http\Controllers\Apps\ReturnController::class, 'index'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.index');
+    Route::get('/returns/create', [\App\Http\Controllers\Apps\ReturnController::class, 'create'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.create');
+    Route::post('/returns', [\App\Http\Controllers\Apps\ReturnController::class, 'store'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.store');
+    Route::get('/returns/search-transaction', [\App\Http\Controllers\Apps\ReturnController::class, 'searchTransaction'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.searchTransaction');
+    Route::get('/returns/{id}', [\App\Http\Controllers\Apps\ReturnController::class, 'show'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.show');
+    Route::post('/returns/{id}/approve', [\App\Http\Controllers\Apps\ReturnController::class, 'approve'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.approve');
+    Route::post('/returns/{id}/reject', [\App\Http\Controllers\Apps\ReturnController::class, 'reject'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.reject');
 
     // POS Routes
     Route::get('/pos', [POSController::class, 'index'])->middleware('permission:transactions-access')->name('pos.index');

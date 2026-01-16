@@ -23,6 +23,7 @@ import {
     IconToolsKitchen2,
     IconSettings,
     IconClipboardCheck,
+    IconFileInvoice,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -120,6 +121,13 @@ export default function Menu() {
                     permissions: hasAnyPermission(["displays-access"]),
                 },
                 {
+                    title: "Purchase Order",
+                    href: route("purchase-orders.index"),
+                    active: url.startsWith("/dashboard/purchase-orders"),
+                    icon: <IconFileInvoice size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["purchase-orders-access"]),
+                },
+                {
                     title: "Barang Masuk",
                     href: route("stock-movements.create"),
                     active: url === "/dashboard/stock-movements/create",
@@ -173,6 +181,13 @@ export default function Menu() {
                     href: route("transactions.history"),
                     active: url === "/dashboard/transactions/history",
                     icon: <IconReceipt size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
+                {
+                    title: "Return / Refund",
+                    href: route("returns.index"),
+                    active: url.startsWith("/dashboard/returns"),
+                    icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["transactions-access"]),
                 },
             ],

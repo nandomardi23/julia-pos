@@ -499,6 +499,57 @@ php artisan optimize
 
 ---
 
+## ⚠️ Analisis Konflik Antar Fitur (Updated: 15 Jan 2026)
+
+Berikut adalah fitur-fitur yang saling terkait tetapi berpotensi menimbulkan konflik:
+
+### 🔴 Prioritas Tinggi
+
+#### 1. Transaction vs Product Return (Recipe)
+- **Masalah**: Saat produk recipe dijual, yang dikurangi adalah **ingredient-nya**. Tetapi saat return, sistem mengembalikan stok **produk recipe** ke display (bukan ingredient).
+- **Lokasi**: `ReturnController.php` → `approve()` method
+- **Dampak**: Data stok ingredient tidak akurat
+
+#### 2. Recipe Ingredients Tanpa Validasi Stok
+- **Masalah**: Transaksi recipe tetap berhasil meski stok ingredient tidak cukup (sistem hanya skip pengurangan).
+- **Lokasi**: `TransactionController.php` → `deductIngredientStock()` method
+- **Dampak**: Transaksi bisa terjadi tanpa pengurangan bahan
+
+### 🟠 Prioritas Sedang
+
+#### 3. Stock Opname Surplus Kategorisasi Salah
+- **Masalah**: Koreksi surplus dari stock opname dicatat sebagai `from_type = 'supplier'`, mempengaruhi kalkulasi Average Cost.
+- **Lokasi**: `StockOpnameController.php` → `complete()` method
+- **Solusi**: Gunakan type baru seperti `TYPE_ADJUSTMENT`
+
+#### 4. Average Cost Dua Metode Berbeda
+- **Masalah**: Average cost dihitung berbeda di `PurchaseOrderController.php` (weighted average) vs `Product.php` (dari StockMovement supplier)
+- **Dampak**: Nilai average cost bisa tidak konsisten
+
+#### 5. Profit Variant Tidak Akurat
+- **Masalah**: Profit dihitung menggunakan `$cart->product->sell_price`, bukan harga variant.
+- **Lokasi**: `TransactionController.php` → `store()` method line 198
+- **Solusi**: Gunakan `$cart->variant->sell_price` jika tersedia
+
+### 🟡 Prioritas Rendah
+
+#### 6. Delete Transaction vs Return
+- **Masalah**: Jika transaksi sudah punya return yang diproses, menghapus transaksi bisa mengembalikan stok dua kali.
+- **Solusi**: Cek return terkait sebelum hapus transaksi
+
+### Diagram Konflik
+
+```
+Transaction Flow:
+  POS → (recipe?) → Deduct Ingredients → OK
+                     ↑
+Product Return:      |
+  Approve Return → Add Product Stock → ❌ KONFLIK!
+                   (bukan ingredient)
+```
+
+---
+
 ## 📝 Catatan Penting
 
 1. **Stok produk resep**: Saat dijual, stok SEMUA ingredient akan dikurangi otomatis

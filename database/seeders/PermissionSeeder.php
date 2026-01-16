@@ -83,5 +83,11 @@ class PermissionSeeder extends Seeder
         // stock movements permissions
         Permission::create(['name' => 'stock-movements-access']);
         Permission::create(['name' => 'stock-movements-create']);
+
+        // purchase orders permissions
+        Permission::create(['name' => 'purchase-orders-access']);
+        Permission::create(['name' => 'purchase-orders-create']);
+        Permission::create(['name' => 'purchase-orders-edit']);
+        Permission::create(['name' => 'purchase-orders-delete']);
     }
 }

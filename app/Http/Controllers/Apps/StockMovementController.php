@@ -154,19 +154,45 @@ class StockMovementController extends Controller
 
     /**
      * Store stock from supplier to warehouse.
+     * Supports multi-item entry with items array.
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'product_id' => 'required|exists:products,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'quantity' => 'required|integer|min:1',
-            'purchase_price' => 'nullable|numeric|min:0',
-            'note' => 'nullable|string',
-        ]);
+        // Check if it's multi-item entry
+        if ($request->has('items') && is_array($request->items)) {
+            $validated = $request->validate([
+                'warehouse_id' => 'required|exists:warehouses,id',
+                'supplier_id' => 'nullable|exists:suppliers,id',
+                'invoice_number' => 'nullable|string|max:100',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.packaging_qty' => 'required|integer|min:1',
+                'items.*.packaging_unit' => 'nullable|string|max:50',
+                'items.*.qty_per_package' => 'nullable|integer|min:1',
+                'items.*.quantity' => 'nullable|integer|min:0', // Calculated field
+                'items.*.purchase_price' => 'nullable|numeric|min:0',
+                'items.*.batch_number' => 'nullable|string|max:100',
+                'items.*.expiry_date' => 'nullable|date',
+                'items.*.note' => 'nullable|string',
+            ]);
 
-        $result = $this->stockService->addToWarehouse($validated);
+            $result = $this->stockService->addMultipleToWarehouse($validated);
+        } else {
+            // Single item entry (backward compatible)
+            $validated = $request->validate([
+                'warehouse_id' => 'required|exists:warehouses,id',
+                'product_id' => 'required|exists:products,id',
+                'supplier_id' => 'nullable|exists:suppliers,id',
+                'invoice_number' => 'nullable|string|max:100',
+                'batch_number' => 'nullable|string|max:100',
+                'expiry_date' => 'nullable|date',
+                'quantity' => 'required|integer|min:1',
+                'purchase_price' => 'nullable|numeric|min:0',
+                'note' => 'nullable|string',
+            ]);
+
+            $result = $this->stockService->addToWarehouse($validated);
+        }
 
         return redirect()->route('stock-movements.index')->with('success', $result['message']);
     }
@@ -229,6 +255,56 @@ class StockMovementController extends Controller
 
         return response()->json([
             'quantity' => $stock ? $stock->quantity : 0,
+        ]);
+    }
+
+    /**
+     * Get last purchase price for a product from a supplier (API endpoint).
+     */
+    public function getLastPurchasePrice(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $supplierId = $request->input('supplier_id');
+
+        $query = StockMovement::where('product_id', $productId)
+            ->where('to_type', StockMovement::TYPE_WAREHOUSE)
+            ->whereNotNull('purchase_price')
+            ->where('purchase_price', '>', 0);
+
+        if ($supplierId) {
+            $query->where('supplier_id', $supplierId);
+        }
+
+        $lastMovement = $query->latest()->first();
+
+        return response()->json([
+            'purchase_price' => $lastMovement ? (float) $lastMovement->purchase_price : null,
+            'last_date' => $lastMovement ? $lastMovement->created_at->format('d/m/Y') : null,
+        ]);
+    }
+
+    /**
+     * Get combined stock for a product across all warehouses (API endpoint).
+     */
+    public function getProductStock(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $warehouseId = $request->input('warehouse_id');
+
+        // Get warehouse stock
+        $warehouseStockQuery = WarehouseStock::where('product_id', $productId);
+        if ($warehouseId) {
+            $warehouseStockQuery->where('warehouse_id', $warehouseId);
+        }
+        $warehouseStock = $warehouseStockQuery->sum('quantity');
+
+        // Get display stock
+        $displayStock = DisplayStock::where('product_id', $productId)->sum('quantity');
+
+        return response()->json([
+            'warehouse_stock' => (float) $warehouseStock,
+            'display_stock' => (float) $displayStock,
+            'total_stock' => (float) ($warehouseStock + $displayStock),
         ]);
     }
 

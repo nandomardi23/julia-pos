@@ -1,17 +1,127 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { IconArrowLeft, IconPrinter } from "@tabler/icons-react";
+import { IconArrowLeft, IconPrinter, IconCash, IconSettings } from "@tabler/icons-react";
+import toast, { Toaster } from "react-hot-toast";
+import PrintService from "@/Services/PrintService";
 
 export default function Print({ transaction }) {
     const { app_settings: settings = {} } = usePage().props;
+    const [thermalPrinting, setThermalPrinting] = useState(false);
+    const [drawerOpening, setDrawerOpening] = useState(false);
+    const [printers, setPrinters] = useState([]);
+    const [selectedPrinter, setSelectedPrinter] = useState('');
+    const [showPrinterSelect, setShowPrinterSelect] = useState(false);
+    const [qzStatus, setQzStatus] = useState('checking...');
+
+    // Load printers on mount
+    useEffect(() => {
+        const loadPrinters = async () => {
+            if (PrintService.isAvailable()) {
+                try {
+                    const status = await PrintService.checkConnection();
+                    setQzStatus(status.connected ? '✓ Terhubung' : '✗ Tidak terhubung');
+                    if (status.printers) {
+                        setPrinters(status.printers);
+                        if (status.thermalPrinter) {
+                            setSelectedPrinter(status.thermalPrinter);
+                        }
+                    }
+                } catch (err) {
+                    setQzStatus('✗ Error: ' + err.message);
+                }
+            } else {
+                setQzStatus('✗ QZ Tray tidak terdeteksi');
+            }
+        };
+        loadPrinters();
+    }, []);
 
     useEffect(() => {
-        // Auto print after a short delay
-        const timer = setTimeout(() => {
-            window.print();
-        }, 500);
-        return () => clearTimeout(timer);
+        // Try thermal print first, fallback to browser print
+        const attemptPrint = async () => {
+            // Check if QZ Tray is available
+            if (PrintService.isAvailable()) {
+                setThermalPrinting(true);
+                try {
+                    // Determine if drawer should open (cash only)
+                    const isCash = transaction?.payment_method?.toLowerCase() === 'cash';
+
+                    const result = await PrintService.printAndOpenDrawer(
+                        transaction,
+                        settings,
+                        isCash // Only open drawer for cash
+                    );
+
+                    if (result.print.success) {
+                        toast.success('Struk dicetak ke printer thermal');
+                        if (isCash && result.drawer.success && !result.drawer.skipped) {
+                            toast.success('Laci kasir dibuka');
+                        }
+                    } else if (result.print.fallback) {
+                        // Fallback to browser print
+                        console.log('Fallback to browser print');
+                        window.print();
+                    }
+                } catch (err) {
+                    console.error('Thermal print error:', err);
+                    // Fallback to browser print
+                    window.print();
+                } finally {
+                    setThermalPrinting(false);
+                }
+            } else {
+                // QZ Tray not available, use browser print
+                const timer = setTimeout(() => {
+                    window.print();
+                }, 500);
+                return () => clearTimeout(timer);
+            }
+        };
+
+        attemptPrint();
     }, []);
+
+    // Handle manual thermal print
+    const handleThermalPrint = async () => {
+        if (thermalPrinting) return;
+
+        setThermalPrinting(true);
+        try {
+            const result = await PrintService.printReceipt(transaction, settings);
+            if (result.success) {
+                toast.success('Struk dicetak ke printer thermal');
+            } else {
+                toast.error(result.message || 'Gagal cetak thermal');
+                // Offer browser print as alternative
+                if (result.fallback) {
+                    window.print();
+                }
+            }
+        } catch (err) {
+            toast.error('Gagal cetak: ' + err.message);
+        } finally {
+            setThermalPrinting(false);
+        }
+    };
+
+    // Handle manual drawer open
+    const handleOpenDrawer = async () => {
+        if (drawerOpening) return;
+
+        setDrawerOpening(true);
+        try {
+            const result = await PrintService.openCashDrawer();
+            if (result.success) {
+                toast.success('Laci kasir dibuka');
+            } else {
+                toast.error(result.message || 'Gagal buka laci');
+            }
+        } catch (err) {
+            toast.error('Gagal buka laci: ' + err.message);
+        } finally {
+            setDrawerOpening(false);
+        }
+    };
 
     const formatPrice = (price = 0) =>
         Number(price || 0).toLocaleString("id-ID");
@@ -85,23 +195,99 @@ export default function Print({ transaction }) {
             `}</style>
 
             <div className="min-h-screen bg-gray-100 py-8 px-4">
+                <Toaster position="top-right" />
+
                 {/* Action Buttons */}
-                <div className="max-w-md mx-auto mb-4 flex items-center justify-between no-print">
-                    <Link
-                        href={route("pos.index")}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                    >
-                        <IconArrowLeft size={16} />
-                        Kembali
-                    </Link>
-                    <button
-                        type="button"
-                        onClick={() => window.print()}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                    >
-                        <IconPrinter size={16} />
-                        Cetak
-                    </button>
+                <div className="max-w-md mx-auto mb-4 no-print">
+                    <div className="flex items-center justify-between mb-3">
+                        <Link
+                            href={route("pos.index")}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                            <IconArrowLeft size={16} />
+                            Kembali
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => window.print()}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                        >
+                            <IconPrinter size={16} />
+                            Cetak Browser
+                        </button>
+                    </div>
+
+                    {/* Thermal Printer Actions */}
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handleThermalPrint}
+                            disabled={thermalPrinting}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <IconPrinter size={16} />
+                            {thermalPrinting ? 'Mencetak...' : 'Cetak Thermal'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleOpenDrawer}
+                            disabled={drawerOpening}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <IconCash size={16} />
+                            {drawerOpening ? '...' : 'Buka Laci'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowPrinterSelect(!showPrinterSelect)}
+                            className="inline-flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                            title="Pengaturan Printer"
+                        >
+                            <IconSettings size={16} />
+                        </button>
+                    </div>
+
+                    {/* Printer Debug Panel */}
+                    {showPrinterSelect && (
+                        <div className="mt-3 p-3 bg-gray-50 border rounded-lg text-sm">
+                            <div className="font-semibold text-gray-700 mb-2">🔧 Debug Printer</div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">QZ Tray:</span>
+                                    <span className={qzStatus.includes('✓') ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                        {qzStatus}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Printer Dipilih:</span>
+                                    <span className="text-blue-600 font-medium">{selectedPrinter || '-'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600 block mb-1">Printer Tersedia:</span>
+                                    {printers.length > 0 ? (
+                                        <select
+                                            value={selectedPrinter}
+                                            onChange={(e) => {
+                                                setSelectedPrinter(e.target.value);
+                                                PrintService.setSelectedPrinter(e.target.value);
+                                                toast.success(`Printer dipilih: ${e.target.value}`);
+                                            }}
+                                            className="w-full px-2 py-1.5 border rounded text-sm"
+                                        >
+                                            {printers.map(p => (
+                                                <option key={p} value={p}>{p}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <span className="text-gray-400 italic">Tidak ada printer terdeteksi</span>
+                                    )}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-2 pt-2 border-t">
+                                    💡 Pastikan printer thermal Kassen muncul di daftar di atas dan terpilih.
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Receipt */}
@@ -109,7 +295,7 @@ export default function Print({ transaction }) {
                     {/* Header - Logo & Store Info */}
                     <div className="text-center mb-4">
                         {settings.store_logo ? (
-                            <img 
+                            <img
                                 src={`/storage/settings/${settings.store_logo}`}
                                 alt="Logo"
                                 className="w-16 h-16 mx-auto mb-2 object-contain"
@@ -176,7 +362,7 @@ export default function Print({ transaction }) {
                             <span>Total QTY : {totalQty}</span>
                         </div>
                         <div className="divider"></div>
-                        
+
                         <div className="flex justify-between">
                             <span>Sub Total</span>
                             <span>Rp {formatPrice(calculatedSubTotal)}</span>

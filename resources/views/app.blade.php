@@ -16,6 +16,10 @@
     @viteReactRefresh
     @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
     @inertiaHead
+
+    <!-- QZ Tray for thermal printing -->
+    <script src="{{ asset('js/qz-tray.js') }}"></script>
+
     <style>
         body.dark {
             background-color: rgb(3 7 18 / 0.9);

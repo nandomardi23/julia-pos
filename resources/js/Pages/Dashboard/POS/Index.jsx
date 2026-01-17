@@ -137,67 +137,100 @@ export default function Index({
     // Barcode scanner detection - auto-add when Enter is pressed after fast input
     const scanningRef = useRef(false); // Lock to prevent concurrent scans
     
+    // Buffer for headless scanning
+    const bufferTimeoutRef = useRef(null);
+
     useEffect(() => {
         const handleKeyDown = async (e) => {
-            // Only handle if search input is focused
-            if (document.activeElement !== searchInputRef.current) return;
-            
-            const now = Date.now();
-            const timeDiff = now - lastInputTimeRef.current;
-            lastInputTimeRef.current = now;
-            
-            // If Enter is pressed and we have a search value
-            if (e.key === "Enter" && search.trim()) {
-                e.preventDefault();
-                
-                // Prevent concurrent scans
-                if (scanningRef.current) {
-                    return;
+            const activeElement = document.activeElement;
+            const isTypingField = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+            const isSearchFocused = activeElement === searchInputRef.current;
+
+            // 1. If typing in another field (e.g. Payment/Discount) that is NOT search, ignore scanning
+            if (isTypingField && !isSearchFocused) return;
+
+            // 2. Headless Layout: Capture non-control characters into buffer
+            if (!isSearchFocused && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                const now = Date.now();
+                // Check inter-keypress timing. Scanners are fast (<50ms). Humans are slow.
+                // If gap > 100ms, assume new sequence or manual type.
+                if (now - lastInputTimeRef.current > 100) {
+                     barcodeBufferRef.current = ""; 
                 }
-                
-                const barcode = search.trim();
-                
-                // Clear search IMMEDIATELY to prevent barcode concatenation
-                setSearch("");
-                
-                // Cancel any pending debounced search
-                if (searchTimeoutRef.current) {
-                    clearTimeout(searchTimeoutRef.current);
-                    searchTimeoutRef.current = null;
+                lastInputTimeRef.current = now;
+                barcodeBufferRef.current += e.key;
+
+                // Auto-clear buffer if sequence stops (noise prevention)
+                if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
+                bufferTimeoutRef.current = setTimeout(() => {
+                    barcodeBufferRef.current = "";
+                }, 200);
+            }
+
+            // 3. Handle Enter Key (Trigger Search)
+            if (e.key === "Enter") {
+                let barcodeToSearch = "";
+
+                // Prefer Search Input value if focused, otherwise Buffer
+                if (isSearchFocused) {
+                    barcodeToSearch = search.trim();
+                } else {
+                    barcodeToSearch = barcodeBufferRef.current.trim();
                 }
-                
-                // Set scanning lock
-                scanningRef.current = true;
-                
-                try {
-                    // First try to find in current products list (fast)
-                    const localProduct = productsList.find(
-                        (p) => p.barcode && p.barcode.toLowerCase() === barcode.toLowerCase()
-                    );
+
+                if (barcodeToSearch) {
+                    e.preventDefault();
+                    if (scanningRef.current) return;
+
+                    const barcode = barcodeToSearch;
+
+                    // Cleanup
+                    setSearch("");
+                    barcodeBufferRef.current = "";
+                    if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
                     
-                    if (localProduct) {
-                        playBeep(true);
-                        handleAddToCart(localProduct);
-                        return;
+                    if (searchTimeoutRef.current) {
+                        clearTimeout(searchTimeoutRef.current);
+                        searchTimeoutRef.current = null;
                     }
+
+                    scanningRef.current = true;
+                    // Provide immediate feedback to reduce perceived delay
+                    const loadingToast = toast.loading("Mencari produk...");
                     
-                    // If not found locally, search in database via API
-                    const response = await fetch(`/dashboard/pos/find-by-barcode?barcode=${encodeURIComponent(barcode)}`);
-                    const data = await response.json();
-                    
-                    if (data.found && data.product) {
-                        playBeep(true);
-                        handleAddToCart(data.product);
-                    } else {
+                    try {
+                        // First try to find in current products list (fast)
+                        const localProduct = productsList.find(
+                            (p) => p.barcode && p.barcode.toLowerCase() === barcode.toLowerCase()
+                        );
+                        
+                        if (localProduct) {
+                            toast.dismiss(loadingToast); // Dismiss loading immediately
+                            playBeep(true);
+                            handleAddToCart(localProduct);
+                            return;
+                        }
+                        
+                        // If not found locally, search in database via API
+                        const response = await fetch(`/dashboard/pos/find-by-barcode?barcode=${encodeURIComponent(barcode)}`);
+                        const data = await response.json();
+                        
+                        toast.dismiss(loadingToast); // Dismiss loading before showing result
+                        
+                        if (data.found && data.product) {
+                            playBeep(true);
+                            handleAddToCart(data.product);
+                        } else {
+                            playBeep(false);
+                            toast.error(data.message || "Produk tidak ditemukan!");
+                        }
+                    } catch (error) {
+                        toast.dismiss(loadingToast);
                         playBeep(false);
-                        toast.error(data.message || "Produk tidak ditemukan!");
+                        toast.error("Gagal mencari produk: " + error.message);
+                    } finally {
+                        scanningRef.current = false;
                     }
-                } catch (error) {
-                    playBeep(false);
-                    toast.error("Gagal mencari produk: " + error.message);
-                } finally {
-                    // Release scanning lock
-                    scanningRef.current = false;
                 }
             }
         };
@@ -569,11 +602,11 @@ export default function Index({
                 </header>
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden overflow-y-auto">
                     {/* Products Panel */}
-                    <div className="flex-1 flex flex-col overflow-hidden lg:w-2/3">
+                    <div className="flex-1 flex flex-col lg:overflow-hidden lg:w-2/3">
                         {/* Search & Categories */}
-                        <div className="bg-white dark:bg-gray-950 border-b dark:border-gray-800 p-4 space-y-3">
+                        <div className="bg-white dark:bg-gray-950 border-b dark:border-gray-800 p-4 space-y-3 sticky top-0 z-40">
                             {/* Search */}
                             <div className="relative">
                                 <IconSearch
@@ -748,7 +781,7 @@ export default function Index({
                     </div>
 
                     {/* Cart Panel */}
-                    <div className="lg:w-1/3 xl:w-[400px] bg-white dark:bg-gray-950 border-t lg:border-t-0 lg:border-l dark:border-gray-800 flex flex-col max-h-[50vh] lg:max-h-none">
+                    <div className="lg:w-1/3 xl:w-[400px] bg-white dark:bg-gray-950 border-t lg:border-t-0 lg:border-l dark:border-gray-800 flex flex-col shrink-0">
                         {/* Cart Header */}
                         <div className="p-4 border-b dark:border-gray-800 flex items-center justify-between">
                             <div className="flex items-center gap-2">

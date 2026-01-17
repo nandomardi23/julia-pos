@@ -13,72 +13,60 @@ export default function Print({ transaction }) {
     const [showPrinterSelect, setShowPrinterSelect] = useState(false);
     const [qzStatus, setQzStatus] = useState('checking...');
 
-    // Load printers on mount
+    // Initialize and Auto-print
     useEffect(() => {
-        const loadPrinters = async () => {
+        let mounted = true;
+
+        const init = async () => {
+            // Wait for QZ Tray resource to potentialy load
+            await new Promise(r => setTimeout(r, 1000));
+
+            if (!mounted) return;
+
             if (PrintService.isAvailable()) {
                 try {
+                    setQzStatus('Menghubungkan...');
                     const status = await PrintService.checkConnection();
-                    setQzStatus(status.connected ? '✓ Terhubung' : '✗ Tidak terhubung');
-                    if (status.printers) {
-                        setPrinters(status.printers);
-                        if (status.thermalPrinter) {
-                            setSelectedPrinter(status.thermalPrinter);
+                    
+                    if (mounted) {
+                        setQzStatus(status.connected ? '✓ Terhubung' : '✗ Tidak terhubung');
+                        
+                        if (status.printers) {
+                            setPrinters(status.printers);
+                            if (status.thermalPrinter) {
+                                setSelectedPrinter(status.thermalPrinter);
+                            }
+                        }
+
+                        if (status.connected) {
+                            // Auto trigger thermal print if connected
+                            handleThermalPrint();
+                        } else {
+                            toast.error('Printer Thermal tidak terhubung');
+                            // We DO NOT auto-fallback to window.print() here to avoid annoying popups
                         }
                     }
                 } catch (err) {
-                    setQzStatus('✗ Error: ' + err.message);
+                    if (mounted) setQzStatus('✗ Error: ' + err.message);
                 }
             } else {
-                setQzStatus('✗ QZ Tray tidak terdeteksi');
-            }
-        };
-        loadPrinters();
-    }, []);
-
-    useEffect(() => {
-        // Try thermal print first, fallback to browser print
-        const attemptPrint = async () => {
-            // Check if QZ Tray is available
-            if (PrintService.isAvailable()) {
-                setThermalPrinting(true);
-                try {
-                    // Determine if drawer should open (cash only)
-                    const isCash = transaction?.payment_method?.toLowerCase() === 'cash';
-
-                    const result = await PrintService.printAndOpenDrawer(
-                        transaction,
-                        settings,
-                        isCash // Only open drawer for cash
-                    );
-
-                    if (result.print.success) {
-                        toast.success('Struk dicetak ke printer thermal');
-                        if (isCash && result.drawer.success && !result.drawer.skipped) {
-                            toast.success('Laci kasir dibuka');
-                        }
-                    } else if (result.print.fallback) {
-                        // Fallback to browser print
-                        console.log('Fallback to browser print');
-                        window.print();
-                    }
-                } catch (err) {
-                    console.error('Thermal print error:', err);
-                    // Fallback to browser print
-                    window.print();
-                } finally {
-                    setThermalPrinting(false);
+                if (mounted) {
+                    setQzStatus('✗ QZ Tray tidak terdeteksi');
+                    // Fallback to browser print ONLY if QZ Tray is completely missing
+                    // But maybe user prefers manual click? Let's leave it manual for now to answer user complaint.
+                    toast('Silakan gunakan tombol "Cetak Browser" jika tidak menggunakan printer thermal', {
+                        icon: '🖨️',
+                        duration: 5000
+                    });
                 }
-            } else {
-                // QZ Tray not available, use browser print
-                const timer = setTimeout(() => {
-                    window.print();
-                }, 500);
-                return () => clearTimeout(timer);
             }
         };
 
-        attemptPrint();
+        init();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     // Handle manual thermal print

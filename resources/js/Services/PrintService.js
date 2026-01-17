@@ -163,7 +163,7 @@ class PrintService {
      * Generate ESC/POS receipt commands for 80mm paper (48 chars width)
      * Format matches web preview exactly
      */
-    static generateReceiptCommands(transaction, settings = {}) {
+    static generateReceiptCommands(transaction, settings = {}, hasLogo = false) {
         const ESC = '\x1B';
         const GS = '\x1D';
         const LF = '\x0A';
@@ -171,21 +171,30 @@ class PrintService {
 
         let receipt = '';
 
-        // Initialize printer
-        receipt += ESC + '@'; // Reset printer
+        // Initialize printer (Only reset if NO logo, otherwise we might clear the logo buffer)
+        if (!hasLogo) {
+            receipt += ESC + '@'; 
+        }
 
         // ===== HEADER =====
         // Center align
         receipt += ESC + 'a' + '\x01';
 
-        // Store Initial/Logo placeholder (large bold letter like web preview)
-        const storeInitial = (settings.store_name || 'S').charAt(0).toUpperCase();
-        receipt += ESC + 'E' + '\x01'; // Bold ON
-        receipt += GS + '!' + '\x33';  // 4x height + 4x width (larger)
-        receipt += storeInitial + LF;
-        receipt += GS + '!' + '\x00';  // Normal size
-        receipt += ESC + 'E' + '\x00'; // Bold OFF
-        receipt += LF;
+        // Add padding if logo was printed (prevent text from touching logo)
+        if (hasLogo) {
+            receipt += LF; 
+        }
+
+        // Store Initial placeholder (only if no logo image)
+        if (!hasLogo) {
+            const storeInitial = (settings.store_name || 'S').charAt(0).toUpperCase();
+            receipt += ESC + 'E' + '\x01'; // Bold ON
+            receipt += GS + '!' + '\x33';  // 4x height + 4x width (larger)
+            receipt += storeInitial + LF;
+            receipt += GS + '!' + '\x00';  // Normal size
+            receipt += ESC + 'E' + '\x00'; // Bold OFF
+            receipt += LF;
+        }
 
         // Store name (bold, double height)
         receipt += ESC + 'E' + '\x01'; // Bold ON
@@ -349,13 +358,50 @@ class PrintService {
             }
 
             const config = this.qz.configs.create(printer);
-            const receiptData = this.generateReceiptCommands(transaction, settings);
+            
+            // 1. Print Logo (Separate Job to prevent Mixed Content Errors)
+            let hasLogo = false;
+            if (settings.store_logo) {
+                const logoUrl = `/storage/settings/${settings.store_logo}`;
+                const base64Image = await this.fetchImageBase64(logoUrl);
+                
+                if (base64Image) {
+                    try {
+                        console.log('Printing logo...');
+                        await this.qz.print(config, [{
+                            type: 'pixel',
+                            format: 'image',
+                            flavor: 'base64',
+                            data: base64Image,
+                            options: {
+                                language: "ESCPOS",
+                                dotDensity: "double"
+                            }
+                        }]);
+                        hasLogo = true;
+                    } catch (logoError) {
+                        console.error('Logo print failed, proceeding with text:', logoError);
+                    }
+                }
+            }
 
-            await this.qz.print(config, [{
-                type: 'raw',
-                format: 'command',
-                data: receiptData
-            }]);
+            // 2. Print Receipt Text (Separate Job)
+            // Note: If logo was printed, the printer is already initialized. 
+            // We pass hasLogo=true to generateReceiptCommands to skip big initial letter if desired.
+            const receiptData = this.generateReceiptCommands(transaction, settings, hasLogo);
+            
+            try {
+                console.log('Printing text...');
+                await this.qz.print(config, [{
+                    type: 'raw',
+                    format: 'command',
+                    flavor: 'hex',
+                    data: this.toHex(receiptData)
+                }]);
+            } catch (textError) {
+                console.error('Text print failed:', textError);
+                throw textError;
+            }
 
             console.log('✓ Struk berhasil dicetak');
             return { success: true, message: 'Struk berhasil dicetak' };
@@ -401,12 +447,14 @@ class PrintService {
 
             // ESC p 0 25 250 - Standard cash drawer kick command
             // Works with most RJ11-connected cash drawers
-            const drawerKick = '\x1B\x70\x00\x19\xFA';
+            // Hex: 1B700019FA
+            const drawerKickHex = '1B700019FA';
 
             await this.qz.print(config, [{
                 type: 'raw',
                 format: 'command',
-                data: drawerKick
+                flavor: 'hex',
+                data: drawerKickHex
             }]);
 
             console.log('✓ Cash drawer dibuka');
@@ -534,6 +582,47 @@ class PrintService {
         } catch {
             return '-';
         }
+    }
+
+    /**
+     * Fetch image from URL and convert to Base64 (without header)
+     */
+    static async fetchImageBase64(url) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64Combined = reader.result;
+                    // Split header "data:image/png;base64," to get pure base64
+                    const base64Pure = base64Combined.split(',')[1];
+                    resolve(base64Pure);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Error fetching image for printing:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Convert string to Hex string for QZ Tray
+     * Ensures only single-byte characters are processed to avoid invalid hex length
+     */
+    static toHex(str) {
+        let hex = '';
+        for (let i = 0; i < str.length; i++) {
+            let code = str.charCodeAt(i);
+            // Force 8-bit range. Replace non-ASCII (>255) with '?' (0x3F)
+            if (code > 255) {
+                code = 0x3F; 
+            }
+            hex += code.toString(16).padStart(2, '0');
+        }
+        return hex.toUpperCase();
     }
 }
 

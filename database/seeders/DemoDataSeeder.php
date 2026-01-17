@@ -59,7 +59,7 @@ class DemoDataSeeder extends Seeder
         $categories = $this->seedCategories();
 
         $this->command->info('🧪 Creating ingredients (bahan baku)...');
-        $this->seedIngredients($categories, $warehouse);
+        $this->seedIngredients($categories, $warehouse, $display);
 
         $this->command->info('📦 Creating supplies (perlengkapan)...');
         $this->seedSupplies($categories, $warehouse);
@@ -72,6 +72,7 @@ class DemoDataSeeder extends Seeder
 
         $this->command->info('✅ Demo data seeded successfully!');
     }
+
 
     private function seedSuppliers(): void
     {
@@ -118,9 +119,9 @@ class DemoDataSeeder extends Seeder
 
     /**
      * INGREDIENTS - Bahan baku untuk resep
-     * Masuk gudang, TIDAK ke display (karena bukan untuk dijual langsung)
+     * Masuk gudang DAN display (agar resep bisa dijual di POS)
      */
-    private function seedIngredients(array $categories, Warehouse $warehouse): void
+    private function seedIngredients(array $categories, Warehouse $warehouse, Display $display): void
     {
         $ingredients = [
             ['name' => 'Coffee Beans', 'img' => 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400', 'buy' => 150000, 'unit' => 'kg'],
@@ -155,6 +156,13 @@ class DemoDataSeeder extends Seeder
             // Add to warehouse
             WarehouseStock::create([
                 'warehouse_id' => $warehouse->id,
+                'product_id' => $product->id,
+                'quantity' => rand(20, 100),
+            ]);
+
+            // Add to display (for recipe availability check in POS)
+            DisplayStock::create([
+                'display_id' => $display->id,
                 'product_id' => $product->id,
                 'quantity' => rand(20, 100),
             ]);

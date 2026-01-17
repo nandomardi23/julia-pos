@@ -24,6 +24,7 @@ import {
     IconSettings,
     IconClipboardCheck,
     IconFileInvoice,
+    IconCash,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -188,6 +189,13 @@ export default function Menu() {
                     href: route("returns.index"),
                     active: url.startsWith("/dashboard/returns"),
                     icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["transactions-access"]),
+                },
+                {
+                    title: "Shift Kasir",
+                    href: route("shifts.index"),
+                    active: url.startsWith("/dashboard/shifts"),
+                    icon: <IconCash size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["transactions-access"]),
                 },
             ],

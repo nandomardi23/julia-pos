@@ -1,20 +1,285 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, router } from '@inertiajs/react'
-import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet } from '@tabler/icons-react'
+import { Head, router, useForm } from '@inertiajs/react'
+import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle } from '@tabler/icons-react'
 import Table from '@/Components/Common/Table'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
+import SearchableSelect from '@/Components/Common/SearchableSelect'
+import Modal from '@/Components/Common/Modal'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 
-export default function Index({ movements, filters }) {
+export default function Index({ movements, filters, warehouses, displays, transferProducts, allProducts, suppliers, stockOutReasons }) {
     const [filterData, setFilterData] = useState({
         product: filters.product || '',
         type: filters.type || '',
         start_date: filters.start_date || '',
         end_date: filters.end_date || ''
     })
+
+    // Modal States
+    const [showTransferModal, setShowTransferModal] = useState(false)
+    const [showStockInModal, setShowStockInModal] = useState(false)
+    const [showStockOutModal, setShowStockOutModal] = useState(false)
+    
+    // Stock availability states
+    const [transferAvailableStock, setTransferAvailableStock] = useState(0)
+    const [stockOutAvailableStock, setStockOutAvailableStock] = useState(0)
+    const [stockOutFilteredProducts, setStockOutFilteredProducts] = useState([])
+
+    // Transfer Form
+    const transferForm = useForm({
+        warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+        display_id: displays.length > 0 ? displays[0].id : '',
+        product_id: '',
+        quantity: '',
+        note: ''
+    })
+
+    // Stock In Form (simplified single item)
+    const stockInForm = useForm({
+        warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+        supplier_id: '',
+        product_id: '',
+        quantity: '',
+        purchase_price: '',
+        note: ''
+    })
+
+    // Stock Out Form
+    const stockOutForm = useForm({
+        location_type: 'warehouse',
+        location_id: warehouses.length > 0 ? warehouses[0].id : '',
+        product_id: '',
+        quantity: '',
+        reason: 'damaged',
+        note: ''
+    })
+
+    // ==================== TRANSFER MODAL LOGIC ====================
+    useEffect(() => {
+        if (transferForm.data.warehouse_id && transferForm.data.product_id) {
+            axios.get(route('stock-movements.warehouseStock'), {
+                params: {
+                    warehouse_id: transferForm.data.warehouse_id,
+                    product_id: transferForm.data.product_id
+                }
+            }).then(response => {
+                setTransferAvailableStock(response.data.quantity)
+            }).catch(() => {
+                setTransferAvailableStock(0)
+            })
+        } else {
+            setTransferAvailableStock(0)
+        }
+    }, [transferForm.data.warehouse_id, transferForm.data.product_id])
+
+    const getTransferProductsWithStock = () => {
+        if (!transferForm.data.warehouse_id || !warehouses.length) return transferProducts;
+        const warehouse = warehouses.find(w => w.id == transferForm.data.warehouse_id)
+        if (!warehouse || !warehouse.stocks) return transferProducts;
+        const productIdsWithStock = warehouse.stocks.map(s => s.product_id)
+        return transferProducts.filter(p => productIdsWithStock.includes(p.id))
+    }
+
+    const transferProductOptions = getTransferProductsWithStock().map(product => ({
+        value: product.id,
+        label: product.barcode ? `${product.title} (${product.barcode})` : product.title
+    }))
+
+    const selectedTransferProduct = transferProductOptions.find(opt => opt.value == transferForm.data.product_id) || null
+
+    const handleTransferSubmit = (e) => {
+        e.preventDefault()
+        transferForm.post(route('stock-movements.storeTransfer'), {
+            onSuccess: () => {
+                toast('Stok berhasil ditransfer ke display', {
+                    icon: '👏',
+                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
+                })
+                setShowTransferModal(false)
+                transferForm.reset()
+                setTransferAvailableStock(0)
+            },
+            onError: () => {
+                toast('Terjadi kesalahan', {
+                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
+                })
+            },
+        })
+    }
+
+    const openTransferModal = () => {
+        transferForm.reset()
+        transferForm.setData({
+            warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+            display_id: displays.length > 0 ? displays[0].id : '',
+            product_id: '',
+            quantity: '',
+            note: ''
+        })
+        setTransferAvailableStock(0)
+        setShowTransferModal(true)
+    }
+
+    // ==================== STOCK IN MODAL LOGIC ====================
+    const allProductOptions = (allProducts || []).map(product => ({
+        value: product.id,
+        label: product.barcode 
+            ? `${product.title} (${product.barcode})` 
+            : product.title
+    }))
+
+    const supplierOptions = (suppliers || []).map(supplier => ({
+        value: supplier.id,
+        label: supplier.company ? `${supplier.name} (${supplier.company})` : supplier.name
+    }))
+
+    const selectedStockInProduct = allProductOptions.find(opt => opt.value == stockInForm.data.product_id) || null
+    const selectedSupplier = supplierOptions.find(opt => opt.value == stockInForm.data.supplier_id) || null
+
+    const formatCurrency = (value) => {
+        if (!value) return ''
+        const num = parseInt(String(value).replace(/\D/g, ''), 10)
+        if (isNaN(num)) return ''
+        return new Intl.NumberFormat('id-ID').format(num)
+    }
+
+    const parseCurrency = (value) => {
+        return String(value).replace(/\D/g, '')
+    }
+
+    const handleStockInSubmit = (e) => {
+        e.preventDefault()
+        
+        const payload = {
+            warehouse_id: stockInForm.data.warehouse_id,
+            supplier_id: stockInForm.data.supplier_id || null,
+            product_id: stockInForm.data.product_id,
+            quantity: parseInt(stockInForm.data.quantity) || 0,
+            purchase_price: parseCurrency(stockInForm.data.purchase_price) || null,
+            note: stockInForm.data.note || null,
+        }
+
+        router.post(route('stock-movements.store'), payload, {
+            onSuccess: () => {
+                toast('Stok berhasil ditambahkan ke gudang', {
+                    icon: '👏',
+                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
+                })
+                setShowStockInModal(false)
+                stockInForm.reset()
+            },
+            onError: () => {
+                toast('Terjadi kesalahan', {
+                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
+                })
+            },
+        })
+    }
+
+    const openStockInModal = () => {
+        stockInForm.reset()
+        stockInForm.setData({
+            warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+            supplier_id: '',
+            product_id: '',
+            quantity: '',
+            purchase_price: '',
+            note: ''
+        })
+        setShowStockInModal(true)
+    }
+
+    // ==================== STOCK OUT MODAL LOGIC ====================
+    useEffect(() => {
+        if (stockOutForm.data.location_type === 'warehouse') {
+            const warehouse = warehouses.find(w => w.id == stockOutForm.data.location_id)
+            if (warehouse && warehouse.stocks) {
+                const productIds = warehouse.stocks.map(s => s.product_id)
+                setStockOutFilteredProducts((allProducts || []).filter(p => productIds.includes(p.id)))
+            } else {
+                setStockOutFilteredProducts([])
+            }
+        } else {
+            const display = displays.find(d => d.id == stockOutForm.data.location_id)
+            if (display && display.stocks) {
+                const productIds = display.stocks.map(s => s.product_id)
+                setStockOutFilteredProducts((allProducts || []).filter(p => productIds.includes(p.id)))
+            } else {
+                setStockOutFilteredProducts([])
+            }
+        }
+        stockOutForm.setData('product_id', '')
+        setStockOutAvailableStock(0)
+    }, [stockOutForm.data.location_type, stockOutForm.data.location_id])
+
+    useEffect(() => {
+        if (stockOutForm.data.location_id && stockOutForm.data.product_id) {
+            const url = stockOutForm.data.location_type === 'warehouse' 
+                ? route('stock-movements.warehouseStock')
+                : route('stock-movements.displayStock')
+            
+            const params = stockOutForm.data.location_type === 'warehouse'
+                ? { warehouse_id: stockOutForm.data.location_id, product_id: stockOutForm.data.product_id }
+                : { display_id: stockOutForm.data.location_id, product_id: stockOutForm.data.product_id }
+
+            axios.get(url, { params }).then(response => {
+                setStockOutAvailableStock(response.data.quantity)
+            }).catch(() => {
+                setStockOutAvailableStock(0)
+            })
+        } else {
+            setStockOutAvailableStock(0)
+        }
+    }, [stockOutForm.data.product_id, stockOutForm.data.location_id, stockOutForm.data.location_type])
+
+    const stockOutProductOptions = stockOutFilteredProducts.map(product => ({
+        value: product.id,
+        label: product.barcode ? `${product.title} (${product.barcode})` : product.title
+    }))
+
+    const selectedStockOutProduct = stockOutProductOptions.find(opt => opt.value == stockOutForm.data.product_id) || null
+
+    const handleStockOutSubmit = (e) => {
+        e.preventDefault()
+        stockOutForm.post(route('stock-movements.storeStockOut'), {
+            onSuccess: () => {
+                toast('Barang keluar berhasil dicatat', {
+                    icon: '✅',
+                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
+                })
+                setShowStockOutModal(false)
+                stockOutForm.reset()
+                setStockOutAvailableStock(0)
+            },
+            onError: () => {
+                toast('Terjadi kesalahan', {
+                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
+                })
+            },
+        })
+    }
+
+    const openStockOutModal = () => {
+        stockOutForm.reset()
+        stockOutForm.setData({
+            location_type: 'warehouse',
+            location_id: warehouses.length > 0 ? warehouses[0].id : '',
+            product_id: '',
+            quantity: '',
+            reason: 'damaged',
+            note: ''
+        })
+        setStockOutAvailableStock(0)
+        setShowStockOutModal(true)
+    }
+
+    const stockOutLocations = stockOutForm.data.location_type === 'warehouse' ? warehouses : displays
+
+    // ==================== OTHER FUNCTIONS ====================
     const handleExport = () => {
         const params = new URLSearchParams(filterData).toString();
         window.open(route("stock-movements.export") + "?" + params, "_blank");
@@ -22,12 +287,6 @@ export default function Index({ movements, filters }) {
 
     const handleExportStockReport = () => {
         window.open(route("stock-movements.exportStockReport"), "_blank");
-    }
-
-    const resetFilters = () => {
-        router.get(route('stock-movements.index'), filterData, {
-            preserveState: true
-        })
     }
 
     const handleFilter = () => {
@@ -76,25 +335,25 @@ export default function Index({ movements, filters }) {
             <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
                 <div className='flex flex-wrap gap-2'>
                     <Button
-                        type={'link'}
+                        type={'button'}
                         icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
                         className={'border bg-green-500 text-white hover:bg-green-600'}
                         label={'Barang Masuk'}
-                        href={route('stock-movements.create')}
+                        onClick={openStockInModal}
                     />
                     <Button
-                        type={'link'}
+                        type={'button'}
                         icon={<IconMinus size={18} strokeWidth={1.5} />}
                         className={'border bg-red-500 text-white hover:bg-red-600'}
                         label={'Barang Keluar'}
-                        href={route('stock-movements.stockOut')}
+                        onClick={openStockOutModal}
                     />
                     <Button
-                        type={'link'}
+                        type={'button'}
                         icon={<IconArrowsExchange size={18} strokeWidth={1.5} />}
                         className={'border bg-blue-500 text-white hover:bg-blue-600'}
                         label={'Transfer Stok'}
-                        href={route('stock-movements.transfer')}
+                        onClick={openTransferModal}
                     />
                 </div>
                 <div className='flex flex-wrap gap-2'>
@@ -264,6 +523,341 @@ export default function Index({ movements, filters }) {
                     </Table.Tbody>
                 </Table>
             </Table.Card>
+
+            {/* ==================== TRANSFER MODAL ==================== */}
+            <Modal
+                show={showTransferModal}
+                onClose={() => setShowTransferModal(false)}
+                maxWidth="lg"
+                title={
+                    <div className='flex items-center gap-2'>
+                        <IconArrowsExchange size={20} strokeWidth={1.5} />
+                        <span>Transfer Stok: Gudang → Display</span>
+                    </div>
+                }
+            >
+                <form onSubmit={handleTransferSubmit}>
+                    <div className='grid grid-cols-12 gap-4'>
+                        <div className='col-span-6'>
+                            <Select
+                                label="Dari Gudang"
+                                value={transferForm.data.warehouse_id}
+                                onChange={e => transferForm.setData('warehouse_id', e.target.value)}
+                                errors={transferForm.errors.warehouse_id}
+                            >
+                                {warehouses.map(warehouse => (
+                                    <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className='col-span-6'>
+                            <Select
+                                label="Ke Display"
+                                value={transferForm.data.display_id}
+                                onChange={e => transferForm.setData('display_id', e.target.value)}
+                                errors={transferForm.errors.display_id}
+                            >
+                                {displays.map(display => (
+                                    <option key={display.id} value={display.id}>{display.name}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className='col-span-12'>
+                            <SearchableSelect
+                                label="Produk"
+                                options={transferProductOptions}
+                                value={selectedTransferProduct}
+                                onChange={(option) => transferForm.setData('product_id', option ? option.value : '')}
+                                placeholder="Cari dan pilih produk..."
+                                errors={transferForm.errors.product_id}
+                            />
+                        </div>
+                        
+                        {transferForm.data.product_id && (
+                            <div className='col-span-12'>
+                                <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+                                    <p className='text-sm text-blue-700 dark:text-blue-300'>
+                                        Stok tersedia di gudang: <strong>{transferAvailableStock}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className='col-span-6'>
+                            <Input
+                                name='quantity'
+                                label={'Jumlah Transfer'}
+                                type={'number'}
+                                min='1'
+                                max={transferAvailableStock}
+                                placeholder={'Jumlah yang akan ditransfer'}
+                                value={transferForm.data.quantity}
+                                errors={transferForm.errors.quantity}
+                                onChange={e => transferForm.setData('quantity', e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-12">
+                            <Input
+                                name='note'
+                                label={'Catatan (Opsional)'}
+                                placeholder={'Catatan transfer stok'}
+                                value={transferForm.data.note}
+                                errors={transferForm.errors.note}
+                                onChange={e => transferForm.setData('note', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className='flex items-center justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-800'>
+                        <Button
+                            type={'button'}
+                            label={'Batal'}
+                            icon={<IconX size={18} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => setShowTransferModal(false)}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={transferForm.processing ? 'Memproses...' : 'Transfer'}
+                            icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
+                            className={'border bg-blue-500 text-white hover:bg-blue-600'}
+                            disabled={transferForm.processing}
+                        />
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ==================== STOCK IN MODAL ==================== */}
+            <Modal
+                show={showStockInModal}
+                onClose={() => setShowStockInModal(false)}
+                maxWidth="lg"
+                title={
+                    <div className='flex items-center gap-2'>
+                        <IconCirclePlus size={20} strokeWidth={1.5} />
+                        <span>Barang Masuk ke Gudang</span>
+                    </div>
+                }
+            >
+                <form onSubmit={handleStockInSubmit}>
+                    <div className='grid grid-cols-12 gap-4'>
+                        <div className='col-span-6'>
+                            <SearchableSelect
+                                label="Supplier (Opsional)"
+                                options={supplierOptions}
+                                value={selectedSupplier}
+                                onChange={(option) => stockInForm.setData('supplier_id', option ? option.value : '')}
+                                placeholder="Pilih supplier..."
+                                isClearable={true}
+                                errors={stockInForm.errors.supplier_id}
+                            />
+                        </div>
+                        <div className='col-span-6'>
+                            <Select
+                                label="Gudang Tujuan"
+                                value={stockInForm.data.warehouse_id}
+                                onChange={e => stockInForm.setData('warehouse_id', e.target.value)}
+                                errors={stockInForm.errors.warehouse_id}
+                            >
+                                {warehouses.map(warehouse => (
+                                    <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className='col-span-12'>
+                            <SearchableSelect
+                                label="Produk"
+                                options={allProductOptions}
+                                value={selectedStockInProduct}
+                                onChange={(option) => stockInForm.setData('product_id', option ? option.value : '')}
+                                placeholder="Cari dan pilih produk..."
+                                errors={stockInForm.errors.product_id}
+                            />
+                        </div>
+                        <div className='col-span-6'>
+                            <Input
+                                name='quantity'
+                                label={'Jumlah (Qty)'}
+                                type={'number'}
+                                min='1'
+                                placeholder={'Jumlah barang masuk'}
+                                value={stockInForm.data.quantity}
+                                errors={stockInForm.errors.quantity}
+                                onChange={e => stockInForm.setData('quantity', e.target.value)}
+                            />
+                        </div>
+                        <div className='col-span-6'>
+                            <Input
+                                name='purchase_price'
+                                label={'Harga Beli Total (Rp)'}
+                                type={'text'}
+                                placeholder={'Total harga beli'}
+                                value={formatCurrency(stockInForm.data.purchase_price)}
+                                errors={stockInForm.errors.purchase_price}
+                                onChange={e => stockInForm.setData('purchase_price', parseCurrency(e.target.value))}
+                            />
+                        </div>
+                        <div className="col-span-12">
+                            <Input
+                                name='note'
+                                label={'Catatan (Opsional)'}
+                                placeholder={'Catatan barang masuk'}
+                                value={stockInForm.data.note}
+                                errors={stockInForm.errors.note}
+                                onChange={e => stockInForm.setData('note', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className='flex items-center justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-800'>
+                        <Button
+                            type={'button'}
+                            label={'Batal'}
+                            icon={<IconX size={18} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => setShowStockInModal(false)}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={stockInForm.processing ? 'Menyimpan...' : 'Simpan'}
+                            icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
+                            className={'border bg-green-500 text-white hover:bg-green-600'}
+                            disabled={stockInForm.processing}
+                        />
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ==================== STOCK OUT MODAL ==================== */}
+            <Modal
+                show={showStockOutModal}
+                onClose={() => setShowStockOutModal(false)}
+                maxWidth="lg"
+                title={
+                    <div className='flex items-center gap-2'>
+                        <IconMinus size={20} strokeWidth={1.5} />
+                        <span>Barang Keluar (Non-Penjualan)</span>
+                    </div>
+                }
+            >
+                <form onSubmit={handleStockOutSubmit}>
+                    <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4'>
+                        <div className='flex items-center gap-2 text-yellow-700 dark:text-yellow-300'>
+                            <IconAlertTriangle size={20} />
+                            <p className='text-sm'>
+                                Untuk mencatat barang keluar selain penjualan (rusak, kadaluarsa, retur, dll).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className='grid grid-cols-12 gap-4'>
+                        <div className='col-span-6'>
+                            <Select
+                                label="Lokasi Stok"
+                                value={stockOutForm.data.location_type}
+                                onChange={e => {
+                                    stockOutForm.setData({
+                                        ...stockOutForm.data,
+                                        location_type: e.target.value,
+                                        location_id: e.target.value === 'warehouse' 
+                                            ? (warehouses[0]?.id || '') 
+                                            : (displays[0]?.id || ''),
+                                        product_id: ''
+                                    })
+                                }}
+                            >
+                                <option value="warehouse">Gudang</option>
+                                <option value="display">Display</option>
+                            </Select>
+                        </div>
+                        <div className='col-span-6'>
+                            <Select
+                                label={stockOutForm.data.location_type === 'warehouse' ? 'Pilih Gudang' : 'Pilih Display'}
+                                value={stockOutForm.data.location_id}
+                                onChange={e => stockOutForm.setData('location_id', e.target.value)}
+                                errors={stockOutForm.errors.location_id}
+                            >
+                                {stockOutLocations.map(loc => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className='col-span-12'>
+                            <SearchableSelect
+                                label="Produk"
+                                options={stockOutProductOptions}
+                                value={selectedStockOutProduct}
+                                onChange={(option) => stockOutForm.setData('product_id', option ? option.value : '')}
+                                placeholder="Cari dan pilih produk..."
+                                errors={stockOutForm.errors.product_id}
+                            />
+                        </div>
+                        
+                        {stockOutForm.data.product_id && (
+                            <div className='col-span-12'>
+                                <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
+                                    <p className='text-sm text-blue-700 dark:text-blue-300'>
+                                        Stok tersedia: <strong>{stockOutAvailableStock}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className='col-span-6'>
+                            <Select
+                                label="Alasan"
+                                value={stockOutForm.data.reason}
+                                onChange={e => stockOutForm.setData('reason', e.target.value)}
+                                errors={stockOutForm.errors.reason}
+                            >
+                                {stockOutReasons && Object.entries(stockOutReasons).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        <div className='col-span-6'>
+                            <Input
+                                name='quantity'
+                                label={'Jumlah'}
+                                type={'number'}
+                                min='1'
+                                max={stockOutAvailableStock}
+                                placeholder={'Jumlah barang keluar'}
+                                value={stockOutForm.data.quantity}
+                                errors={stockOutForm.errors.quantity}
+                                onChange={e => stockOutForm.setData('quantity', e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-12">
+                            <Input
+                                name='note'
+                                label={'Catatan (Opsional)'}
+                                placeholder={'Detail keterangan barang keluar'}
+                                value={stockOutForm.data.note}
+                                errors={stockOutForm.errors.note}
+                                onChange={e => stockOutForm.setData('note', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className='flex items-center justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-800'>
+                        <Button
+                            type={'button'}
+                            label={'Batal'}
+                            icon={<IconX size={18} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => setShowStockOutModal(false)}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={stockOutForm.processing ? 'Menyimpan...' : 'Simpan'}
+                            icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
+                            className={'border bg-red-500 text-white hover:bg-red-600'}
+                            disabled={stockOutForm.processing}
+                        />
+                    </div>
+                </form>
+            </Modal>
         </>
     )
 }

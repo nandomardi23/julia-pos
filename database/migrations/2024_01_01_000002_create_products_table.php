@@ -11,26 +11,30 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('supplier_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('sku')->nullable()->unique();
+            $table->string('barcode')->nullable()->unique();
             $table->string('image');
-            $table->string('barcode')->unique();
             $table->string('title');
             $table->text('description')->nullable();
             $table->bigInteger('buy_price');
+            $table->decimal('average_cost', 15, 2)->default(0);
             $table->bigInteger('sell_price');
             $table->string('unit')->default('pcs');
-            $table->boolean('is_recipe')->default(false); // Produk komposit/resep
-            $table->boolean('is_supply')->default(false); // Alat pendukung (cup, pipet, dll)
-            $table->boolean('is_ingredient')->default(false); // Bahan baku
+            $table->decimal('min_stock', 10, 3)->default(0)->comment('Minimum stock for alert. 0 = no alert.');
+            $table->string('product_type')->default('sellable'); // sellable, recipe, ingredient, supply
             $table->timestamps();
+
+            // Performance indexes
+            $table->index('product_type');
+            $table->index('category_id');
         });
 
-        // Product Ingredients (untuk resep)
+        // Product Ingredients (for recipes at PRODUCT level)
         Schema::create('product_ingredients', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete(); // Produk utama (resep)
-            $table->foreignId('ingredient_id')->constrained('products')->cascadeOnDelete(); // Bahan/ingredient
-            $table->decimal('quantity', 10, 3); // Jumlah bahan per 1 produk
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete(); // Recipe product
+            $table->foreignId('ingredient_id')->constrained('products')->cascadeOnDelete(); // Ingredient
+            $table->decimal('quantity', 10, 3); // Amount per 1 unit of recipe
             $table->timestamps();
 
             $table->unique(['product_id', 'ingredient_id']);

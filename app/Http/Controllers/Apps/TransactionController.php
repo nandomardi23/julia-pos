@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Models\ProductReturn;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -117,6 +118,60 @@ class TransactionController extends Controller
     }
 
     /**
+     * Validate ingredient stocks for recipe products before transaction.
+     * Returns array of insufficient items, empty if all stock is sufficient.
+     *
+     * @param  \Illuminate\Support\Collection $carts
+     * @param  Display $display
+     * @return array
+     */
+    private function validateIngredientStock($carts, $display): array
+    {
+        $insufficientItems = [];
+        
+        foreach ($carts as $cart) {
+            $product = $cart->product;
+            
+            if ($product->product_type !== Product::TYPE_RECIPE) {
+                continue;
+            }
+            
+            $variant = $cart->variant;
+            $multiplier = (float) $cart->qty;
+            $ingredients = $product->getEffectiveIngredients($variant);
+            
+            foreach ($ingredients as $ingredientData) {
+                $ingredient = $ingredientData->ingredient;
+                if (!$ingredient) continue;
+                
+                $requiredQty = $ingredientData->quantity * $multiplier;
+                
+                if ($ingredient->product_type === Product::TYPE_SUPPLY) {
+                    // Check warehouse stock for supplies
+                    $availableStock = WarehouseStock::where('product_id', $ingredient->id)->sum('quantity');
+                } else {
+                    // Check display stock for ingredients
+                    $availableStock = DisplayStock::where('display_id', $display->id)
+                        ->where('product_id', $ingredient->id)
+                        ->sum('quantity');
+                }
+                
+                if ($availableStock < $requiredQty) {
+                    $insufficientItems[] = [
+                        'recipe' => $product->title . ($variant ? ' (' . $variant->name . ')' : ''),
+                        'ingredient' => $ingredient->title,
+                        'required' => $requiredQty,
+                        'available' => $availableStock,
+                        'unit' => $ingredient->unit ?? 'pcs',
+                    ];
+                }
+            }
+        }
+        
+        return $insufficientItems;
+    }
+
+    /**
      * store
      *
      * @param  mixed $request
@@ -145,6 +200,23 @@ class TransactionController extends Controller
             }
         }
 
+        // Bug #2 Fix: Validate ingredient stock before transaction
+        $carts = Cart::with(['product', 'variant'])->where('cashier_id', auth()->user()->id)->get();
+        $display = Display::active()->first();
+        
+        if ($display) {
+            $insufficientItems = $this->validateIngredientStock($carts, $display);
+            
+            if (!empty($insufficientItems)) {
+                $messages = [];
+                foreach ($insufficientItems as $item) {
+                    $messages[] = "{$item['recipe']}: {$item['ingredient']} (butuh {$item['required']} {$item['unit']}, tersedia {$item['available']} {$item['unit']})";
+                }
+                return redirect()->route('pos.index')
+                    ->with('error', 'Stok bahan tidak cukup: ' . implode('; ', $messages));
+            }
+        }
+
         $length = 10;
         $random = '';
         for ($i = 0; $i < $length; $i++) {
@@ -156,16 +228,21 @@ class TransactionController extends Controller
         $cashAmount = $isCashPayment ? $request->cash : $request->grand_total;
         $changeAmount = $isCashPayment ? $request->change : 0;
 
+        // Get active shift for the cashier
+        $activeShift = \App\Models\Shift::getActiveShift();
+
         $transaction = DB::transaction(function () use (
             $request,
             $invoice,
             $cashAmount,
             $changeAmount,
             $paymentMethod,
-            $isCashPayment
+            $isCashPayment,
+            $activeShift
         ) {
             $transaction = Transaction::create([
                 'cashier_id' => auth()->user()->id,
+                'shift_id' => $activeShift?->id,
                 'invoice' => $invoice,
                 'cash' => $cashAmount,
                 'change' => $changeAmount,
@@ -193,9 +270,13 @@ class TransactionController extends Controller
                     'buy_price' => $currentBuyPrice,
                 ]);
 
-                // Hitung profit berdasarkan buy_price saat transaksi
+                // Bug #3 Fix: Use variant sell_price if available for accurate profit calculation
+                $currentSellPrice = $cart->variant 
+                    ? ($cart->variant->sell_price ?? $cart->product->sell_price)
+                    : $cart->product->sell_price;
+                
                 $total_buy_price = $currentBuyPrice * $cart->qty;
-                $total_sell_price = $cart->product->sell_price * $cart->qty;
+                $total_sell_price = $currentSellPrice * $cart->qty;
                 $profits = $total_sell_price - $total_buy_price;
 
                 $transaction->profits()->create([
@@ -329,10 +410,21 @@ class TransactionController extends Controller
 
     /**
      * Delete transaction and revert stock changes.
+     * Bug #4 Fix: Check for processed returns before deletion.
      */
     public function destroy($invoice)
     {
         $transaction = Transaction::where('invoice', $invoice)->firstOrFail();
+
+        // Bug #4 Fix: Check for processed returns before deleting
+        $hasProcessedReturns = ProductReturn::where('transaction_id', $transaction->id)
+            ->whereIn('status', [ProductReturn::STATUS_APPROVED, ProductReturn::STATUS_COMPLETED])
+            ->exists();
+        
+        if ($hasProcessedReturns) {
+            return redirect()->route('transactions.history')
+                ->with('error', 'Transaksi tidak dapat dihapus karena sudah memiliki return yang diproses. Menghapus transaksi ini akan menyebabkan stok terhitung ganda.');
+        }
 
         $result = $this->transactionService->deleteTransaction($transaction);
 

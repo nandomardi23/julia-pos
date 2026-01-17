@@ -19,24 +19,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'store', 'key' => 'store_phone', 'value' => '08123456789'],
             ['group' => 'store', 'key' => 'store_email', 'value' => 'toko@example.com'],
             ['group' => 'store', 'key' => 'store_logo', 'value' => null],
-
-            // Receipt settings
-            ['group' => 'receipt', 'key' => 'receipt_header', 'value' => 'Selamat Berbelanja!'],
-            ['group' => 'receipt', 'key' => 'receipt_footer', 'value' => 'Terima kasih atas kunjungan Anda.'],
-            ['group' => 'receipt', 'key' => 'receipt_show_logo', 'value' => '1'],
-
-            // Sales settings
-            ['group' => 'sales', 'key' => 'default_payment_method', 'value' => 'cash'],
-            ['group' => 'sales', 'key' => 'low_stock_threshold', 'value' => '10'],
-            ['group' => 'sales', 'key' => 'allow_negative_stock', 'value' => '0'],
-
-            // Display settings
-            ['group' => 'display', 'key' => 'default_theme', 'value' => 'system'],
-            ['group' => 'display', 'key' => 'products_per_page', 'value' => '12'],
-
-            // Notification settings
-            ['group' => 'notification', 'key' => 'notify_low_stock', 'value' => '1'],
-            ['group' => 'notification', 'key' => 'notification_email', 'value' => ''],
         ];
 
         foreach ($settings as $setting) {

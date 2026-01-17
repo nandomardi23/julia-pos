@@ -69,9 +69,35 @@ class StockMovementController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Data for Transfer Modal
+        $warehouses = Warehouse::active()->with(['stocks' => function ($query) {
+            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+        }])->get();
+        
+        $displays = Display::active()->with(['stocks' => function ($query) {
+            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+        }])->get();
+        
+        $transferProducts = Product::whereHas('warehouseStocks', function ($query) {
+            $query->where('quantity', '>', 0);
+        })->with('category:id,name')->get(['id', 'title', 'barcode', 'category_id']);
+
+        // Data for Stock In Modal
+        $allProducts = Product::with('category:id,name')->get(['id', 'title', 'barcode', 'category_id']);
+        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
+
+        // Data for Stock Out Modal
+        $stockOutReasons = StockMovement::getStockOutReasons();
+
         return Inertia::render('Dashboard/StockMovements/Index', [
             'movements' => $movements,
             'filters' => $filters,
+            'warehouses' => $warehouses,
+            'displays' => $displays,
+            'transferProducts' => $transferProducts,
+            'allProducts' => $allProducts,
+            'suppliers' => $suppliers,
+            'stockOutReasons' => $stockOutReasons,
         ]);
     }
 

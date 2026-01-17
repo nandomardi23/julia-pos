@@ -241,6 +241,35 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middleware('permission:transactions-access')
         ->name('returns.reject');
 
+    // Shift Management Routes
+    Route::get('/shifts', [\App\Http\Controllers\Apps\ShiftController::class, 'index'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.index');
+    Route::get('/shifts/create', [\App\Http\Controllers\Apps\ShiftController::class, 'create'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.create');
+    Route::post('/shifts', [\App\Http\Controllers\Apps\ShiftController::class, 'store'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.store');
+    Route::get('/shifts/status', [\App\Http\Controllers\Apps\ShiftController::class, 'status'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.status');
+    Route::get('/shifts/{id}', [\App\Http\Controllers\Apps\ShiftController::class, 'show'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.show');
+    Route::get('/shifts/{id}/close', [\App\Http\Controllers\Apps\ShiftController::class, 'close'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.close');
+    Route::post('/shifts/{id}/close', [\App\Http\Controllers\Apps\ShiftController::class, 'storeClose'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.storeClose');
+    Route::post('/shifts/cash-flow', [\App\Http\Controllers\Apps\ShiftController::class, 'addCashFlow'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.addCashFlow');
+    Route::delete('/shifts/cash-flow/{id}', [\App\Http\Controllers\Apps\ShiftController::class, 'deleteCashFlow'])
+        ->middleware('permission:transactions-access')
+        ->name('shifts.deleteCashFlow');
+
     // POS Routes
     Route::get('/pos', [POSController::class, 'index'])->middleware('permission:transactions-access')->name('pos.index');
     Route::get('/pos/find-by-barcode', [POSController::class, 'findByBarcode'])->middleware('permission:transactions-access')->name('pos.findByBarcode');

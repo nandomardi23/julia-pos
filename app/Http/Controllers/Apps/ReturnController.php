@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Apps;
 
+use App\Models\Product;
 use App\Models\ProductReturn;
 use App\Models\ReturnItem;
 use App\Models\Transaction;
 use App\Models\Display;
 use App\Models\DisplayStock;
+use App\Models\WarehouseStock;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -175,27 +177,83 @@ class ReturnController extends Controller
             
             if ($display) {
                 foreach ($return->items as $item) {
-                    // Add stock back to display
-                    $displayStock = DisplayStock::firstOrCreate(
-                        [
-                            'display_id' => $display->id,
-                            'product_id' => $item->product_id,
-                        ],
-                        ['quantity' => 0]
-                    );
-                    $displayStock->increment('quantity', $item->qty);
+                    $product = Product::find($item->product_id);
+                    
+                    // Check if product is a recipe type
+                    if ($product && $product->product_type === Product::TYPE_RECIPE) {
+                        // For recipe products, restore ingredient stocks (not the recipe itself)
+                        $effectiveIngredients = $product->getEffectiveIngredients();
+                        
+                        foreach ($effectiveIngredients as $ingredientData) {
+                            $ingredient = $ingredientData->ingredient;
+                            if (!$ingredient) continue;
+                            
+                            $ingredientQty = $ingredientData->quantity * $item->qty;
+                            
+                            // Determine where to restore based on ingredient type
+                            if ($ingredient->product_type === Product::TYPE_SUPPLY) {
+                                // Restore supply to warehouse (first available)
+                                $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)->first();
+                                if ($warehouseStock) {
+                                    $warehouseStock->increment('quantity', $ingredientQty);
+                                    
+                                    StockMovement::create([
+                                        'product_id' => $ingredient->id,
+                                        'from_type' => StockMovement::TYPE_TRANSACTION,
+                                        'from_id' => $return->transaction_id,
+                                        'to_type' => StockMovement::TYPE_WAREHOUSE,
+                                        'to_id' => $warehouseStock->warehouse_id,
+                                        'quantity' => $ingredientQty,
+                                        'note' => 'Return bahan resep: ' . $return->return_number . ' - ' . $product->title,
+                                        'user_id' => auth()->id(),
+                                    ]);
+                                }
+                            } else {
+                                // Restore ingredient to display
+                                $ingredientDisplayStock = DisplayStock::firstOrCreate(
+                                    [
+                                        'display_id' => $display->id,
+                                        'product_id' => $ingredient->id,
+                                    ],
+                                    ['quantity' => 0]
+                                );
+                                $ingredientDisplayStock->increment('quantity', $ingredientQty);
+                                
+                                StockMovement::create([
+                                    'product_id' => $ingredient->id,
+                                    'from_type' => StockMovement::TYPE_TRANSACTION,
+                                    'from_id' => $return->transaction_id,
+                                    'to_type' => StockMovement::TYPE_DISPLAY,
+                                    'to_id' => $display->id,
+                                    'quantity' => $ingredientQty,
+                                    'note' => 'Return bahan resep: ' . $return->return_number . ' - ' . $product->title,
+                                    'user_id' => auth()->id(),
+                                ]);
+                            }
+                        }
+                    } else {
+                        // For non-recipe products, restore product stock directly (existing logic)
+                        $displayStock = DisplayStock::firstOrCreate(
+                            [
+                                'display_id' => $display->id,
+                                'product_id' => $item->product_id,
+                            ],
+                            ['quantity' => 0]
+                        );
+                        $displayStock->increment('quantity', $item->qty);
 
-                    // Create stock movement record
-                    StockMovement::create([
-                        'product_id' => $item->product_id,
-                        'from_type' => StockMovement::TYPE_TRANSACTION,
-                        'from_id' => $return->transaction_id,
-                        'to_type' => StockMovement::TYPE_DISPLAY,
-                        'to_id' => $display->id,
-                        'quantity' => $item->qty,
-                        'note' => 'Return: ' . $return->return_number . ' - ' . $return->reason,
-                        'user_id' => auth()->id(),
-                    ]);
+                        // Create stock movement record
+                        StockMovement::create([
+                            'product_id' => $item->product_id,
+                            'from_type' => StockMovement::TYPE_TRANSACTION,
+                            'from_id' => $return->transaction_id,
+                            'to_type' => StockMovement::TYPE_DISPLAY,
+                            'to_id' => $display->id,
+                            'quantity' => $item->qty,
+                            'note' => 'Return: ' . $return->return_number . ' - ' . $return->reason,
+                            'user_id' => auth()->id(),
+                        ]);
+                    }
                 }
             }
 

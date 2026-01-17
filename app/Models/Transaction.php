@@ -18,6 +18,7 @@ class Transaction extends Model
      */
     protected $fillable = [
         'cashier_id',
+        'shift_id',
         'invoice',
         'cash',
         'change',
@@ -39,7 +40,13 @@ class Transaction extends Model
         return $this->hasMany(TransactionDetail::class);
     }
 
-
+    /**
+     * Get the shift this transaction belongs to.
+     */
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
+    }
 
     /**
      * cashier

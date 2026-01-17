@@ -3,6 +3,7 @@ import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head } from "@inertiajs/react";
 import { useEffect, useMemo, useRef } from "react";
 import Chart from "chart.js/auto";
+import { formatDecimal } from "@/Utils/Format";
 import {
     IconBox,
     IconCategory,
@@ -103,7 +104,7 @@ export default function Dashboard({
                             <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-2 text-sm">
                                 <p className="font-medium text-gray-800 dark:text-gray-200 truncate">{item.name}</p>
                                 <p className="text-orange-600 dark:text-orange-400">
-                                    Sisa: {item.stock} {item.unit} (min: {item.min_stock})
+                                    Sisa: {formatDecimal(item.stock)} {item.unit} (min: {formatDecimal(item.min_stock)})
                                 </p>
                             </div>
                         ))}

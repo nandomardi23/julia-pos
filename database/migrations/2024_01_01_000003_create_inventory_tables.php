@@ -43,7 +43,7 @@ return new class extends Migration
             $table->foreignId('display_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->integer('quantity')->default(0);
-            $table->integer('min_stock')->default(0); // Minimum stok untuk alert
+            $table->integer('min_stock')->default(0);
             $table->timestamps();
 
             $table->unique(['display_id', 'product_id']);
@@ -52,17 +52,29 @@ return new class extends Migration
         // Stock Movements
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
+            $table->string('receipt_id')->nullable()->comment('Group ID for multi-item entry');
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('from_type'); // supplier, warehouse, display
             $table->unsignedBigInteger('from_id')->nullable();
             $table->foreignId('supplier_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('invoice_number')->nullable()->comment('Invoice number from supplier');
+            $table->string('batch_number')->nullable()->comment('Product batch number');
+            $table->date('expiry_date')->nullable()->comment('Product expiry date');
             $table->string('to_type'); // warehouse, display, transaction, out
             $table->unsignedBigInteger('to_id')->nullable();
             $table->integer('quantity');
-            $table->decimal('purchase_price', 15, 2)->nullable(); // Harga beli dari supplier
+            $table->decimal('purchase_price', 15, 2)->nullable()->comment('Purchase price from supplier');
+            $table->decimal('loss_amount', 15, 2)->nullable()->comment('Loss = quantity × buy_price (for stock out)');
             $table->text('note')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
+
+            // Indexes for faster queries
+            $table->index('receipt_id');
+            $table->index('invoice_number');
+            $table->index('batch_number');
+            $table->index('from_type');
+            $table->index('to_type');
         });
     }
 

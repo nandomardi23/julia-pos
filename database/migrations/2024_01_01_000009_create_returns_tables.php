@@ -6,17 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('returns', function (Blueprint $table) {
             $table->id();
             $table->string('return_number')->unique();
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained(); // User yang membuat return
-            $table->foreignId('approved_by')->nullable()->constrained('users'); // Manager yang approve
+            $table->foreignId('user_id')->constrained(); // User who created the return
+            $table->foreignId('approved_by')->nullable()->constrained('users'); // Manager who approved
             $table->enum('return_type', ['refund', 'exchange', 'credit'])->default('refund');
             $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])->default('pending');
             $table->decimal('return_amount', 15, 2)->default(0);
@@ -34,14 +31,11 @@ return new class extends Migration
             $table->decimal('qty', 10, 3);
             $table->decimal('price', 15, 2);
             $table->decimal('subtotal', 15, 2);
-            $table->text('condition_note')->nullable(); // Kondisi barang saat return
+            $table->text('condition_note')->nullable(); // Item condition on return
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('return_items');

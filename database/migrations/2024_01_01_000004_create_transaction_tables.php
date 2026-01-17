@@ -13,15 +13,20 @@ return new class extends Migration
             $table->id();
             $table->foreignId('cashier_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('qty');
+            $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->decimal('qty', 10, 3);
             $table->bigInteger('price');
             $table->timestamps();
+
+            // Performance indexes
+            $table->index(['cashier_id', 'product_id', 'product_variant_id'], 'carts_lookup_index');
         });
 
         // Transactions
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cashier_id')->constrained('users');
+            $table->unsignedBigInteger('shift_id')->nullable();
             $table->string('invoice')->unique();
             $table->bigInteger('cash');
             $table->bigInteger('change');
@@ -32,6 +37,10 @@ return new class extends Migration
             $table->string('payment_reference')->nullable();
             $table->text('payment_url')->nullable();
             $table->timestamps();
+
+            // Performance indexes
+            $table->index('created_at');
+            $table->index('shift_id');
         });
 
         // Transaction Details
@@ -39,8 +48,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained();
-            $table->integer('qty');
+            $table->string('variant_name')->nullable();
+            $table->decimal('qty', 10, 3);
             $table->bigInteger('price');
+            $table->decimal('buy_price', 15, 2)->default(0);
             $table->timestamps();
         });
 

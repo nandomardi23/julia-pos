@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->timestamps();
         });
@@ -37,10 +38,20 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
+
+        // Settings (App Settings)
+        Schema::create('settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('group')->index(); // store, receipt, sales, display, notification
+            $table->string('key')->unique();
+            $table->text('value')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('settings');
         Schema::dropIfExists('payment_settings');
         Schema::dropIfExists('suppliers');
         Schema::dropIfExists('categories');

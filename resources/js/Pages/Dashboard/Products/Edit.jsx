@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Common/InputSelect'
 import Select from '@/Components/Common/Select'
 import ImagePreview from '@/Components/Product/ImagePreview'
+import { parseDecimalInput } from '@/Utils/Format'
 
 // Daftar satuan yang tersedia
 const unitOptions = [
@@ -46,7 +47,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         description: product.description || '',
         buy_price: product.buy_price || 0,
         sell_price: product.sell_price || 0,
-        min_stock: product.min_stock || 0,
+        min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
         product_type: product.product_type || 'sellable',
     }), [product.id])
@@ -62,7 +63,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         description: product.description || '',
         buy_price: product.buy_price || 0,
         sell_price: product.sell_price || 0,
-        min_stock: product.min_stock || 0,
+        min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
         product_type: product.product_type || 'sellable',
         _method: 'PUT'

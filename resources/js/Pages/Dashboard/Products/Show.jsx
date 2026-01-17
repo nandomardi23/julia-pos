@@ -6,6 +6,7 @@ import Button from '@/Components/Common/Button'
 import { IconBox, IconArrowLeft, IconPencil, IconHistory, IconChartBar, IconList } from '@tabler/icons-react'
 import PriceHistoryTable from '@/Components/Product/PriceHistoryTable'
 import ProductSalesAnalytics from '@/Components/Product/ProductSalesAnalytics'
+import { formatDecimal } from '@/Utils/Format'
 
 export default function Show({ product, priceHistories = [], salesStats, variantSales = [], recentTransactions = [], warehouseStocks = [] }) {
     
@@ -151,7 +152,7 @@ export default function Show({ product, priceHistories = [], salesStats, variant
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Stok Minimum</p>
-                                <p className="font-semibold text-gray-900 dark:text-white">{product.min_stock || 0}</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">{formatDecimal(product.min_stock) || 0}</p>
                             </div>
                         </div>
                     </div>

@@ -129,39 +129,11 @@ export default function Menu() {
                     permissions: hasAnyPermission(["purchase-orders-access"]),
                 },
                 {
-                    title: "Barang Masuk",
-                    href: route("stock-movements.create"),
-                    active: url === "/dashboard/stock-movements/create",
-                    icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["stock-movements-create"]),
-                },
-                {
-                    title: "Transfer Stok",
-                    href: route("stock-movements.transfer"),
-                    active: url === "/dashboard/stock-movements/transfer",
-                    icon: <IconArrowsExchange size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["stock-movements-create"]),
-                },
-                {
-                    title: "Barang Keluar",
-                    href: route("stock-movements.stockOut"),
-                    active: url === "/dashboard/stock-movements/stock-out",
-                    icon: <IconMinus size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["stock-movements-create"]),
-                },
-                {
-                    title: "Riwayat Stok",
+                    title: "Manajemen Stok",
                     href: route("stock-movements.index"),
                     active: url === "/dashboard/stock-movements",
                     icon: <IconClockHour6 size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-movements-access"]),
-                },
-                {
-                    title: "Import Excel",
-                    href: route("stock-movements.bulkImport"),
-                    active: url === "/dashboard/stock-movements/bulk-import",
-                    icon: <IconCirclePlus size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["stock-movements-create"]),
                 },
                 {
                     title: "Stock Opname",
@@ -169,6 +141,27 @@ export default function Menu() {
                     active: url.startsWith("/dashboard/stock-opnames"),
                     icon: <IconClipboardCheck size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-movements-access"]),
+                },
+            ],
+        },
+
+        // ===== PENGELUARAN =====
+        {
+            title: "Pengeluaran",
+            details: [
+                {
+                    title: "Daftar Pengeluaran",
+                    href: route("expenses.index"),
+                    active: url.startsWith("/dashboard/expenses"),
+                    icon: <IconReceipt size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["expenses-access"]),
+                },
+                {
+                    title: "Kategori",
+                    href: route("expense-categories.index"),
+                    active: url.startsWith("/dashboard/expense-categories"),
+                    icon: <IconFolder size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["expense-categories-access"]),
                 },
             ],
         },

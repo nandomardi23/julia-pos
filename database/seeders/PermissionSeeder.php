@@ -101,5 +101,17 @@ class PermissionSeeder extends Seeder
         // returns permissions
         Permission::firstOrCreate(['name' => 'returns-access']);
         Permission::firstOrCreate(['name' => 'returns-create']);
+
+        // expense category permissions
+        Permission::firstOrCreate(['name' => 'expense-categories-access']);
+        Permission::firstOrCreate(['name' => 'expense-categories-create']);
+        Permission::firstOrCreate(['name' => 'expense-categories-edit']);
+        Permission::firstOrCreate(['name' => 'expense-categories-delete']);
+
+        // expense permissions
+        Permission::firstOrCreate(['name' => 'expenses-access']);
+        Permission::firstOrCreate(['name' => 'expenses-create']);
+        Permission::firstOrCreate(['name' => 'expenses-edit']);
+        Permission::firstOrCreate(['name' => 'expenses-delete']);
     }
 }

@@ -6,9 +6,18 @@ import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye, Ico
 import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
 import BarcodeModal from '@/Components/Common/BarcodeModal'
+import toast from 'react-hot-toast'
 
 export default function Index({ recipes }) {
     const [barcodeModal, setBarcodeModal] = useState({ show: false, product: null });
+
+    const handleOpenBarcodeModal = (recipe) => {
+        if (!recipe.barcode) {
+            toast.error('Produk ini tidak memiliki barcode. Silakan tambahkan barcode terlebih dahulu di halaman edit.')
+            return
+        }
+        setBarcodeModal({ show: true, product: recipe })
+    }
 
     const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -127,7 +136,7 @@ export default function Index({ recipes }) {
                                                 <IconEye size={14} strokeWidth={1.5} />
                                             </Link>
                                             <button
-                                                onClick={() => setBarcodeModal({ show: true, product: recipe })}
+                                                onClick={() => handleOpenBarcodeModal(recipe)}
                                                 className='p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30'
                                                 title='Cetak Barcode'
                                             >

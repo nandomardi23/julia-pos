@@ -12,7 +12,6 @@ use App\Models\WarehouseStock;
 use App\Exports\StockImportTemplateExport;
 use App\Exports\StockMovementsExport;
 use App\Exports\StockReportExport;
-use App\Imports\StockImport;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -402,60 +401,7 @@ class StockMovementController extends Controller
     /**
      * Show bulk import form.
      */
-    public function bulkImport()
-    {
-        $warehouses = Warehouse::active()->get();
-        $suppliers = Supplier::orderBy('name')->get(['id', 'name', 'company']);
 
-        return Inertia::render('Dashboard/StockMovements/BulkImport', [
-            'warehouses' => $warehouses,
-            'suppliers' => $suppliers,
-        ]);
-    }
-
-    /**
-     * Download template Excel for stock import.
-     */
-    public function downloadTemplate()
-    {
-        return Excel::download(
-            new StockImportTemplateExport(), 
-            'template_barang_masuk_' . date('Y-m-d') . '.xlsx'
-        );
-    }
-
-    /**
-     * Process bulk import from Excel file.
-     */
-    public function processImport(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-        ]);
-
-        $import = new StockImport(
-            $request->warehouse_id,
-            $request->supplier_id,
-            auth()->id()
-        );
-
-        Excel::import($import, $request->file('file'));
-
-        $importedCount = $import->getImportedCount();
-        $errors = $import->getErrors();
-
-        if (count($errors) > 0) {
-            return redirect()->back()->with([
-                'warning' => "Berhasil import {$importedCount} item dengan " . count($errors) . " error.",
-                'importErrors' => $errors,
-            ]);
-        }
-
-        return redirect()->route('stock-movements.index')
-            ->with('success', "Berhasil import {$importedCount} item ke gudang!");
-    }
 
     /**
      * Delete stock movement and revert stock changes.

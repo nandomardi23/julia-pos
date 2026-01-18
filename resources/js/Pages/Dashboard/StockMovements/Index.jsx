@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, router, useForm } from '@inertiajs/react'
-import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle } from '@tabler/icons-react'
+import { Head, Link, router, useForm } from '@inertiajs/react'
+import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle, IconFileAnalytics, IconBulb } from '@tabler/icons-react'
 import Table from '@/Components/Common/Table'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
@@ -330,57 +330,67 @@ export default function Index({ movements, filters, warehouses, displays, transf
     return (
         <>
             <Head title='Riwayat Stok' />
-            
-            {/* Info Tip Banner */}
-            <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950'>
-                <p className='text-sm text-blue-700 dark:text-blue-300'>
-                    💡 <strong>Tips:</strong> Gunakan <strong>"Barang Masuk"</strong> untuk penyesuaian stok cepat. 
-                    Untuk pengadaan formal dengan tracking invoice dan partial receiving, gunakan menu <a href={route('purchase-orders.index')} className='underline font-medium hover:text-blue-800 dark:hover:text-blue-200'>Purchase Order</a>.
-                </p>
+            <Head title="Manajemen Stok" />
+
+            <div className='flex flex-col lg:flex-row gap-4 mb-6'>
+                {/* Main Action Buttons */}
+                <div className="flex flex-wrap gap-2">
+                    {hasPermission('stock-movements-create') && (
+                        <>
+                            <Button
+                                type='button'
+                                onClick={openStockInModal}
+                                label='Barang Masuk'
+                                icon={<IconCirclePlus size={18} />}
+                                className='bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                            />
+                            <Button
+                                type='button'
+                                onClick={openStockOutModal}
+                                label='Barang Keluar'
+                                icon={<IconMinus size={18} />}
+                                className='bg-red-600 hover:bg-red-700 text-white shadow-sm'
+                            />
+                            <Button
+                                type='button'
+                                onClick={openTransferModal}
+                                label='Transfer Stok'
+                                icon={<IconArrowsExchange size={18} />}
+                                className='bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                            />
+                        </>
+                    )}
+                </div>
+
+                {/* Right Side Actions */}
+                <div className="flex flex-wrap gap-2 lg:ml-auto">
+                    <Button
+                        type='button'
+                        onClick={handleExportStockReport}
+                        label='Export Laporan Stok'
+                        icon={<IconFileAnalytics size={18} />}
+                        className='bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                    />
+                    <Button
+                        type='button'
+                        onClick={handleExport}
+                        label='Export Riwayat'
+                        icon={<IconFileSpreadsheet size={18} />}
+                        className='bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                    />
+                </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-                <div className='flex flex-wrap gap-2'>
-                    <Button
-                        type={'button'}
-                        icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
-                        className={'border bg-green-500 text-white hover:bg-green-600'}
-                        label={'Barang Masuk'}
-                        onClick={openStockInModal}
-                    />
-                    <Button
-                        type={'button'}
-                        icon={<IconMinus size={18} strokeWidth={1.5} />}
-                        className={'border bg-red-500 text-white hover:bg-red-600'}
-                        label={'Barang Keluar'}
-                        onClick={openStockOutModal}
-                    />
-                    <Button
-                        type={'button'}
-                        icon={<IconArrowsExchange size={18} strokeWidth={1.5} />}
-                        className={'border bg-blue-500 text-white hover:bg-blue-600'}
-                        label={'Transfer Stok'}
-                        onClick={openTransferModal}
-                    />
+            {hasPermission('stock-movements-access') && (
+                <div className='mb-6'>
+                    <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex gap-3 text-blue-700 dark:text-blue-300'>
+                        <IconBulb className="min-w-5 h-5 mt-0.5" />
+                        <div className="text-sm">
+                            <span className="font-semibold">Tips:</span> Gunakan "Barang Masuk" untuk penyesuaian stok cepat. Untuk pengadaan formal dengan tracking invoice dan partial receiving, gunakan menu <Link href={route('purchase-orders.index')} className="underline hover:text-blue-800">Purchase Order</Link>.
+                        </div>
+                    </div>
                 </div>
-                <div className='flex flex-wrap gap-2'>
-                    <Button
-                        type={'button'}
-                        label={'Export Laporan Stok'}
-                        icon={<IconFileSpreadsheet size={18} />}
-                        className={'border bg-indigo-600 text-white hover:bg-indigo-700'}
-                        onClick={handleExportStockReport}
-                    />
-                    <Button
-                        type={'button'}
-                        label={'Export Riwayat'}
-                        icon={<IconFileSpreadsheet size={18} />}
-                        className={'border bg-emerald-600 text-white hover:bg-emerald-700'}
-                        onClick={handleExport}
-                    />
-                </div>
-            </div>
+            )}
 
             {/* Filters */}
             <div className='bg-white dark:bg-gray-900 p-4 rounded-lg border dark:border-gray-800 mb-4'>

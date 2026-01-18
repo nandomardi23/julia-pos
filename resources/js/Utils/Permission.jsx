@@ -5,6 +5,9 @@ export default function hasAnyPermission(permissions) {
     // destruct auth from usepage props
     const { auth } = usePage().props
 
+    // if super admin, return true
+    if (auth.super) return true;
+
     // get all permissions from props auth.permissions
     let allPermissions = auth.permissions;
 

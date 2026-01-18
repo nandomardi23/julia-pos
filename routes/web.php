@@ -15,6 +15,8 @@ use App\Http\Controllers\Apps\SupplyController;
 use App\Http\Controllers\Apps\RecipeController;
 use App\Http\Controllers\Apps\StockOpnameController;
 use App\Http\Controllers\Apps\PurchaseOrderController;
+use App\Http\Controllers\Apps\ExpenseCategoryController;
+use App\Http\Controllers\Apps\ExpenseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -172,17 +174,6 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.destroy');
     
-    // Bulk Import Routes
-    Route::get('/stock-movements/bulk-import', [StockMovementController::class, 'bulkImport'])
-        ->middleware('permission:stock-movements-create')
-        ->name('stock-movements.bulkImport');
-    Route::get('/stock-movements/download-template', [StockMovementController::class, 'downloadTemplate'])
-        ->middleware('permission:stock-movements-create')
-        ->name('stock-movements.downloadTemplate');
-    Route::post('/stock-movements/process-import', [StockMovementController::class, 'processImport'])
-        ->middleware('permission:stock-movements-create')
-        ->name('stock-movements.processImport');
-    
     // API routes for enhanced stock movement form
     Route::get('/stock-movements/last-price', [StockMovementController::class, 'getLastPurchasePrice'])
         ->middleware('permission:stock-movements-access')
@@ -210,6 +201,21 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::delete('/stock-opnames/{id}', [StockOpnameController::class, 'destroy'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-opnames.destroy');
+
+    // Expense Categories Routes
+    Route::resource('expense-categories', ExpenseCategoryController::class)
+        ->except(['create', 'edit', 'show'])
+        ->middlewareFor('index', 'permission:expense-categories-access')
+        ->middlewareFor('store', 'permission:expense-categories-create')
+        ->middlewareFor('update', 'permission:expense-categories-edit')
+        ->middlewareFor('destroy', 'permission:expense-categories-delete');
+
+    // Expenses Routes
+    Route::resource('expenses', ExpenseController::class)
+        ->middlewareFor(['index', 'show'], 'permission:expenses-access')
+        ->middlewareFor(['create', 'store'], 'permission:expenses-create')
+        ->middlewareFor(['edit', 'update'], 'permission:expenses-edit')
+        ->middlewareFor('destroy', 'permission:expenses-delete');
 
     // Transaction routes (print and history only)
     Route::get('/transactions', fn() => redirect()->route('transactions.history'));

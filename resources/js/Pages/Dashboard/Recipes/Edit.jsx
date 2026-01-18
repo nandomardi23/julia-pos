@@ -228,8 +228,15 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
                         {variants.map((variant, vIndex) => (
                             <div key={vIndex} className='p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
                                 <div className='flex justify-between items-center mb-4'>
-                                    <h4 className='font-semibold text-gray-900 dark:text-white'>
-                                        Variant #{vIndex + 1}
+                                    <h4 className='font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
+                                        <span className='bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 px-2 py-0.5 rounded text-xs'>
+                                            Variant {vIndex + 1}
+                                        </span>
+                                        {variant.name && (
+                                            <span className='text-gray-600 dark:text-gray-400'>
+                                                — {variant.name}
+                                            </span>
+                                        )}
                                     </h4>
                                     {variants.length > 1 && (
                                         <button

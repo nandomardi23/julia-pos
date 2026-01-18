@@ -34,6 +34,8 @@ class RoleSeeder extends Seeder
             'purchase-orders-access',
             'transactions-access', // View transaction history
             'payment-settings-access',
+            'expense-categories-access',
+            'expenses-access',
         ]);
 
         // 3. Cashier - POS operations only

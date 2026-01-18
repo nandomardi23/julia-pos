@@ -478,7 +478,15 @@ export default function Index({
         }
         
         if (product.display_qty < qty) {
-            toast.error("Stok produk tidak mencukupi!");
+            // Smart Warning: Check if product has warehouse stock
+            if (product.warehouse_qty > 0) {
+                toast.error(
+                    `Stok display habis! Tersedia ${product.warehouse_qty} unit di Gudang. Silakan transfer ke Display terlebih dahulu.`,
+                    { duration: 5000 }
+                );
+            } else {
+                toast.error("Stok produk tidak mencukupi!");
+            }
             return;
         }
 

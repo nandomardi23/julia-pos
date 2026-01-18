@@ -112,6 +112,62 @@ export default function Dashboard({
                 </div>
             )}
 
+            {/* Getting Started Guide for New Users */}
+            {(totalCategories === 0 || totalProducts === 0) && (
+                <div className="mb-6 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50 p-6 dark:border-indigo-700 dark:bg-indigo-950">
+                    <h3 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300 mb-4">
+                        🚀 Panduan Memulai
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Ikuti langkah berikut untuk mulai menggunakan sistem POS:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className={`p-4 rounded-lg ${totalCategories > 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-white dark:bg-gray-800'}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${totalCategories > 0 ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'}`}>
+                                    {totalCategories > 0 ? '✓' : '1'}
+                                </span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">Buat Kategori</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Kelompokkan produk Anda</p>
+                            {totalCategories === 0 && (
+                                <a href={route('categories.create')} className="mt-2 inline-block text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    Buat Kategori →
+                                </a>
+                            )}
+                        </div>
+                        <div className={`p-4 rounded-lg ${totalProducts > 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-white dark:bg-gray-800'}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${totalProducts > 0 ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'}`}>
+                                    {totalProducts > 0 ? '✓' : '2'}
+                                </span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">Tambah Produk</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Daftarkan barang dagangan</p>
+                            {totalProducts === 0 && totalCategories > 0 && (
+                                <a href={route('products.create')} className="mt-2 inline-block text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                                    Tambah Produk →
+                                </a>
+                            )}
+                        </div>
+                        <div className="p-4 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300">3</span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">Isi Stok</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Masukkan stok ke gudang</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300">4</span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">Mulai Jual!</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Buka POS dan layani pelanggan</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Today Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="rounded-xl border bg-white p-4 dark:border-gray-900 dark:bg-gray-950">

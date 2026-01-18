@@ -78,17 +78,23 @@ class POSController extends Controller
         // Paginate
         $productsPaginated = $productsQuery->orderBy('title')->paginate($perPage)->withQueryString();
 
+        // Preload warehouse stocks for smart warnings
+        $warehouseStockMap = \App\Models\WarehouseStock::pluck('quantity', 'product_id')->toArray();
+
         // Process products to add display_qty and is_available
-        $products = $productsPaginated->through(function ($product) use ($display, $displayStockMap) {
+        $products = $productsPaginated->through(function ($product) use ($display, $displayStockMap, $warehouseStockMap) {
             if ($product->product_type === Product::TYPE_RECIPE) {
                 // Check if all ingredients are available
                 $isAvailable = $this->checkRecipeIngredients($product, $display, $displayStockMap);
                 $product->display_qty = $isAvailable ? 999 : 0;
                 $product->is_available = $isAvailable;
+                $product->warehouse_qty = 0; // Recipes don't have warehouse stock
             } else {
                 // Get display stock quantity
                 $product->display_qty = $displayStockMap[$product->id] ?? 0;
                 $product->is_available = $product->display_qty > 0;
+                // Add warehouse stock for smart warning
+                $product->warehouse_qty = $warehouseStockMap[$product->id] ?? 0;
             }
             return $product;
         });

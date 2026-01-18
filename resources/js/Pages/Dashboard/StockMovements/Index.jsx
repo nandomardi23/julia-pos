@@ -331,6 +331,14 @@ export default function Index({ movements, filters, warehouses, displays, transf
         <>
             <Head title='Riwayat Stok' />
             
+            {/* Info Tip Banner */}
+            <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950'>
+                <p className='text-sm text-blue-700 dark:text-blue-300'>
+                    💡 <strong>Tips:</strong> Gunakan <strong>"Barang Masuk"</strong> untuk penyesuaian stok cepat. 
+                    Untuk pengadaan formal dengan tracking invoice dan partial receiving, gunakan menu <a href={route('purchase-orders.index')} className='underline font-medium hover:text-blue-800 dark:hover:text-blue-200'>Purchase Order</a>.
+                </p>
+            </div>
+
             {/* Action Buttons */}
             <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
                 <div className='flex flex-wrap gap-2'>

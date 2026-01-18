@@ -77,6 +77,7 @@ class TransactionController extends Controller
                 // SUPPLY → deduct from WAREHOUSE (first available)
                 $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)
                     ->where('quantity', '>=', $ingredientQty)
+                    ->lockForUpdate()
                     ->first();
 
                 if ($warehouseStock) {
@@ -90,13 +91,14 @@ class TransactionController extends Controller
                         'to_id' => $transaction->id,
                         'quantity' => $ingredientQty,
                         'note' => 'Supply resep: ' . $product->title . ' (' . ($variant->name ?? 'default') . ') x' . $multiplier,
-                        'user_id' => auth()->id(),
+                        'user_id' => $transaction->cashier_id,
                     ]);
                 }
             } else {
                 // INGREDIENT → deduct from DISPLAY
                 $ingredientDisplayStock = DisplayStock::where('display_id', $display->id)
                     ->where('product_id', $ingredient->id)
+                    ->lockForUpdate()
                     ->first();
 
                 if ($ingredientDisplayStock) {
@@ -110,7 +112,7 @@ class TransactionController extends Controller
                         'to_id' => $transaction->id,
                         'quantity' => $ingredientQty,
                         'note' => 'Bahan resep: ' . $product->title . ' (' . ($variant->name ?? 'default') . ') x' . $multiplier,
-                        'user_id' => auth()->id(),
+                        'user_id' => $transaction->cashier_id,
                     ]);
                 }
             }
@@ -240,21 +242,37 @@ class TransactionController extends Controller
             $isCashPayment,
             $activeShift
         ) {
+            // Recalculate totals server-side for security
+            $carts = Cart::with(['product', 'variant'])->where('cashier_id', $request->user()->id)->get();
+            
+            $subTotal = 0;
+            foreach ($carts as $item) {
+                $subTotal += $item->price * $item->qty;
+            }
+            
+            // Recalculate Tax & Total
+            $discountAmount = (float) $request->discount;
+            $taxPercent = (float) ($request->ppn ?? 0);
+            
+            // Taxable amount (Subtotal - Discount), min 0
+            $taxable = max($subTotal - $discountAmount, 0);
+            $taxAmount = round($taxable * ($taxPercent / 100));
+            
+            $grandTotal = max($subTotal - $discountAmount + $taxAmount, 0);
+
             $transaction = Transaction::create([
-                'cashier_id' => auth()->user()->id,
+                'cashier_id' => $request->user()->id,
                 'shift_id' => $activeShift?->id,
                 'invoice' => $invoice,
-                'cash' => $cashAmount,
+                'cash' => $cashAmount, // This might need validation too if we want to be strict, but commonly flexible
                 'change' => $changeAmount,
-                'discount' => $request->discount,
-                'grand_total' => $request->grand_total,
+                'discount' => $discountAmount,
+                'grand_total' => $grandTotal,
                 'payment_method' => $paymentMethod ?: 'cash',
                 'payment_status' => $isCashPayment ? 'paid' : 'pending',
-                'ppn' => $request->ppn ?? 0,
-                'tax' => $request->tax ?? 0,
+                'ppn' => $taxPercent,
+                'tax' => $taxAmount,
             ]);
-
-            $carts = Cart::with(['product', 'variant'])->where('cashier_id', auth()->user()->id)->get();
 
             foreach ($carts as $cart) {
                 // Simpan buy_price saat transaksi agar profit tetap akurat meski harga berubah
@@ -295,6 +313,7 @@ class TransactionController extends Controller
                 if ($product->product_type !== Product::TYPE_RECIPE) {
                         $displayStock = DisplayStock::where('display_id', $display->id)
                             ->where('product_id', $cart->product_id)
+                            ->lockForUpdate()
                             ->first();
                         
                         if ($displayStock) {
@@ -309,7 +328,7 @@ class TransactionController extends Controller
                                 'to_id' => $transaction->id,
                                 'quantity' => $cart->qty,
                                 'note' => 'Penjualan: ' . $transaction->invoice,
-                                'user_id' => auth()->id(),
+                                'user_id' => $transaction->cashier_id,
                             ]);
                         }
                     }

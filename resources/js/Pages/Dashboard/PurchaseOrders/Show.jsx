@@ -6,6 +6,7 @@ import Button from '@/Components/Common/Button'
 import Table from '@/Components/Common/Table'
 import { IconArrowLeft, IconPencilCog, IconPackageImport, IconPrinter, IconSend, IconTruck, IconCheck, IconX, IconCircleCheck, IconFileInvoice, IconDownload, IconFileTypePdf } from '@tabler/icons-react'
 import toast from 'react-hot-toast'
+import Swal from 'sweetalert2'
 
 export default function Show({ purchaseOrder, statuses }) {
     const po = purchaseOrder
@@ -45,12 +46,23 @@ export default function Show({ purchaseOrder, statuses }) {
 
     // Update status
     const updateStatus = (newStatus) => {
-        if (!confirm(`Ubah status menjadi "${statuses[newStatus]}"?`)) return
-
-        router.post(route('purchase-orders.updateStatus', po.id), { status: newStatus }, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Status berhasil diubah'),
-            onError: () => toast.error('Gagal mengubah status'),
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: `Ubah status menjadi "${statuses[newStatus]}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Ubah!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.post(route('purchase-orders.updateStatus', po.id), { status: newStatus }, {
+                    preserveScroll: true,
+                    onSuccess: () => toast.success('Status berhasil diubah'),
+                    onError: () => toast.error('Gagal mengubah status'),
+                })
+            }
         })
     }
 

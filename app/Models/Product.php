@@ -50,7 +50,7 @@ class Product extends Model
      *
      * @var array
      */
-    protected $appends = ['warehouse_stock', 'display_stock'];
+    protected $appends = ['warehouse_stock', 'display_stock', 'stock'];
 
     /**
      * Get the category that owns the product.
@@ -163,6 +163,14 @@ class Product extends Model
     public function getDisplayStockAttribute()
     {
         return $this->displayStocks()->sum('quantity');
+    }
+
+    /**
+     * Get total stock (warehouse + display).
+     */
+    public function getStockAttribute()
+    {
+        return $this->warehouse_stock + $this->display_stock;
     }
 
 

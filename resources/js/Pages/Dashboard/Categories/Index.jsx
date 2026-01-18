@@ -2,7 +2,7 @@ import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
-import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash } from '@tabler/icons-react'
+import { IconCirclePlus, IconDatabaseOff, IconPencilCog, IconTrash, IconEye } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
 
@@ -73,6 +73,13 @@ export default function Index({ categories }) {
                                     </Table.Td>
                                     <Table.Td>
                                         <div className='flex justify-center gap-1'>
+                                            <Link
+                                                href={route('categories.show', category.id)}
+                                                className='p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                                title='Lihat'
+                                            >
+                                                <IconEye size={14} strokeWidth={1.5} />
+                                            </Link>
                                             <Link
                                                 href={route('categories.edit', category.id)}
                                                 className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'

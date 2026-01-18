@@ -35,7 +35,7 @@ export default function Button({ className, icon, label, type, href, added, url,
     return (
         <>
             {type === 'link' &&
-                <Link href={href} className={`${className} px-4 py-2 flex items-center gap-2 rounded-lg text-sm font-semibold`}>
+                <Link href={href} className={`${className} px-4 py-2 flex items-center gap-2 rounded-lg text-sm font-semibold`} {...props}>
                     {icon} <span className={`${added === true ? 'hidden lg:block' : ''}`}>{label}</span>
                 </Link>
             }

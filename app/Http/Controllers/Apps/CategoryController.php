@@ -88,6 +88,26 @@ class CategoryController extends Controller
     }
 
     /**
+     * Show the specified resource.
+     *
+     * @param  Category $category
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Category $category)
+    {
+        //get products by category
+        $products = $category->products()
+            ->with(['warehouseStocks', 'displayStocks'])
+            ->latest()
+            ->paginate(10);
+
+        return Inertia::render('Dashboard/Categories/Show', [
+            'category' => $category,
+            'products' => $products
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request

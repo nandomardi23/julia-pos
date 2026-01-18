@@ -27,6 +27,7 @@ class POSController extends Controller
         $perPage = 10;
         $categoryFilter = $request->get('category');
         $searchQuery = $request->get('search');
+        $hideOutOfStock = $request->boolean('hide_out_of_stock');
 
         // Preload ALL display stocks to prevent N+1 queries
         $displayStockMap = [];
@@ -59,10 +60,19 @@ class POSController extends Controller
         }
 
         // Filter: only products that have display stock OR are recipes
-        $productsQuery->where(function ($q) use ($displayStockMap) {
-            $productIdsWithStock = array_keys($displayStockMap);
-            $q->whereIn('id', $productIdsWithStock)
-              ->orWhere('product_type', Product::TYPE_RECIPE);
+        // When hide_out_of_stock is true, only show products with quantity > 0
+        $productsQuery->where(function ($q) use ($displayStockMap, $hideOutOfStock) {
+            if ($hideOutOfStock) {
+                // Only products with stock > 0
+                $productIdsWithStock = array_keys(array_filter($displayStockMap, fn($qty) => $qty > 0));
+                $q->whereIn('id', $productIdsWithStock)
+                  ->orWhere('product_type', Product::TYPE_RECIPE);
+            } else {
+                // All products that are in display (even with 0 stock) or are recipes
+                $productIdsWithStock = array_keys($displayStockMap);
+                $q->whereIn('id', $productIdsWithStock)
+                  ->orWhere('product_type', Product::TYPE_RECIPE);
+            }
         });
 
         // Paginate
@@ -105,6 +115,9 @@ class POSController extends Controller
             $defaultGateway = 'cash';
         }
 
+        // Get active shift for current user
+        $activeShift = \App\Models\Shift::getActiveShift();
+
         return Inertia::render('Dashboard/POS/Index', [
             'products' => $products,
             'categories' => $categories,
@@ -113,9 +126,11 @@ class POSController extends Controller
             'paymentGateways' => $paymentSetting?->enabledGateways() ?? [],
             'defaultPaymentGateway' => $defaultGateway,
             'display' => $display,
+            'activeShift' => $activeShift,
             'filters' => [
                 'category' => $categoryFilter,
                 'search' => $searchQuery,
+                'hide_out_of_stock' => $hideOutOfStock,
             ],
         ]);
     }

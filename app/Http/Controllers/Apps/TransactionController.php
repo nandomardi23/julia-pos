@@ -341,7 +341,7 @@ class TransactionController extends Controller
             }
         }
 
-        return to_route('transactions.print', $transaction->invoice);
+        return to_route('pos.index')->with('transaction', $transaction->load(['details.product', 'cashier']));
     }
 
     /**

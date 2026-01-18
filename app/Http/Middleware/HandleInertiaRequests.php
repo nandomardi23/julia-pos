@@ -45,6 +45,12 @@ class HandleInertiaRequests extends Middleware
                 'super' => $user ? $user->isSuperAdmin() : false,
             ],
             'app_settings' => \App\Models\Setting::getAll(),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'invoice' => fn () => $request->session()->get('invoice'),
+                'transaction' => fn () => $request->session()->get('transaction'),
+            ],
         ];
     }
 }

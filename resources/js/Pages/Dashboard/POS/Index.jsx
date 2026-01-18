@@ -5,6 +5,7 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import Table from "@/Components/Common/Table";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
+import PrintService from "@/Services/PrintService";
 import {
     IconArrowLeft,
     IconArrowRight,
@@ -14,6 +15,7 @@ import {
     IconMoon,
     IconPackage,
     IconPlus,
+    IconPrinter,
     IconScale,
     IconSearch,
     IconShoppingCart,
@@ -30,9 +32,10 @@ export default function Index({
     carts_total = 0,
     paymentGateways = [],
     defaultPaymentGateway = "cash",
+    activeShift = null,
     filters = {},
 }) {
-    const { auth, errors, app_settings: settings = {} } = usePage().props;
+    const { auth, errors, app_settings: settings = {}, flash = {} } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
 
     // Get products data from paginated response
@@ -56,6 +59,53 @@ export default function Index({
     const [variantModalProduct, setVariantModalProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const searchInputRef = useRef(null);
+    
+    // QZ Tray connection status
+    const [qzStatus, setQzStatus] = useState({
+        checking: true,
+        connected: false,
+        printerName: null
+    });
+    
+    // Print mode: 'qz' or 'server' (persisted in localStorage)
+    const [printMode, setPrintMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('pos_print_mode') || 'qz';
+        }
+        return 'qz';
+    });
+    
+    // Save printMode to localStorage when changed
+    useEffect(() => {
+        localStorage.setItem('pos_print_mode', printMode);
+    }, [printMode]);
+    
+    // Server print status
+    const [serverPrintStatus, setServerPrintStatus] = useState({
+        available: false,
+        printerName: null,
+        checking: false
+    });
+    
+    // Hide out of stock filter
+    const [hideOutOfStock, setHideOutOfStock] = useState(filters?.hide_out_of_stock ?? false);
+    
+    // Receipt modal state
+    const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+    const [lastTransaction, setLastTransaction] = useState(null);
+    const [thermalPrinting, setThermalPrinting] = useState(false);
+    const [drawerOpening, setDrawerOpening] = useState(false);
+    
+    // Check for flash transaction (after successful payment)
+    useEffect(() => {
+        if (flash?.transaction) {
+            setLastTransaction(flash.transaction);
+            setReceiptModalOpen(true);
+            // Note: Cash drawer will be opened automatically when printing receipt (for cash payments)
+        }
+    }, [flash?.transaction]);
+    
+
     
     // Local state for optimistic updates - Moved up to fix ReferenceError
     const [localCarts, setLocalCarts] = useState(carts);
@@ -96,6 +146,23 @@ export default function Index({
     useEffect(() => {
         setPaymentMethod(defaultPaymentGateway ?? "cash");
     }, [defaultPaymentGateway]);
+    
+    // QZ Tray connection check handler (lazy - on demand)
+    const handleQzCheck = async () => {
+        if (qzStatus.checking) return; // Prevent multiple checks
+        
+        setQzStatus(prev => ({ ...prev, checking: true }));
+        try {
+            const status = await PrintService.checkConnection();
+            setQzStatus({
+                checking: false,
+                connected: status.connected,
+                printerName: status.thermalPrinter
+            });
+        } catch {
+            setQzStatus({ checking: false, connected: false, printerName: null });
+        }
+    };
 
     // Debounced search to server
     const searchTimeoutRef = useRef(null);
@@ -112,6 +179,7 @@ export default function Index({
             router.get(route('pos.index'), {
                 search: value || undefined,
                 category: selectedCategory?.id || undefined,
+                hide_out_of_stock: hideOutOfStock || undefined,
             }, {
                 preserveState: true,
                 preserveScroll: true,
@@ -125,6 +193,20 @@ export default function Index({
         router.get(route('pos.index'), {
             search: search || undefined,
             category: category?.id || undefined,
+            hide_out_of_stock: hideOutOfStock || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+    
+    // Handle hide out of stock toggle
+    const handleHideOutOfStockChange = (checked) => {
+        setHideOutOfStock(checked);
+        router.get(route('pos.index'), {
+            search: search || undefined,
+            category: selectedCategory?.id || undefined,
+            hide_out_of_stock: checked || undefined,
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -550,6 +632,112 @@ export default function Index({
 
 
 
+
+    // Handle thermal print from receipt modal (supports QZ Tray and Server modes)
+    const handleThermalPrint = async () => {
+        if (thermalPrinting || !lastTransaction) return;
+        
+        setThermalPrinting(true);
+        try {
+            let result;
+            
+            if (printMode === 'server') {
+                // Server-side printing (using axios for proper CSRF)
+                const response = await window.axios.post(`/dashboard/print/receipt/${lastTransaction.invoice}`);
+                result = response.data;
+            } else {
+                // QZ Tray (client-side)
+                result = await PrintService.printReceipt(lastTransaction, settings);
+            }
+            
+            if (result.success) {
+                toast.success('Struk dicetak ke printer thermal');
+            } else {
+                toast.error(result.message || 'Gagal cetak thermal');
+            }
+        } catch (err) {
+            toast.error('Gagal cetak: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setThermalPrinting(false);
+        }
+    };
+
+    // Handle cash drawer open (supports QZ Tray and Server modes)
+    const handleOpenDrawer = async () => {
+        if (drawerOpening) return;
+        
+        setDrawerOpening(true);
+        try {
+            let result;
+            
+            if (printMode === 'server') {
+                // Server-side (using axios for proper CSRF)
+                const response = await window.axios.post('/dashboard/print/drawer');
+                result = response.data;
+            } else {
+                // QZ Tray
+                result = await PrintService.openCashDrawer();
+            }
+            
+            if (result.success) {
+                toast.success('Laci kasir dibuka');
+            } else {
+                toast.error(result.message || 'Gagal buka laci');
+            }
+        } catch (err) {
+            toast.error('Gagal buka laci: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setDrawerOpening(false);
+        }
+    };
+
+    // Check server printer status
+    const handleCheckServerPrinter = async () => {
+        setServerPrintStatus(prev => ({ ...prev, checking: true }));
+        try {
+            const response = await window.axios.get('/dashboard/print/status');
+            const result = response.data;
+            setServerPrintStatus({
+                available: result.available,
+                printerName: result.printerName,
+                checking: false
+            });
+        } catch (err) {
+            setServerPrintStatus({ available: false, printerName: null, checking: false });
+        }
+    };
+
+    // Switch to server mode and auto-check printer
+    const handleSwitchToServerMode = () => {
+        setPrintMode('server');
+        // Auto-check server printer status if not already checked
+        if (!serverPrintStatus.available && !serverPrintStatus.checking) {
+            handleCheckServerPrinter();
+        }
+    };
+
+    // Close receipt modal
+    const handleCloseReceiptModal = () => {
+        setReceiptModalOpen(false);
+        setLastTransaction(null);
+    };
+
+    // Date/time formatters for receipt
+    const formatDate = (value) =>
+        new Date(value).toLocaleDateString("id-ID", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
+
+    const formatTime = (value) =>
+        new Date(value).toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
+
+
     return (
         <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
             <Head title="POS - Kasir" />
@@ -584,10 +772,35 @@ export default function Index({
                             </h1>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                             {auth.user.name}
                         </span>
+                        <div className="h-5 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block" />
+                        {/* QZ Tray Status Indicator */}
+                        <button
+                            onClick={handleQzCheck}
+                            className="relative group"
+                            title="Klik untuk cek koneksi printer"
+                        >
+                            <div className={`p-2 rounded-lg transition-colors ${
+                                qzStatus.checking 
+                                    ? 'text-gray-400 animate-pulse'
+                                    : qzStatus.connected
+                                    ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                    : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }`}>
+                                <IconPrinter size={20} />
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute right-0 top-full mt-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+                                {qzStatus.checking 
+                                    ? 'Memeriksa koneksi printer...'
+                                    : qzStatus.connected
+                                    ? `✓ ${qzStatus.printerName || 'Printer terhubung'}`
+                                    : 'Klik untuk cek printer'}
+                            </div>
+                        </button>
                         <button
                             onClick={themeSwitcher}
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
@@ -600,6 +813,26 @@ export default function Index({
                         </button>
                     </div>
                 </header>
+
+                {/* Shift Warning Banner */}
+                {!activeShift && (
+                    <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-sm font-medium">Shift belum dibuka! Transaksi tidak akan tercatat ke shift.</span>
+                            </div>
+                            <a
+                                href={route('shifts.create')}
+                                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
+                            >
+                                Buka Shift
+                            </a>
+                        </div>
+                    </div>
+                )}
 
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden overflow-y-auto">
@@ -616,7 +849,7 @@ export default function Index({
                                 <input
                                     ref={searchInputRef}
                                     type="text"
-                                    placeholder="Cari produk atau scan barcode... (Enter untuk tambah)"
+                                    placeholder="Ketik nama produk atau scan barcode langsung (tidak perlu klik)..."
                                     value={search}
                                     onChange={(e) => handleSearchChange(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -657,6 +890,17 @@ export default function Index({
                                     </button>
                                 ))}
                             </div>
+                            
+                            {/* Hide Out of Stock Toggle */}
+                            <label className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={hideOutOfStock}
+                                    onChange={(e) => handleHideOutOfStockChange(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                Sembunyikan stok habis
+                            </label>
                         </div>
 
                         {/* Product Grid */}
@@ -933,7 +1177,7 @@ export default function Index({
                                 <input
                                     type="text"
                                     inputMode="numeric"
-                                    placeholder="Diskon"
+                                    placeholder={discountType === "percent" ? "Persen (0-100)" : "Nominal (Rp)"}
                                     value={discountInput}
                                     onChange={(e) =>
                                         setDiscountInput(sanitizeNumericInput(e.target.value))
@@ -1168,6 +1412,196 @@ export default function Index({
                             >
                                 Tambahkan
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Receipt Modal */}
+            {receiptModalOpen && lastTransaction && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-800">
+                            <h3 className="font-bold text-gray-900 dark:text-white">Struk Transaksi</h3>
+                            <button
+                                onClick={handleCloseReceiptModal}
+                                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+                            >
+                                <IconX size={20} />
+                            </button>
+                        </div>
+
+                        {/* Receipt Preview */}
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 font-mono text-sm">
+                                {/* Header */}
+                                <div className="text-center mb-3">
+                                    {settings.store_logo ? (
+                                        <img
+                                            src={`/storage/settings/${settings.store_logo}`}
+                                            alt="Logo"
+                                            className="w-12 h-12 mx-auto mb-2 object-contain"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 mx-auto mb-2 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                                            <span className="text-xl font-bold text-gray-500">
+                                                {(settings.store_name || 'S').charAt(0)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <h4 className="font-bold">{settings.store_name || 'Toko'}</h4>
+                                    {settings.store_address && (
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">{settings.store_address}</p>
+                                    )}
+                                    <p className="text-xs text-gray-500">{lastTransaction.invoice}</p>
+                                </div>
+
+                                <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                {/* Date/Cashier */}
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span>{formatDate(lastTransaction.created_at)}</span>
+                                    <span>{lastTransaction.cashier?.name || 'Kasir'}</span>
+                                </div>
+                                <div className="text-xs mb-2">{formatTime(lastTransaction.created_at)}</div>
+
+                                <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                {/* Items */}
+                                <div className="space-y-1 mb-2">
+                                    {(lastTransaction.details || []).map((item, index) => {
+                                        const qty = Number(item.qty) || 1;
+                                        const price = Number(item.price) || 0;
+                                        return (
+                                            <div key={item.id || index}>
+                                                <div className="font-semibold text-xs">
+                                                    {index + 1}. {item.product?.title}
+                                                    {item.variant_name && <span className="font-normal"> ({item.variant_name})</span>}
+                                                </div>
+                                                <div className="flex justify-between text-xs pl-3">
+                                                    <span>{qty} x {formatPrice(price)}</span>
+                                                    <span>Rp {formatPrice(qty * price)}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                {/* Totals */}
+                                <div className="space-y-1 text-xs">
+                                    <div className="flex justify-between font-bold text-sm">
+                                        <span>Total</span>
+                                        <span>Rp {formatPrice(lastTransaction.grand_total)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Bayar</span>
+                                        <span>Rp {formatPrice(lastTransaction.cash)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Kembali</span>
+                                        <span>Rp {formatPrice(lastTransaction.change)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                <p className="text-center text-xs text-gray-500">Terimakasih Telah Berbelanja</p>
+                            </div>
+                        </div>
+
+                        {/* Print Controls */}
+                        <div className="p-4 border-t dark:border-gray-800 space-y-3">
+                            {/* Mode Selector */}
+                            <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Mode:</span>
+                                <div className="flex-1 flex rounded-lg border dark:border-gray-700 overflow-hidden text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPrintMode('qz')}
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
+                                            printMode === 'qz'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        <IconPrinter size={14} />
+                                        QZ Tray
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSwitchToServerMode}
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
+                                            printMode === 'server'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        <IconPrinter size={14} />
+                                        Server
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Status based on mode */}
+                            {printMode === 'qz' ? (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500 dark:text-gray-400">
+                                    <IconPrinter size={14} />
+                                    <span>QZ Tray: {qzStatus.connected ? `✓ ${qzStatus.printerName || 'Connected'}` : 'Klik icon printer di header untuk cek koneksi'}</span>
+                                </div>
+                            ) : (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                                    serverPrintStatus.available
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                        : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                }`}>
+                                    <IconPrinter size={14} />
+                                    <span>
+                                        {serverPrintStatus.checking 
+                                            ? 'Memeriksa printer...' 
+                                            : serverPrintStatus.available 
+                                                ? `✓ Server: ${serverPrintStatus.printerName}`
+                                                : `Server: ${serverPrintStatus.printerName || 'POS-80'}`}
+                                    </span>
+                                </div>
+                            )}
+                            
+                            {/* Print Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleThermalPrint}
+                                    disabled={thermalPrinting}
+                                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <IconPrinter size={16} />
+                                    {thermalPrinting ? 'Mencetak...' : `Cetak (${printMode === 'qz' ? 'QZ Tray' : 'Server'})`}
+                                </button>
+                                <button
+                                    onClick={handleOpenDrawer}
+                                    disabled={drawerOpening}
+                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <IconCash size={16} />
+                                    {drawerOpening ? '...' : 'Laci'}
+                                </button>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                                >
+                                    <IconPrinter size={16} />
+                                    Cetak Browser
+                                </button>
+                                <button
+                                    onClick={handleCloseReceiptModal}
+                                    className="flex-1 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                >
+                                    Tutup & Lanjutkan
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

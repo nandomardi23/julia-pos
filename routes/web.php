@@ -4,6 +4,7 @@ use App\Http\Controllers\Apps\CategoryController;
 use App\Http\Controllers\Apps\ProductController;
 use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\Apps\POSController;
+use App\Http\Controllers\Apps\PrintController;
 use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\SupplierController;
 use App\Http\Controllers\Apps\WarehouseController;
@@ -277,6 +278,12 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::delete('/pos/{cart_id}/destroyCart', [POSController::class, 'destroyCart'])->middleware('permission:transactions-access')->name('pos.destroyCart');
     Route::patch('/pos/{cart_id}/updateCart', [POSController::class, 'updateCart'])->middleware('permission:transactions-access')->name('pos.updateCart');
     Route::post('/pos/store', [TransactionController::class, 'store'])->middleware('permission:transactions-access')->name('pos.store');
+
+    // Server-side Thermal Print Routes
+    Route::post('/print/receipt/{invoice}', [PrintController::class, 'printReceipt'])->middleware('permission:transactions-access')->name('print.receipt');
+    Route::post('/print/drawer', [PrintController::class, 'openDrawer'])->middleware('permission:transactions-access')->name('print.drawer');
+    Route::post('/print/test', [PrintController::class, 'testPrint'])->middleware('permission:transactions-access')->name('print.test');
+    Route::get('/print/status', [PrintController::class, 'status'])->middleware('permission:transactions-access')->name('print.status');
 
     Route::get('/settings/payments', [PaymentSettingController::class, 'edit'])->middleware('permission:payment-settings-access')->name('settings.payments.edit');
     Route::put('/settings/payments', [PaymentSettingController::class, 'update'])->middleware('permission:payment-settings-access')->name('settings.payments.update');

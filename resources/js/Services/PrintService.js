@@ -375,7 +375,9 @@ class PrintService {
                             data: base64Image,
                             options: {
                                 language: "ESCPOS",
-                                dotDensity: "double"
+                                dotDensity: "double",
+                                scaleImage: true,
+                                imageSize: { width: 150 } // Small logo ~150px width
                             }
                         }]);
                         hasLogo = true;

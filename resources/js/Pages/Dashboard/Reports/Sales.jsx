@@ -137,6 +137,8 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
         orders_count: summary?.orders_count ?? 0,
         revenue_total: summary?.revenue_total ?? 0,
         discount_total: summary?.discount_total ?? 0,
+        tax_total: summary?.tax_total ?? 0,
+        net_revenue: summary?.net_revenue ?? 0,
         items_sold: summary?.items_sold ?? 0,
         profit_total: summary?.profit_total ?? 0,
         average_order: summary?.average_order ?? 0,
@@ -144,10 +146,31 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
 
     const summaryCards = [
         {
-            title: "Pendapatan Bersih",
+            title: "Total Omset",
             value: formatCurrency(safeSummary.revenue_total),
-            description: "Total setelah diskon",
+            description: "Total penjualan kotor",
             icon: <IconReceipt2 size={22} />,
+        },
+        {
+            title: "Pendapatan Bersih",
+            value: formatCurrency(safeSummary.net_revenue),
+            description: "Omset dikurangi pajak",
+            icon: <IconTrendingUp size={22} />,
+        },
+        {
+            title: "Total Pajak (PPN)",
+            value: formatCurrency(safeSummary.tax_total),
+            description: "Pajak terkumpul",
+            icon: <IconCoin size={22} />,
+        },
+        {
+            title: "Total Profit",
+            value: formatCurrency(safeSummary.profit_total),
+            description:
+                safeSummary.average_order > 0
+                    ? `Rata-rata ${formatCurrency(safeSummary.average_order)}`
+                    : "Rata-rata -",
+            icon: <IconCoin size={22} />,
         },
         {
             title: "Diskon Diberikan",
@@ -161,15 +184,6 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
             description: `${safeSummary.orders_count} transaksi`,
             icon: <IconShoppingBag size={22} />,
         },
-        {
-            title: "Total Profit",
-            value: formatCurrency(safeSummary.profit_total),
-            description:
-                safeSummary.average_order > 0
-                    ? `Rata-rata ${formatCurrency(safeSummary.average_order)}`
-                    : "Rata-rata -",
-            icon: <IconCoin size={22} />,
-        },
     ];
 
     return (
@@ -177,7 +191,7 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
             <Head title="Laporan Penjualan" />
 
             <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {summaryCards.map((card) => (
                         <SummaryCard key={card.title} {...card} />
                     ))}
@@ -253,14 +267,18 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
                                 <Table.Th className="text-center">Item</Table.Th>
-                                <Table.Th className="text-right">Diskon</Table.Th>
+                                <Table.Th>Diskon</Table.Th>
+                                <Table.Th className="text-right">Subtotal</Table.Th>
+                                <Table.Th className="text-right">Pajak</Table.Th>
                                 <Table.Th className="text-right">Total</Table.Th>
                                 <Table.Th className="text-right">Profit</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
                             {rows.length > 0 ? (
-                                rows.map((transaction, index) => (
+                                rows.map((transaction, index) => {
+                                    const subtotal = (Number(transaction.grand_total) || 0) + (Number(transaction.discount) || 0) - (Number(transaction.tax) || 0);
+                                    return (
                                     <tr 
                                         key={transaction.id}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
@@ -271,10 +289,16 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
                                         <Table.Td>{transaction.created_at}</Table.Td>
                                         <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
-                                            {transaction.total_items ?? 0}
+                                            {Number(transaction.total_items ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right">
                                             {formatCurrency(transaction.discount ?? 0)}
+                                        </Table.Td>
+                                        <Table.Td className="text-right text-gray-600 dark:text-gray-400">
+                                            {formatCurrency(subtotal)}
+                                        </Table.Td>
+                                        <Table.Td className="text-right text-gray-600 dark:text-gray-400">
+                                            {formatCurrency(transaction.tax ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right font-semibold text-gray-900 dark:text-white">
                                             {formatCurrency(transaction.grand_total ?? 0)}
@@ -283,7 +307,8 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
                                             {formatCurrency(transaction.total_profit ?? 0)}
                                         </Table.Td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <Table.Empty 
                                     colSpan={7} 

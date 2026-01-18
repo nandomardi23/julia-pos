@@ -255,7 +255,7 @@ class PrintService {
             const qtyPrice = `   ${qty} x ${this.formatNumber(price)}`;
             const subtotalStr = 'Rp ' + this.formatNumber(subtotal);
             const spaces = Math.max(1, WIDTH - qtyPrice.length - subtotalStr.length);
-            receipt += qtyPrice + ' '.repeat(spaces) + subtotalStr + LF;
+            receipt += qtyPrice + ' '.repeat(spaces) + subtotalStr + LF + LF;
         });
 
         receipt += '================================================' + LF;
@@ -284,7 +284,22 @@ class PrintService {
             receipt += this.formatTotalLine('Diskon', -discount, 48) + LF;
         }
 
+        // Tax (PPN)
+        const tax = Number(transaction.tax) || 0;
+        const ppn = Number(transaction.ppn) || 0;
+        
+        if (tax > 0) {
+            let label = 'PPN';
+            if (ppn > 0) {
+                // If ppn is integer (e.g. 12.00), show as 12, else 12.5
+                const ppnStr = ppn % 1 === 0 ? ppn.toFixed(0) : ppn.toString();
+                label += ` (${ppnStr}%)`;
+            }
+            receipt += this.formatTotalLine(label, tax, 48) + LF;
+        }
+
         // Total (bold)
+        receipt += '------------------------------------------------' + LF;
         receipt += ESC + 'E' + '\x01';
         receipt += this.formatTotalLine('Total', grandTotal, 48) + LF;
         receipt += ESC + 'E' + '\x00';

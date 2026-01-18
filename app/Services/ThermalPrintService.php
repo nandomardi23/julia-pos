@@ -159,7 +159,19 @@ class ThermalPrintService
                 $this->printer->text($this->formatLine('Diskon', '-Rp ' . $this->formatNumber($discount)) . "\n");
             }
 
+            // Tax (PPN)
+            $tax = (int) $transaction->tax;
+            $ppn = (float) $transaction->ppn;
+            if ($tax > 0) {
+                $label = 'PPN';
+                if ($ppn > 0) {
+                    $label .= ' (' . ($ppn == floor($ppn) ? number_format($ppn, 0) : $ppn) . '%)';
+                }
+                $this->printer->text($this->formatLine($label, 'Rp ' . $this->formatNumber($tax)) . "\n");
+            }
+
             // Total (bold)
+            $this->printer->text(str_repeat('-', $this->width) . "\n");
             $this->printer->setEmphasis(true);
             $this->printer->text($this->formatLine('Total', 'Rp ' . $this->formatNumber($grandTotal)) . "\n");
             $this->printer->setEmphasis(false);

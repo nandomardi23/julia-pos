@@ -250,6 +250,8 @@ class TransactionController extends Controller
                 'grand_total' => $request->grand_total,
                 'payment_method' => $paymentMethod ?: 'cash',
                 'payment_status' => $isCashPayment ? 'paid' : 'pending',
+                'ppn' => $request->ppn ?? 0,
+                'tax' => $request->tax ?? 0,
             ]);
 
             $carts = Cart::with(['product', 'variant'])->where('cashier_id', auth()->user()->id)->get();

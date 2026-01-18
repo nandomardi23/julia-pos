@@ -48,6 +48,7 @@ export default function Index({
     );
     const [discountInput, setDiscountInput] = useState("");
     const [discountType, setDiscountType] = useState("nominal");
+    const [taxInput, setTaxInput] = useState("12"); // Default 12%
     const [cashInput, setCashInput] = useState("");
     const [paymentMethod, setPaymentMethod] = useState(
         defaultPaymentGateway ?? "cash"
@@ -339,9 +340,18 @@ export default function Index({
     }, [discountInput, discountType, localCartsTotal]);
     
     const subtotal = useMemo(() => localCartsTotal ?? 0, [localCartsTotal]);
+    
+    // Tax calculation: (Subtotal - Discount) * Tax%
+    // Only apply tax if result is positive
+    const taxAmount = useMemo(() => {
+        const afterDiscount = Math.max(subtotal - discount, 0);
+        const taxPercent = parseFloat(taxInput) || 0;
+        return Math.round(afterDiscount * (taxPercent / 100));
+    }, [subtotal, discount, taxInput]);
+
     const payable = useMemo(
-        () => Math.max(subtotal - discount, 0),
-        [subtotal, discount]
+        () => Math.max(subtotal - discount + taxAmount, 0),
+        [subtotal, discount, taxAmount]
     );
     const cash = useMemo(
         () =>
@@ -603,6 +613,8 @@ export default function Index({
             {
                 discount: discount,
                 grand_total: payable,
+                ppn: parseFloat(taxInput) || 0,
+                tax: taxAmount,
                 cash: isCashPayment ? cash : payable,
                 change: isCashPayment ? change : 0,
                 payment_method: paymentMethod,
@@ -1146,63 +1158,104 @@ export default function Index({
 
                         {/* Cart Summary & Payment */}
                         <div className="border-t dark:border-gray-800 p-4 space-y-4">
-                            {/* Discount */}
-                            <div className="flex gap-2">
-                                <div className="flex-1">
-                                    <div className="flex rounded-lg border dark:border-gray-700 overflow-hidden text-sm">
-                                        <button
-                                            type="button"
-                                            onClick={() => setDiscountType("nominal")}
-                                            className={`flex-1 px-3 py-2 transition-colors ${
-                                                discountType === "nominal"
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                                            }`}
-                                        >
-                                            Rp
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setDiscountType("percent")}
-                                            className={`flex-1 px-3 py-2 transition-colors ${
-                                                discountType === "percent"
-                                                    ? "bg-blue-600 text-white"
-                                                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                                            }`}
-                                        >
-                                            %
-                                        </button>
-                                    </div>
-                                </div>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    placeholder={discountType === "percent" ? "Persen (0-100)" : "Nominal (Rp)"}
-                                    value={discountInput}
-                                    onChange={(e) =>
-                                        setDiscountInput(sanitizeNumericInput(e.target.value))
-                                    }
-                                    className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm"
-                                />
-                            </div>
+                                    {/* Discount & Tax Section */}
+                                    <div className="space-y-3 pt-4 border-t dark:border-gray-800">
+                                        {/* Discount Input */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Diskon
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setDiscountType("nominal")}
+                                                        className={`text-xs px-2 py-1 rounded transition-colors ${
+                                                            discountType === "nominal"
+                                                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                        }`}
+                                                    >
+                                                        Rp
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDiscountType("percent")}
+                                                        className={`text-xs px-2 py-1 rounded transition-colors ${
+                                                            discountType === "percent"
+                                                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                        }`}
+                                                    >
+                                                        %
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                    {discountType === "nominal" ? "Rp" : "%"}
+                                                </div>
+                                                <input
+                                                    type="text" // Keep as text to control input logic
+                                                    value={discountInput}
+                                                    onChange={(e) => {
+                                                        const val = sanitizeNumericInput(e.target.value);
+                                                        setDiscountInput(val);
+                                                    }}
+                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
 
-                            {/* Summary */}
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                    <span>Subtotal</span>
-                                    <span>{formatPrice(subtotal)}</span>
-                                </div>
-                                {discount > 0 && (
-                                    <div className="flex justify-between text-rose-500">
-                                        <span>Diskon</span>
-                                        <span>-{formatPrice(discount)}</span>
+                                        {/* Tax Input */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Pajak (PPN)
+                                                </label>
+                                                <span className="text-xs text-gray-500">%</span>
+                                            </div>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                    %
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={taxInput}
+                                                    onChange={(e) => {
+                                                        const val = sanitizeDecimalInput(e.target.value);
+                                                        setTaxInput(val);
+                                                    }}
+                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
-                                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t dark:border-gray-700">
-                                    <span>Total</span>
-                                    <span>{formatPrice(payable)}</span>
-                                </div>
-                            </div>
+
+                                    {/* Summary Totals */}
+                                    <div className="pt-4 space-y-2 border-t dark:border-gray-800">
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                                            <span>Subtotal</span>
+                                            {/* Fix hydration mismatch by forcing a string initially or suppression */}
+                                            <span>{formatPrice(subtotal)}</span>
+                                        </div>
+                                        {discount > 0 && (
+                                            <div className="flex justify-between text-red-500 text-sm">
+                                                <span>Diskon</span>
+                                                <span>-{formatPrice(discount)}</span>
+                                            </div>
+                                        )}
+                                        {taxAmount > 0 && (
+                                            <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                                                <span>PPN ({parseFloat(taxInput) || 0}%)</span>
+                                                <span>{formatPrice(taxAmount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-gray-900 dark:text-white font-bold text-lg pt-2 border-t dark:border-gray-800">
+                                            <span>Total</span>
+                                            <span>{formatPrice(payable)}</span>
+                                        </div>
+                                    </div>
 
                             {/* Payment Method */}
                             <div className="flex gap-2">
@@ -1481,7 +1534,7 @@ export default function Index({
                                                 </div>
                                                 <div className="flex justify-between text-xs pl-3">
                                                     <span>{qty} x {formatPrice(price)}</span>
-                                                    <span>Rp {formatPrice(qty * price)}</span>
+                                                    <span>{formatPrice(qty * price)}</span>
                                                 </div>
                                             </div>
                                         );
@@ -1492,17 +1545,29 @@ export default function Index({
 
                                 {/* Totals */}
                                 <div className="space-y-1 text-xs">
+                                    {Number(lastTransaction.discount) > 0 && (
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>Diskon</span>
+                                            <span>-{formatPrice(lastTransaction.discount)}</span>
+                                        </div>
+                                    )}
+                                    {Number(lastTransaction.tax) > 0 && (
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>PPN ({Number(lastTransaction.ppn) || 0}%)</span>
+                                            <span>{formatPrice(lastTransaction.tax)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between font-bold text-sm">
                                         <span>Total</span>
-                                        <span>Rp {formatPrice(lastTransaction.grand_total)}</span>
+                                        <span>{formatPrice(lastTransaction.grand_total)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Bayar</span>
-                                        <span>Rp {formatPrice(lastTransaction.cash)}</span>
+                                        <span>{formatPrice(lastTransaction.cash)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Kembali</span>
-                                        <span>Rp {formatPrice(lastTransaction.change)}</span>
+                                        <span>{formatPrice(lastTransaction.change)}</span>
                                     </div>
                                 </div>
 

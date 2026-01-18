@@ -28,6 +28,8 @@ class Transaction extends Model
         'payment_status',
         'payment_reference',
         'payment_url',
+        'ppn',
+        'tax',
     ];
 
     /**

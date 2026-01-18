@@ -114,7 +114,7 @@ export default function Show({ transaction }) {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500 dark:text-gray-400">Subtotal ({totalQty} item)</span>
-                                    <span className="text-gray-900 dark:text-white">{formatPrice(transaction.grand_total + (transaction.discount || 0))}</span>
+                                    <span className="text-gray-900 dark:text-white">{formatPrice((transaction.grand_total || 0) + (transaction.discount || 0) - (transaction.tax || 0))}</span>
                                 </div>
                                 {(transaction.discount || 0) > 0 && (
                                     <div className="flex justify-between text-sm">
@@ -122,6 +122,12 @@ export default function Show({ transaction }) {
                                             <IconDiscount size={14} /> Diskon
                                         </span>
                                         <span className="text-red-500">- {formatPrice(transaction.discount)}</span>
+                                    </div>
+                                )}
+                                {(transaction.tax || 0) > 0 && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">PPN ({Number(transaction.ppn) || 0}%)</span>
+                                        <span className="text-gray-900 dark:text-white">{formatPrice(transaction.tax)}</span>
                                     </div>
                                 )}
                                 <div className="border-t dark:border-gray-700 pt-3 flex justify-between font-bold">

@@ -12,17 +12,17 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
     }
 
     return (
-        <div className='rounded-xl border bg-white dark:bg-gray-950 dark:border-gray-800 overflow-hidden shadow-sm'>
+        <div className='rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden shadow-sm'>
             {/* Header */}
             {title && (
-                <div className={`px-5 py-4 border-b ${className} bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800`}>
+                <div className={`px-5 py-4 border-b border-gray-200 dark:border-gray-800 ${className} bg-gray-50/50 dark:bg-gray-900/50`}>
                     <div className='flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100'>
                         {icon}
                         <span>{title}</span>
                     </div>
                 </div>
             )}
-            
+
             {/* Body */}
             <div>
                 {children}
@@ -30,7 +30,7 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
 
             {/* Footer with Pagination */}
             {links && links.length > 3 && (
-                <div className='px-5 py-4 border-t bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-800'>
+                <div className='px-5 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50'>
                     <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
                         {/* Info & Per Page Selector */}
                         <div className='flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400'>
@@ -64,11 +64,11 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                         <ul className='flex items-center gap-1'>
                             {links.map((item, i) => {
                                 if (item.url == null) return null;
-                                
+
                                 const baseStyle = 'flex items-center justify-center min-w-[32px] h-8 px-2 text-sm border rounded-lg transition-colors'
                                 const activeStyle = 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
                                 const inactiveStyle = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
-                                
+
                                 if (item.label.includes('Previous')) {
                                     return (
                                         <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
@@ -77,7 +77,7 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                                         </Link>
                                     )
                                 }
-                                
+
                                 if (item.label.includes('Next')) {
                                     return (
                                         <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
@@ -86,12 +86,12 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
                                         </Link>
                                     )
                                 }
-                                
+
                                 // Hide middle page numbers on mobile, show only active
                                 return (
-                                    <Link 
-                                        className={`${baseStyle} ${item.active ? activeStyle : `${inactiveStyle} hidden sm:flex`}`} 
-                                        key={i} 
+                                    <Link
+                                        className={`${baseStyle} ${item.active ? activeStyle : `${inactiveStyle} hidden sm:flex`}`}
+                                        key={i}
                                         href={item.url}
                                     >
                                         {item.label}

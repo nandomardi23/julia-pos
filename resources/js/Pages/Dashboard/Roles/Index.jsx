@@ -5,7 +5,7 @@ import Modal from '@/Components/Common/Modal';
 import Search from '@/Components/Common/Search';
 import Table from '@/Components/Common/Table'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import { Head, useForm, usePage, router } from '@inertiajs/react'
 import { IconDatabaseOff, IconCirclePlus, IconTrash, IconUserShield, IconPencilCog, IconPencilCheck } from '@tabler/icons-react';
 import React from 'react'
 export default function Index() {
@@ -130,7 +130,7 @@ export default function Index() {
                     />
                 </form>
             </Modal>
-            <Table.Card 
+            <Table.Card
                 title={'Data Akses Group'}
                 links={roles.links}
                 meta={{
@@ -170,11 +170,8 @@ export default function Index() {
                                         </div>
                                     </Table.Td>
                                     <Table.Td>
-                                        <div className='flex gap-1'>
-                                            <Button
-                                                type={'modal'}
-                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
-                                                className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
+                                        <div className='flex justify-center gap-1'>
+                                            <button
                                                 onClick={() =>
                                                     setData({
                                                         id: role.id,
@@ -184,13 +181,22 @@ export default function Index() {
                                                         isOpen: !data.isOpen,
                                                     })
                                                 }
-                                            />
-                                            <Button
-                                                type={'delete'}
-                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
-                                                className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
-                                                url={route('roles.destroy', role.id)}
-                                            />
+                                                className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'
+                                                title='Edit'
+                                            >
+                                                <IconPencilCog size={14} strokeWidth={1.5} />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Apakah Anda yakin ingin menghapus role ini?')) {
+                                                        router.delete(route('roles.destroy', role.id))
+                                                    }
+                                                }}
+                                                className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                title='Hapus'
+                                            >
+                                                <IconTrash size={14} strokeWidth={1.5} />
+                                            </button>
                                         </div>
                                     </Table.Td>
                                 </tr>

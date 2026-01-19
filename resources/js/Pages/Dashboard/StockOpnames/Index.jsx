@@ -184,23 +184,22 @@ export default function Index({ opnames, filters }) {
                                         )}
                                     </Table.Td>
                                     <Table.Td className="text-center">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Link href={route('stock-opnames.show', opname.id)}>
-                                                <Button
-                                                    type="button"
-                                                    icon={<IconEye size={14} />}
-                                                    className="text-blue-600 hover:text-blue-800 p-1"
-                                                    variant="ghost"
-                                                />
+                                        <div className="flex justify-center gap-1">
+                                            <Link
+                                                href={route('stock-opnames.show', opname.id)}
+                                                className='p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                                title='Lihat'
+                                            >
+                                                <IconEye size={14} strokeWidth={1.5} />
                                             </Link>
                                             {opname.status === 'draft' && (
-                                                <Button
-                                                    type="button"
-                                                    icon={<IconTrash size={14} />}
-                                                    className="text-red-500 hover:text-red-700 p-1"
-                                                    variant="ghost"
+                                                <button
                                                     onClick={() => handleDelete(opname.id)}
-                                                />
+                                                    className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                    title='Hapus'
+                                                >
+                                                    <IconTrash size={14} strokeWidth={1.5} />
+                                                </button>
                                             )}
                                         </div>
                                     </Table.Td>

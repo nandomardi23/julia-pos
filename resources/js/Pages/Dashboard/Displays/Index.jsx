@@ -1,6 +1,6 @@
 import React from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head } from '@inertiajs/react'
+import { Head, Link, router } from '@inertiajs/react'
 import Button from '@/Components/Common/Button'
 import { IconCirclePlus, IconDatabaseOff, IconEye, IconPencilCog, IconTrash, IconLayoutList } from '@tabler/icons-react'
 import Search from '@/Components/Common/Search'
@@ -27,7 +27,7 @@ export default function Index({ displays, filters }) {
                     </div>
                 </div>
             </div>
-            <Table.Card 
+            <Table.Card
                 title={'Data Display'}
                 links={displays.links}
                 meta={{
@@ -75,34 +75,40 @@ export default function Index({ displays, filters }) {
                                         </span>
                                     </Table.Td>
                                     <Table.Td className='text-center'>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            display.is_active 
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${display.is_active
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                                                 : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                        }`}>
+                                            }`}>
                                             {display.is_active ? 'Aktif' : 'Nonaktif'}
                                         </span>
                                     </Table.Td>
                                     <Table.Td>
-                                        <div className='flex gap-1'>
-                                            <Button
-                                                type={'link'}
-                                                icon={<IconEye size={14} strokeWidth={1.5} />}
-                                                className={'border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900'}
+                                        <div className='flex justify-center gap-1'>
+                                            <Link
                                                 href={route('displays.show', display.id)}
-                                            />
-                                            <Button
-                                                type={'edit'}
-                                                icon={<IconPencilCog size={14} strokeWidth={1.5} />}
-                                                className={'border bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900'}
+                                                className='p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                                title='Lihat'
+                                            >
+                                                <IconEye size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <Link
                                                 href={route('displays.edit', display.id)}
-                                            />
-                                            <Button
-                                                type={'delete'}
-                                                icon={<IconTrash size={14} strokeWidth={1.5} />}
-                                                className={'border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900'}
-                                                url={route('displays.destroy', display.id)}
-                                            />
+                                                className='p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30'
+                                                title='Edit'
+                                            >
+                                                <IconPencilCog size={14} strokeWidth={1.5} />
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Apakah Anda yakin ingin menghapus display ini?')) {
+                                                        router.delete(route('displays.destroy', display.id))
+                                                    }
+                                                }}
+                                                className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                                                title='Hapus'
+                                            >
+                                                <IconTrash size={14} strokeWidth={1.5} />
+                                            </button>
                                         </div>
                                     </Table.Td>
                                 </tr>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
-import { Head, Link, router, useForm } from '@inertiajs/react'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle, IconFileAnalytics, IconBulb } from '@tabler/icons-react'
 import Table from '@/Components/Common/Table'
 import Button from '@/Components/Common/Button'
@@ -12,6 +12,9 @@ import toast from 'react-hot-toast'
 import axios from 'axios'
 
 export default function Index({ movements, filters, warehouses, displays, transferProducts, allProducts, suppliers, stockOutReasons }) {
+    const { auth } = usePage().props;
+    const hasPermission = (name) => auth.super || auth.permissions[name];
+
     const [filterData, setFilterData] = useState({
         product: filters.product || '',
         type: filters.type || '',
@@ -23,7 +26,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
     const [showTransferModal, setShowTransferModal] = useState(false)
     const [showStockInModal, setShowStockInModal] = useState(false)
     const [showStockOutModal, setShowStockOutModal] = useState(false)
-    
+
     // Stock availability states
     const [transferAvailableStock, setTransferAvailableStock] = useState(0)
     const [stockOutAvailableStock, setStockOutAvailableStock] = useState(0)
@@ -127,8 +130,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
     // ==================== STOCK IN MODAL LOGIC ====================
     const allProductOptions = (allProducts || []).map(product => ({
         value: product.id,
-        label: product.barcode 
-            ? `${product.title} (${product.barcode})` 
+        label: product.barcode
+            ? `${product.title} (${product.barcode})`
             : product.title
     }))
 
@@ -153,7 +156,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
     const handleStockInSubmit = (e) => {
         e.preventDefault()
-        
+
         const payload = {
             warehouse_id: stockInForm.data.warehouse_id,
             supplier_id: stockInForm.data.supplier_id || null,
@@ -218,10 +221,10 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
     useEffect(() => {
         if (stockOutForm.data.location_id && stockOutForm.data.product_id) {
-            const url = stockOutForm.data.location_type === 'warehouse' 
+            const url = stockOutForm.data.location_type === 'warehouse'
                 ? route('stock-movements.warehouseStock')
                 : route('stock-movements.displayStock')
-            
+
             const params = stockOutForm.data.location_type === 'warehouse'
                 ? { warehouse_id: stockOutForm.data.location_id, product_id: stockOutForm.data.product_id }
                 : { display_id: stockOutForm.data.location_id, product_id: stockOutForm.data.product_id }
@@ -318,9 +321,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
     const formatDate = (dateString) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString('id-ID', { 
-            day: '2-digit', 
-            month: 'short', 
+        return date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -402,14 +405,14 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             type='text'
                             placeholder='Cari produk...'
                             value={filterData.product}
-                            onChange={e => setFilterData({...filterData, product: e.target.value})}
+                            onChange={e => setFilterData({ ...filterData, product: e.target.value })}
                         />
                     </div>
                     <div className='w-40'>
                         <Select
                             label="Tipe"
                             value={filterData.type}
-                            onChange={e => setFilterData({...filterData, type: e.target.value})}
+                            onChange={e => setFilterData({ ...filterData, type: e.target.value })}
                         >
                             <option value="">Semua</option>
                             <option value="in">Barang Masuk</option>
@@ -424,7 +427,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             label='Dari Tanggal'
                             type='date'
                             value={filterData.start_date}
-                            onChange={e => setFilterData({...filterData, start_date: e.target.value})}
+                            onChange={e => setFilterData({ ...filterData, start_date: e.target.value })}
                         />
                     </div>
                     <div className='w-40'>
@@ -433,7 +436,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             label='Sampai Tanggal'
                             type='date'
                             value={filterData.end_date}
-                            onChange={e => setFilterData({...filterData, end_date: e.target.value})}
+                            onChange={e => setFilterData({ ...filterData, end_date: e.target.value })}
                         />
                     </div>
                     <Button
@@ -445,7 +448,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                 </div>
             </div>
 
-            <Table.Card 
+            <Table.Card
                 title={'Riwayat Pergerakan Stok'}
                 links={movements.links}
                 meta={{
@@ -487,7 +490,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                             </span>
                                         </Table.Td>
                                         <Table.Td className='text-sm text-gray-600 dark:text-gray-400'>
-                                            {movement.from_type === 'supplier' 
+                                            {movement.from_type === 'supplier'
                                                 ? (movement.supplier?.name || 'Supplier')
                                                 : movement.from_type
                                             }
@@ -501,13 +504,13 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                             </span>
                                         </Table.Td>
                                         <Table.Td className='text-sm text-right'>
-                                            {movement.purchase_price 
+                                            {movement.purchase_price
                                                 ? `Rp ${new Intl.NumberFormat('id-ID').format(movement.purchase_price)}`
                                                 : '-'
                                             }
                                         </Table.Td>
                                         <Table.Td className='text-sm text-right'>
-                                            {movement.loss_amount 
+                                            {movement.loss_amount
                                                 ? <span className='text-red-600 font-medium'>Rp {new Intl.NumberFormat('id-ID').format(movement.loss_amount)}</span>
                                                 : '-'
                                             }
@@ -590,7 +593,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                 errors={transferForm.errors.product_id}
                             />
                         </div>
-                        
+
                         {transferForm.data.product_id && (
                             <div className='col-span-12'>
                                 <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
@@ -777,8 +780,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                     stockOutForm.setData({
                                         ...stockOutForm.data,
                                         location_type: e.target.value,
-                                        location_id: e.target.value === 'warehouse' 
-                                            ? (warehouses[0]?.id || '') 
+                                        location_id: e.target.value === 'warehouse'
+                                            ? (warehouses[0]?.id || '')
                                             : (displays[0]?.id || ''),
                                         product_id: ''
                                     })
@@ -810,7 +813,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                 errors={stockOutForm.errors.product_id}
                             />
                         </div>
-                        
+
                         {stockOutForm.data.product_id && (
                             <div className='col-span-12'>
                                 <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>

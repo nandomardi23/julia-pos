@@ -8,6 +8,8 @@ use Spatie\Permission\Exceptions\UnauthorizedException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -40,5 +42,27 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()
                 ->back(fallback: route('pos.index'))
                 ->with('error', $message);
+        });
+
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+            if (in_array($response->getStatusCode(), [404, 403])) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)
+                    ->setStatusCode($response->getStatusCode());
+            }
+
+            if (!app()->environment('local') && in_array($response->getStatusCode(), [500, 503])) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)
+                    ->setStatusCode($response->getStatusCode());
+            }
+
+            if ($response->getStatusCode() === 419) {
+                return back()->with([
+                    'error' => 'Sesi Anda telah berakhir, silakan coba lagi.',
+                ]);
+            }
+
+            return $response;
         });
     })->create();

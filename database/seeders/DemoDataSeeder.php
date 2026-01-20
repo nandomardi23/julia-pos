@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantIngredient;
 use App\Models\Profit;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -24,6 +25,7 @@ use Illuminate\Support\Str;
 class DemoDataSeeder extends Seeder
 {
     private array $ingredients = []; // Store ingredients for recipe linking
+    private $suppliers = [];
 
     public function run(): void
     {
@@ -34,6 +36,7 @@ class DemoDataSeeder extends Seeder
         TransactionDetail::truncate();
         Profit::truncate();
         Transaction::truncate();
+        StockMovement::truncate();
         ProductVariantIngredient::truncate();
         ProductVariant::truncate();
         DisplayStock::truncate();
@@ -76,14 +79,14 @@ class DemoDataSeeder extends Seeder
 
     private function seedSuppliers(): void
     {
-        $suppliers = [
+        $suppliersData = [
             ['name' => 'PT Kopi Nusantara', 'company' => 'Kopi Nusantara', 'phone' => '021-1234567', 'address' => 'Jl. Kopi No. 1, Jakarta'],
             ['name' => 'CV Susu Murni', 'company' => 'Susu Murni', 'phone' => '022-9876543', 'address' => 'Jl. Susu No. 2, Bandung'],
             ['name' => 'UD Buah Segar', 'company' => 'Buah Segar', 'phone' => '021-5551234', 'address' => 'Pasar Induk, Jakarta'],
             ['name' => 'UD Packaging', 'company' => 'Packaging Jaya', 'phone' => '031-5556789', 'address' => 'Jl. Industri No. 5, Surabaya'],
         ];
-        foreach ($suppliers as $s) {
-            Supplier::create($s);
+        foreach ($suppliersData as $s) {
+            $this->suppliers[] = Supplier::create($s);
             $this->command->info("  ✓ {$s['name']}");
         }
     }
@@ -153,18 +156,48 @@ class DemoDataSeeder extends Seeder
             // Store for recipe linking
             $this->ingredients[$ing['name']] = $product;
 
-            // Add to warehouse
+            $warehouseQty = rand(20, 100);
+            $displayQty = rand(20, 100);
+            $totalQty = $warehouseQty + $displayQty;
+
+            // 1. In Stock from Supplier to Warehouse (Total Amount)
+            $this->createStockMovement(
+                $product, 
+                StockMovement::TYPE_SUPPLIER, 
+                $this->suppliers[array_rand($this->suppliers)]->id,
+                StockMovement::TYPE_WAREHOUSE,
+                $warehouse->id,
+                $totalQty,
+                $ing['buy']
+            );
+            
+            // Manual sync warehouse stock (because we don't have observers yet)
             WarehouseStock::create([
                 'warehouse_id' => $warehouse->id,
                 'product_id' => $product->id,
-                'quantity' => rand(20, 100),
+                'quantity' => $totalQty,
             ]);
 
-            // Add to display (for recipe availability check in POS)
+            // 2. Transfer from Warehouse to Display
+            $this->createStockMovement(
+                $product,
+                StockMovement::TYPE_WAREHOUSE,
+                $warehouse->id,
+                StockMovement::TYPE_DISPLAY,
+                $display->id,
+                $displayQty,
+                0 // Internal transfer has no price
+            );
+
+            // Update Manual Stocks
+            WarehouseStock::where('warehouse_id', $warehouse->id)
+                ->where('product_id', $product->id)
+                ->decrement('quantity', $displayQty);
+                
             DisplayStock::create([
                 'display_id' => $display->id,
                 'product_id' => $product->id,
-                'quantity' => rand(20, 100),
+                'quantity' => $displayQty,
             ]);
 
             $this->command->info("  ✓ {$ing['name']}");
@@ -200,10 +233,23 @@ class DemoDataSeeder extends Seeder
                 'product_type' => Product::TYPE_SUPPLY,
             ]);
 
+            $qty = rand(100, 500);
+
+            // 1. In Stock from Supplier to Warehouse
+             $this->createStockMovement(
+                $product, 
+                StockMovement::TYPE_SUPPLIER, 
+                $this->suppliers[array_rand($this->suppliers)]->id,
+                StockMovement::TYPE_WAREHOUSE,
+                $warehouse->id,
+                $qty,
+                $sup['buy']
+            );
+
             WarehouseStock::create([
                 'warehouse_id' => $warehouse->id,
                 'product_id' => $product->id,
-                'quantity' => rand(100, 500),
+                'quantity' => $qty,
             ]);
 
             $this->command->info("  ✓ {$sup['name']}");
@@ -237,16 +283,46 @@ class DemoDataSeeder extends Seeder
                 'product_type' => Product::TYPE_SELLABLE,
             ]);
 
+            $warehouseQty = rand(20, 50);
+            $displayQty = rand(5, 20);
+            $totalQty = $warehouseQty + $displayQty;
+
+            // 1. In Stock from Supplier to Warehouse
+            $this->createStockMovement(
+                $product, 
+                StockMovement::TYPE_SUPPLIER, 
+                $this->suppliers[array_rand($this->suppliers)]->id,
+                StockMovement::TYPE_WAREHOUSE,
+                $warehouse->id,
+                $totalQty,
+                $s['buy']
+            );
+
             WarehouseStock::create([
                 'warehouse_id' => $warehouse->id,
                 'product_id' => $product->id,
-                'quantity' => rand(20, 50),
+                'quantity' => $totalQty,
             ]);
+
+            // 2. Transfer to Display
+             $this->createStockMovement(
+                $product,
+                StockMovement::TYPE_WAREHOUSE,
+                $warehouse->id,
+                StockMovement::TYPE_DISPLAY,
+                $display->id,
+                $displayQty,
+                0
+            );
+
+            WarehouseStock::where('warehouse_id', $warehouse->id)
+                ->where('product_id', $product->id)
+                ->decrement('quantity', $displayQty);
 
             DisplayStock::create([
                 'display_id' => $display->id,
                 'product_id' => $product->id,
-                'quantity' => rand(5, 20),
+                'quantity' => $displayQty,
             ]);
 
             $this->command->info("  ✓ {$s['name']}");
@@ -441,15 +517,14 @@ class DemoDataSeeder extends Seeder
         $counter = 1;
         foreach ($recipes as $recipe) {
             $imageName = $this->downloadImage($recipe['img'], 'products', Str::slug($recipe['name']));
-            $baseVariant = $recipe['variants'][0];
-
+            
             // Create product
             $product = Product::create([
                 'sku' => strtoupper(substr($recipe['cat'], 0, 2)) . '-' . strtoupper(substr(str_replace(' ', '', $recipe['name']), 0, 2)) . '-' . str_pad($counter++, 3, '0', STR_PAD_LEFT),
                 'title' => $recipe['name'],
                 'category_id' => $categories[$recipe['cat']]->id,
-                'buy_price' => $baseVariant['buy'],
-                'sell_price' => $baseVariant['sell'],
+                'buy_price' => $recipe['variants'][0]['buy'],
+                'sell_price' => $recipe['variants'][0]['sell'],
                 'unit' => 'cup',
                 'min_stock' => 0,
                 'image' => $imageName,
@@ -482,6 +557,20 @@ class DemoDataSeeder extends Seeder
             $ingredientCount = count($recipe['variants'][0]['ingredients']);
             $this->command->info("  ✓ {$recipe['name']} (" . count($recipe['variants']) . " variants, {$ingredientCount} ingredients each)");
         }
+    }
+
+    private function createStockMovement($product, $fromType, $fromId, $toType, $toId, $qty, $price)
+    {
+        StockMovement::create([
+            'product_id' => $product->id,
+            'from_type' => $fromType,
+            'from_id' => $fromId,
+            'to_type' => $toType,
+            'to_id' => $toId,
+            'quantity' => $qty,
+            'purchase_price' => $price,
+            'user_id' => 1 // Super Admin
+        ]);
     }
 
     private function downloadImage(string $url, string $folder, string $name): string

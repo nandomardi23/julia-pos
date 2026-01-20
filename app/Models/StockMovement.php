@@ -68,6 +68,7 @@ class StockMovement extends Model
     const TYPE_DISPLAY = 'display';
     const TYPE_TRANSACTION = 'transaction';
     const TYPE_OUT = 'out'; // For stock out (damaged, expired, return, etc.)
+    const TYPE_ADJUSTMENT = 'adjustment'; // For stock opname corrections
 
     /**
      * Stock out reason constants
@@ -139,6 +140,7 @@ class StockMovement extends Model
             self::TYPE_SUPPLIER => $entity->name ?? 'Supplier',
             self::TYPE_WAREHOUSE => $entity->name ?? 'Gudang',
             self::TYPE_DISPLAY => $entity->name ?? 'Display',
+            self::TYPE_ADJUSTMENT => 'Koreksi Stok',
             default => ucfirst($this->from_type),
         };
     }

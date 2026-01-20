@@ -227,7 +227,7 @@ class StockOpnameController extends Controller
                     
                     StockMovement::create([
                         'product_id' => $item->product_id,
-                        'from_type' => StockMovement::TYPE_SUPPLIER,
+                        'from_type' => StockMovement::TYPE_ADJUSTMENT,
                         'from_id' => null,
                         'to_type' => $fromType,
                         'to_id' => $opname->location_id,

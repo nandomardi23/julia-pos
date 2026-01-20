@@ -130,41 +130,75 @@ class TransactionController extends Controller
     private function validateIngredientStock($carts, $display): array
     {
         $insufficientItems = [];
+        $recipeCarts = $carts->filter(fn($c) => $c->product->product_type === Product::TYPE_RECIPE);
         
-        foreach ($carts as $cart) {
-            $product = $cart->product;
-            
-            if ($product->product_type !== Product::TYPE_RECIPE) {
-                continue;
+        if ($recipeCarts->isEmpty()) {
+            return [];
+        }
+
+        // 1. Gather all unique ingredient IDs needed
+        $neededIngredients = [];
+        foreach ($recipeCarts as $cart) {
+            $ingredients = $cart->product->getEffectiveIngredients($cart->variant);
+            foreach ($ingredients as $ingredientData) {
+                $id = $ingredientData->ingredient_id;
+                $neededIngredients[$id] = [
+                    'id' => $id,
+                    'type' => $ingredientData->ingredient->product_type,
+                    'title' => $ingredientData->ingredient->title,
+                    'unit' => $ingredientData->ingredient->unit ?? 'pcs',
+                ];
             }
-            
+        }
+
+        if (empty($neededIngredients)) {
+            return [];
+        }
+
+        $ingredientIds = array_keys($neededIngredients);
+
+        // 2. Bulk fetch all needed stocks
+        // Warehouse stock for supplies
+        $warehouseStockMap = WarehouseStock::whereIn('product_id', $ingredientIds)
+            ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
+            ->groupBy('product_id')
+            ->pluck('total_qty', 'product_id')
+            ->toArray();
+
+        // Display stock for ingredients
+        $displayStockMap = [];
+        if ($display) {
+            $displayStockMap = DisplayStock::where('display_id', $display->id)
+                ->whereIn('product_id', $ingredientIds)
+                ->select('product_id', DB::raw('SUM(quantity) as total_qty'))
+                ->groupBy('product_id')
+                ->pluck('total_qty', 'product_id')
+                ->toArray();
+        }
+
+        // 3. Validate requirements against stock maps
+        foreach ($recipeCarts as $cart) {
+            $product = $cart->product;
             $variant = $cart->variant;
             $multiplier = (float) $cart->qty;
             $ingredients = $product->getEffectiveIngredients($variant);
             
             foreach ($ingredients as $ingredientData) {
-                $ingredient = $ingredientData->ingredient;
-                if (!$ingredient) continue;
-                
+                $ingredientId = $ingredientData->ingredient_id;
                 $requiredQty = $ingredientData->quantity * $multiplier;
                 
-                if ($ingredient->product_type === Product::TYPE_SUPPLY) {
-                    // Check warehouse stock for supplies
-                    $availableStock = WarehouseStock::where('product_id', $ingredient->id)->sum('quantity');
-                } else {
-                    // Check display stock for ingredients
-                    $availableStock = DisplayStock::where('display_id', $display->id)
-                        ->where('product_id', $ingredient->id)
-                        ->sum('quantity');
-                }
+                $isSupply = $neededIngredients[$ingredientId]['type'] === Product::TYPE_SUPPLY;
+                $availableStock = $isSupply 
+                    ? ($warehouseStockMap[$ingredientId] ?? 0)
+                    : ($displayStockMap[$ingredientId] ?? 0);
                 
                 if ($availableStock < $requiredQty) {
                     $insufficientItems[] = [
                         'recipe' => $product->title . ($variant ? ' (' . $variant->name . ')' : ''),
-                        'ingredient' => $ingredient->title,
+                        'ingredient' => $neededIngredients[$ingredientId]['title'],
                         'required' => $requiredQty,
                         'available' => $availableStock,
-                        'unit' => $ingredient->unit ?? 'pcs',
+                        'unit' => $neededIngredients[$ingredientId]['unit'],
                     ];
                 }
             }

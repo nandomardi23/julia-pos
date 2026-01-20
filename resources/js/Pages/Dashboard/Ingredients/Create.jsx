@@ -152,11 +152,11 @@ export default function Create({ categories }) {
                     <div className='col-span-6'>
                         <Input
                             type={'number'}
-                            label={'Harga Jual per Satuan (Jika dijual satuan)'}
+                            label={'Harga Jual per Satuan (Opsional)'}
                             value={data.sell_price}
                             onChange={e => setData('sell_price', e.target.value)}
                             errors={errors.sell_price}
-                            placeholder={'Harga jual'}
+                            placeholder={'Harga jual jika dijual retail'}
                         />
                     </div>
                 </div>

@@ -24,8 +24,12 @@ class DashboardController extends Controller
 
         // Today's stats (optimized single queries)
         $today = Carbon::today();
-        $todayTransactions = Transaction::whereDate('created_at', $today)->count();
-        $todayRevenue = Transaction::whereDate('created_at', $today)->sum('grand_total');
+        $todayStats = Transaction::whereDate('created_at', $today)
+            ->selectRaw('COUNT(*) as count, SUM(grand_total) as revenue')
+            ->first();
+
+        $todayTransactions = $todayStats->count ?? 0;
+        $todayRevenue = $todayStats->revenue ?? 0;
         
         // Today's profit using join (efficient)
         $todayProfit = DB::table('profits')

@@ -54,7 +54,7 @@ class IngredientController extends Controller
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
             'buy_price' => 'required|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
+            'sell_price' => 'nullable|numeric|min:0',
             'unit' => 'required|string',
         ]);
 
@@ -74,7 +74,7 @@ class IngredientController extends Controller
             'description' => $validated['description'] ?? '',
             'category_id' => $validated['category_id'],
             'buy_price' => $validated['buy_price'],
-            'sell_price' => $validated['sell_price'],
+            'sell_price' => $validated['sell_price'] ?? 0,
             'unit' => $validated['unit'],
             'product_type' => Product::TYPE_INGREDIENT,
         ]);
@@ -108,7 +108,7 @@ class IngredientController extends Controller
             'description' => 'nullable',
             'category_id' => 'required|exists:categories,id',
             'buy_price' => 'required|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
+            'sell_price' => 'nullable|numeric|min:0',
             'unit' => 'required|string',
         ]);
 
@@ -126,16 +126,18 @@ class IngredientController extends Controller
         }
 
         // Record price change if buy_price or sell_price changed
-        if ($ingredient->buy_price != $validated['buy_price'] || $ingredient->sell_price != $validated['sell_price']) {
+        $newSellPrice = $validated['sell_price'] ?? 0;
+        if ($ingredient->buy_price != $validated['buy_price'] || $ingredient->sell_price != $newSellPrice) {
             PriceHistory::recordChange(
                 $ingredient->id,
                 $ingredient->buy_price,
                 $validated['buy_price'],
                 $ingredient->sell_price,
-                $validated['sell_price']
+                $newSellPrice
             );
         }
 
+        $validated['sell_price'] = $newSellPrice;
         $ingredient->update($validated);
 
         return redirect()->route('ingredients.index')->with('success', 'Bahan baku berhasil diperbarui!');

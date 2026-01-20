@@ -178,6 +178,10 @@ class RecipeController extends Controller
             'buy_price' => 'nullable|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
             'variants' => 'nullable|array',
+            'variants.*.name' => 'required|string',
+            'variants.*.buy_price' => 'nullable|numeric|min:0',
+            'variants.*.sell_price' => 'required|numeric|min:0',
+            'variants.*.ingredients' => 'nullable|array',
         ]);
 
         DB::transaction(function () use ($request, $validated, $recipe) {

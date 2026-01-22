@@ -1,0 +1,21 @@
+{
+    "name": "pos-julia/printer-server",
+    "description": "WebSocket Print Server for POS Julia - Client-side thermal printing",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "workerman/workerman": "^4.1",
+        "mike42/escpos-php": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PrintServer\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

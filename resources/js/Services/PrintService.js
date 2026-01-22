@@ -1,8 +1,9 @@
 /**
- * PrintService - Client-side thermal printing via QZ Tray
+ * PrintService - Client-side thermal printing
  * 
- * QZ Tray must be installed on cashier's PC
- * Download: https://qz.io/download/
+ * Supports two methods:
+ * 1. QZ Tray (requires QZ Tray installed on cashier's PC)
+ * 2. WebSocket Print Server (requires local print server running)
  * 
  * Supported Features:
  * - ESC/POS receipt printing (80mm paper)
@@ -643,4 +644,328 @@ class PrintService {
     }
 }
 
+/**
+ * WebSocket Print Service - Client-side thermal printing via local WebSocket server
+ * 
+ * This requires a print server running on the cashier's computer.
+ * See: printer-server/README.md for setup instructions
+ */
+class WebSocketPrintService {
+    static ws = null;
+    static isConnected = false;
+    static reconnectAttempts = 0;
+    static maxReconnectAttempts = 5;
+    static reconnectDelay = 2000; // 2 seconds
+    static reconnectTimer = null;
+    static serverUrl = 'ws://localhost:9100';
+    static messageQueue = [];
+    static statusCallbacks = [];
+
+    /**
+     * Set server URL (default: ws://localhost:9100)
+     */
+    static setServerUrl(url) {
+        this.serverUrl = url;
+    }
+
+    /**
+     * Register callback for connection status changes
+     */
+    static onStatusChange(callback) {
+        this.statusCallbacks.push(callback);
+    }
+
+    /**
+     * Notify all status callbacks
+     */
+    static notifyStatusChange(status) {
+        this.statusCallbacks.forEach(cb => {
+            try {
+                cb(status);
+            } catch (e) {
+                console.error('Error in status callback:', e);
+            }
+        });
+    }
+
+    /**
+     * Connect to WebSocket print server
+     */
+    static connect() {
+        if (this.ws && this.isConnected) {
+            return Promise.resolve(true);
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                this.ws = new WebSocket(this.serverUrl);
+
+                const connectTimeout = setTimeout(() => {
+                    if (!this.isConnected) {
+                        this.ws.close();
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 5000);
+
+                this.ws.onopen = () => {
+                    clearTimeout(connectTimeout);
+                    this.isConnected = true;
+                    this.reconnectAttempts = 0;
+                    console.log('✓ WebSocket print server connected');
+                    this.notifyStatusChange({ connected: true, message: 'Connected to print server' });
+                    resolve(true);
+                };
+
+                this.ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        console.log('WebSocket message:', message);
+                        
+                        // Handle queued message resolution
+                        if (this.messageQueue.length > 0) {
+                            const pending = this.messageQueue.shift();
+                            pending.resolve(message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing WebSocket message:', e);
+                    }
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.notifyStatusChange({ connected: false, message: 'Connection error' });
+                };
+
+                this.ws.onclose = () => {
+                    clearTimeout(connectTimeout);
+                    this.isConnected = false;
+                    console.log('WebSocket print server disconnected');
+                    this.notifyStatusChange({ connected: false, message: 'Disconnected from print server' });
+                    
+                    // Auto-reconnect
+                    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                        this.scheduleReconnect();
+                    }
+                    
+                    reject(new Error('Connection closed'));
+                };
+
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Schedule reconnection attempt
+     */
+    static scheduleReconnect() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+        }
+
+        this.reconnectAttempts++;
+        const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 5);
+        
+        console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+        this.notifyStatusChange({ 
+            connected: false, 
+            reconnecting: true, 
+            message: `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})` 
+        });
+
+        this.reconnectTimer = setTimeout(() => {
+            this.connect().catch(err => {
+                console.error('Reconnect failed:', err);
+            });
+        }, delay);
+    }
+
+    /**
+     * Disconnect from server
+     */
+    static disconnect() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+
+        this.isConnected = false;
+        this.reconnectAttempts = 0;
+    }
+
+    /**
+     * Send command to print server and wait for response
+     */
+    static sendCommand(command, data = {}) {
+        return new Promise((resolve, reject) => {
+            if (!this.isConnected || !this.ws) {
+                reject(new Error('Not connected to print server'));
+                return;
+            }
+
+            try {
+                const payload = { command, ...data };
+                this.ws.send(JSON.stringify(payload));
+                
+                // Queue the pending message
+                this.messageQueue.push({ resolve, reject });
+
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    const index = this.messageQueue.findIndex(p => p.resolve === resolve);
+                    if (index !== -1) {
+                        this.messageQueue.splice(index, 1);
+                        reject(new Error('Command timeout'));
+                    }
+                }, 10000);
+
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Print receipt to thermal printer
+     */
+    static async printReceipt(transaction, settings = {}, openDrawer = false) {
+        try {
+            // Ensure connected
+            if (!this.isConnected) {
+                await this.connect();
+            }
+
+            const response = await this.sendCommand('print_receipt', {
+                data: {
+                    printer_name: settings.printer_name || 'POS-80',
+                    open_drawer: openDrawer,
+                    transaction: transaction,
+                    settings: settings
+                }
+            });
+
+            if (response.type === 'success') {
+                console.log('✓ Receipt printed via WebSocket');
+                return { 
+                    success: true, 
+                    message: response.message || 'Struk berhasil dicetak'
+                };
+            } else {
+                throw new Error(response.message || 'Print failed');
+            }
+
+        } catch (error) {
+            console.error('WebSocket print error:', error);
+            return {
+                success: false,
+                message: error.message || 'Gagal mencetak via WebSocket',
+                fallback: true
+            };
+        }
+    }
+
+    /**
+     * Test printer connection
+     */
+    static async testPrint(printerName = null) {
+        try {
+            if (!this.isConnected) {
+                await this.connect();
+            }
+
+            const response = await this.sendCommand('test_print', {
+                printer_name: printerName || 'POS-80'
+            });
+
+            return {
+                success: response.type === 'success',
+                message: response.message
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Test print failed'
+            };
+        }
+    }
+
+    /**
+     * Open cash drawer
+     */
+    static async openCashDrawer(printerName = null) {
+        try {
+            if (!this.isConnected) {
+                await this.connect();
+            }
+
+            const response = await this.sendCommand('open_drawer', {
+                printer_name: printerName || 'POS-80'
+            });
+
+            return {
+                success: response.type === 'success',
+                message: response.message
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                message: error.message || 'Failed to open drawer'
+            };
+        }
+    }
+
+    /**
+     * Print receipt and optionally open cash drawer
+     */
+    static async printAndOpenDrawer(transaction, settings = {}) {
+        const isCashPayment = transaction.payment_method?.toLowerCase() === 'cash';
+        return await this.printReceipt(transaction, settings, isCashPayment);
+    }
+
+    /**
+     * Check connection status
+     */
+    static async checkConnection() {
+        try {
+            await this.connect();
+            
+            // Send ping to verify
+            const response = await this.sendCommand('ping');
+            
+            return {
+                available: true,
+                connected: response.type === 'pong',
+                message: 'WebSocket print server online',
+                serverUrl: this.serverUrl
+            };
+
+        } catch (error) {
+            return {
+                available: false,
+                connected: false,
+                message: 'Print server offline. Please start printer-server.',
+                serverUrl: this.serverUrl,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Check if WebSocket is supported
+     */
+    static isAvailable() {
+        return typeof WebSocket !== 'undefined';
+    }
+}
+
 export default PrintService;
+export { PrintService, WebSocketPrintService };
+

@@ -5,6 +5,8 @@
 /public/storage
 /storage/*.key
 /vendor
+/printer-server/vendor
+/printer-server/composer.lock
 .env
 .env.backup
 .env.production

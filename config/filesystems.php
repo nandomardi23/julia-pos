@@ -44,6 +44,17 @@ return [
             'throw' => false,
         ],
 
+        // For shared hosting without symlink support
+        // Use this disk instead of 'public' disk
+        // Set FILESYSTEM_DISK=public_direct in .env
+        'public_direct' => [
+            'driver' => 'local',
+            'root' => public_path('storage'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

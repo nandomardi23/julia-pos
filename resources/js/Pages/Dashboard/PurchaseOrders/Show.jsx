@@ -112,14 +112,15 @@ export default function Show({ purchaseOrder, statuses }) {
                 {/* Action Buttons */}
                 <div className='flex flex-wrap gap-2'>
                     {/* PDF Download Button - Always visible */}
-                    <Button
-                        type='link'
-                        icon={<IconFileTypePdf size={18} strokeWidth={1.5} />}
-                        className='border bg-red-50 text-red-700 border-red-300 hover:bg-red-100'
-                        label='Download PDF'
+                    <a
                         href={route('purchase-orders.pdf', po.id)}
                         target='_blank'
-                    />
+                        rel='noopener noreferrer'
+                        className='border bg-red-50 text-red-700 border-red-300 hover:bg-red-100 px-4 py-2 flex items-center gap-2 rounded-lg text-sm font-semibold'
+                    >
+                        <IconFileTypePdf size={18} strokeWidth={1.5} />
+                        <span>Download PDF</span>
+                    </a>
 
                     {po.status === 'draft' && (
                         <>

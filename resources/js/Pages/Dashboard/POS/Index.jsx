@@ -5,7 +5,7 @@ import Input from "@/Components/Common/Input";
 import Button from "@/Components/Common/Button";
 import Table from "@/Components/Common/Table";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
-import PrintService from "@/Services/PrintService";
+import PrintService, { WebSocketPrintService } from "@/Services/PrintService";
 import {
     IconArrowLeft,
     IconArrowRight,
@@ -87,6 +87,28 @@ export default function Index({
         printerName: null,
         checking: false
     });
+    
+    // WebSocket print status
+    const [wsStatus, setWsStatus] = useState({
+        connected: false,
+        reconnecting: false,
+        message: 'Disconnected'
+    });
+    
+    // Register WebSocket status callback
+    useEffect(() => {
+        WebSocketPrintService.onStatusChange(setWsStatus);
+        
+        // Try to connect on mount
+        WebSocketPrintService.connect().catch(() => {
+            // Silent fail - status will be updated via callback
+        });
+        
+        return () => {
+            // Cleanup on unmount
+            WebSocketPrintService.disconnect();
+        };
+    }, []);
     
     // Hide out of stock filter
     const [hideOutOfStock, setHideOutOfStock] = useState(filters?.hide_out_of_stock ?? false);
@@ -653,7 +675,7 @@ export default function Index({
 
 
 
-    // Handle thermal print from receipt modal (supports QZ Tray and Server modes)
+    // Handle thermal print from receipt modal (supports QZ Tray, Server, and WebSocket modes)
     const handleThermalPrint = async () => {
         if (thermalPrinting || !lastTransaction) return;
         
@@ -665,6 +687,19 @@ export default function Index({
                 // Server-side printing (using axios for proper CSRF)
                 const response = await window.axios.post(`/dashboard/print/receipt/${lastTransaction.invoice}`);
                 result = response.data;
+            } else if (printMode === 'websocket') {
+                // WebSocket printing
+                if (!wsStatus.connected) {
+                    toast.error('Print server not connected. Please start the print server.');
+                    setThermalPrinting(false);
+                    return;
+                }
+                
+                result = await WebSocketPrintService.printReceipt(
+                    lastTransaction,
+                    settings,
+                    'POS-80' // Default printer name, can be made configurable
+                );
             } else {
                 // QZ Tray (client-side)
                 result = await PrintService.printReceipt(lastTransaction, settings);
@@ -682,7 +717,7 @@ export default function Index({
         }
     };
 
-    // Handle cash drawer open (supports QZ Tray and Server modes)
+    // Handle cash drawer open (supports QZ Tray, Server, and WebSocket modes)
     const handleOpenDrawer = async () => {
         if (drawerOpening) return;
         
@@ -694,6 +729,15 @@ export default function Index({
                 // Server-side (using axios for proper CSRF)
                 const response = await window.axios.post('/dashboard/print/drawer');
                 result = response.data;
+            } else if (printMode === 'websocket') {
+                // WebSocket
+                if (!wsStatus.connected) {
+                    toast.error('Print server not connected. Please start the print server.');
+                    setDrawerOpening(false);
+                    return;
+                }
+                
+                result = await WebSocketPrintService.openCashDrawer('POS-80');
             } else {
                 // QZ Tray
                 result = await PrintService.openCashDrawer();
@@ -1615,6 +1659,18 @@ export default function Index({
                                         <IconPrinter size={14} />
                                         Server
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPrintMode('websocket')}
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
+                                            printMode === 'websocket'
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        <IconPrinter size={14} />
+                                        WebSocket
+                                    </button>
                                 </div>
                             </div>
 
@@ -1624,7 +1680,7 @@ export default function Index({
                                     <IconPrinter size={14} />
                                     <span>QZ Tray: {qzStatus.connected ? `✓ ${qzStatus.printerName || 'Connected'}` : 'Klik icon printer di header untuk cek koneksi'}</span>
                                 </div>
-                            ) : (
+                            ) : printMode === 'server' ? (
                                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
                                     serverPrintStatus.available
                                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
@@ -1639,6 +1695,27 @@ export default function Index({
                                                 : `Server: ${serverPrintStatus.printerName || 'POS-80'}`}
                                     </span>
                                 </div>
+                            ) : (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                                    wsStatus.connected
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                        : wsStatus.reconnecting
+                                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                                            : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
+                                }`}>
+                                    <span className={`w-2 h-2 rounded-full ${
+                                        wsStatus.connected ? 'bg-emerald-500 animate-pulse' : 
+                                        wsStatus.reconnecting ? 'bg-amber-500 animate-pulse' : 
+                                        'bg-rose-500'
+                                    }`} />
+                                    <span>
+                                        {wsStatus.connected 
+                                            ? '✓ WebSocket: Connected (localhost:9100)' 
+                                            : wsStatus.reconnecting
+                                                ? 'WebSocket: Reconnecting...'
+                                                : 'WebSocket: Disconnected - Start print server'}
+                                    </span>
+                                </div>
                             )}
                             
                             {/* Print Buttons */}
@@ -1649,7 +1726,7 @@ export default function Index({
                                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <IconPrinter size={16} />
-                                    {thermalPrinting ? 'Mencetak...' : `Cetak (${printMode === 'qz' ? 'QZ Tray' : 'Server'})`}
+                                    {thermalPrinting ? 'Mencetak...' : `Cetak (${printMode === 'qz' ? 'QZ Tray' : printMode === 'server' ? 'Server' : 'WebSocket'})`}
                                 </button>
                                 <button
                                     onClick={handleOpenDrawer}

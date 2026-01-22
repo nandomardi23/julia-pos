@@ -517,24 +517,42 @@ class PurchaseOrderController extends Controller
      */
     public function downloadPdf($id)
     {
-        $po = PurchaseOrder::with([
-            'supplier',
-            'warehouse',
-            'user',
-            'items.product',
-        ])->findOrFail($id);
+        try {
+            // Clean any previous output
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
 
-        $statuses = PurchaseOrder::getStatuses();
+            $po = PurchaseOrder::with([
+                'supplier',
+                'warehouse',
+                'user',
+                'items.product',
+            ])->findOrFail($id);
 
-        $pdf = \PDF::loadView('pdf.purchase-order', [
-            'po' => $po,
-            'statuses' => $statuses,
-        ]);
+            $statuses = PurchaseOrder::getStatuses();
 
-        $pdf->setPaper('a4', 'portrait');
+            $pdf = \PDF::loadView('pdf.purchase-order', [
+                'po' => $po,
+                'statuses' => $statuses,
+            ]);
 
-        $filename = 'PO-' . $po->po_number . '.pdf';
-        
-        return $pdf->download($filename);
+            $pdf->setPaper('a4', 'portrait');
+
+            $filename = 'PO-' . $po->po_number . '.pdf';
+            
+            // Return with explicit headers
+            return response($pdf->output(), 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+                
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Gagal generate PDF: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

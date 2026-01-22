@@ -535,6 +535,6 @@ class PurchaseOrderController extends Controller
 
         $filename = 'PO-' . $po->po_number . '.pdf';
         
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 }

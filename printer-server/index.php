@@ -8,6 +8,13 @@
  * Usage: php index.php start
  */
 
+// CRITICAL: Prevent any Laravel environment loading
+// This print server is STANDALONE and does NOT need database access
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    // Prevent accidentally loading Laravel's autoloader
+    error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+}
+
 use Workerman\Worker;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
@@ -16,6 +23,9 @@ use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\EscposImage;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+// Load printer server configuration
+$config = require __DIR__ . '/config.php';
 
 // WebSocket server configuration
 $ws_worker = new Worker('websocket://0.0.0.0:9100');

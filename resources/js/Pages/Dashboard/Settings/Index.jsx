@@ -12,16 +12,22 @@ import {
     IconPhoto,
     IconDeviceFloppy,
     IconDatabaseExport,
-    IconTool
+    IconTool,
+    IconPrinter,
+    IconPlugConnected
 } from '@tabler/icons-react'
+import { WebSocketPrintService } from '@/Services/PrintService'
 
 const tabs = [
     { id: 'store', label: 'Informasi Toko', icon: IconBuildingStore },
+    { id: 'print', label: 'Printer', icon: IconPrinter },
     { id: 'maintenance', label: 'Pemeliharaan', icon: IconTool },
 ]
 
 export default function Index({ settings }) {
     const [activeTab, setActiveTab] = useState('store')
+    const [testingConnection, setTestingConnection] = useState(false)
+    const [connectionStatus, setConnectionStatus] = useState(null)
 
     // Form untuk masing-masing tab
     const storeForm = useForm({
@@ -37,7 +43,17 @@ export default function Index({ settings }) {
         }
     })
 
+    const printForm = useForm({
+        group: 'print',
+        _method: 'PUT',
+        settings: {
+            websocket_url: settings.print?.websocket_url || 'ws://localhost:9100',
+            printer_name: settings.print?.printer_name || 'POS-80',
+        }
+    })
+
     const getActiveForm = () => {
+        if (activeTab === 'print') return printForm
         return storeForm
     }
 
@@ -58,6 +74,33 @@ export default function Index({ settings }) {
             ...form.data.settings,
             [key]: value
         })
+    }
+
+    const handleTestConnection = async () => {
+        setTestingConnection(true)
+        setConnectionStatus(null)
+        
+        try {
+            // Set WebSocket URL before testing
+            WebSocketPrintService.setServerUrl(printForm.data.settings.websocket_url)
+            
+            const status = await WebSocketPrintService.checkConnection()
+            setConnectionStatus(status)
+            
+            if (status.connected) {
+                toast.success('Koneksi berhasil!')
+            } else {
+                toast.error('Gagal terhubung ke print server')
+            }
+        } catch (error) {
+            setConnectionStatus({
+                connected: false,
+                message: error.message || 'Connection failed'
+            })
+            toast.error('Gagal testing koneksi')
+        } finally {
+            setTestingConnection(false)
+        }
     }
 
     return (
@@ -172,7 +215,65 @@ export default function Index({ settings }) {
                         </div>
                     )}
 
-                    {/* Tab 2: Pemeliharaan */}
+                    {/* Tab 2: Print Settings */}
+                    {activeTab === 'print' && (
+                        <div className="space-y-6">
+                            <div className="p-4 border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900/30 rounded-lg">
+                                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
+                                    <IconPrinter size={18} />
+                                    Konfigurasi Printer Server
+                                </h4>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    Jika mengakses dari shared hosting, ubah WebSocket URL ke IP komputer kasir (contoh: ws://192.168.1.100:9100)
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <Input
+                                    label="WebSocket URL"
+                                    value={printForm.data.settings.websocket_url}
+                                    onChange={(e) => updateSetting('websocket_url', e.target.value)}
+                                    placeholder="ws://localhost:9100"
+                                    helpText="Format: ws://IP_ADDRESS:9100 (contoh: ws://192.168.1.100:9100)"
+                                />
+                                
+                                <Input
+                                    label="Nama Printer"
+                                    value={printForm.data.settings.printer_name}
+                                    onChange={(e) => updateSetting('printer_name', e.target.value)}
+                                    placeholder="POS-80"
+                                    helpText="Nama printer Windows yang terhubung (cek di Devices and Printers)"
+                                />
+
+                                <div>
+                                    <Button
+                                        type="button"
+                                        onClick={handleTestConnection}
+                                        label={testingConnection ? "Testing..." : "Test Connection"}
+                                        icon={<IconPlugConnected size={18} />}
+                                        className="bg-green-600 text-white hover:bg-green-700"
+                                        disabled={testingConnection}
+                                    />
+                                    
+                                    {connectionStatus && (
+                                        <div className={`mt-3 p-3 rounded-lg text-sm ${
+                                            connectionStatus.connected 
+                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30'
+                                                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/30'
+                                        }`}>
+                                            <strong>{connectionStatus.connected ? '✓ Terhubung' : '✗ Tidak Terhubung'}</strong>
+                                            <p className="mt-1">{connectionStatus.message}</p>
+                                            {connectionStatus.serverUrl && (
+                                                <p className="mt-1 text-xs opacity-75">Server: {connectionStatus.serverUrl}</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab 3: Pemeliharaan */}
                     {activeTab === 'maintenance' && (
                         <div className="space-y-6">
                             <div className="p-4 border border-blue-100 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900/30 rounded-lg">
@@ -195,7 +296,7 @@ export default function Index({ settings }) {
                     )}
 
                     {/* Submit Button */}
-                    {activeTab === 'store' && (
+                    {(activeTab === 'store' || activeTab === 'print') && (
                         <div className="mt-6 pt-4 border-t dark:border-gray-800">
                             <Button
                                 type="submit"

@@ -19,6 +19,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'store', 'key' => 'store_phone', 'value' => '08123456789'],
             ['group' => 'store', 'key' => 'store_email', 'value' => 'toko@example.com'],
             ['group' => 'store', 'key' => 'store_logo', 'value' => null],
+            
+            // Print settings
+            ['group' => 'print', 'key' => 'websocket_url', 'value' => 'ws://localhost:9100'],
+            ['group' => 'print', 'key' => 'printer_name', 'value' => 'POS-80'],
         ];
 
         foreach ($settings as $setting) {

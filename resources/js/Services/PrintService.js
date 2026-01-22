@@ -662,10 +662,14 @@ class WebSocketPrintService {
     static statusCallbacks = [];
 
     /**
-     * Set server URL (default: ws://localhost:9100)
+     * Set server URL (can be called before connect to use custom URL)
+     * @param {string} url - WebSocket server URL (e.g., 'ws://192.168.1.100:9100')
      */
     static setServerUrl(url) {
-        this.serverUrl = url;
+        if (url && url.trim()) {
+            this.serverUrl = url.trim();
+            console.log('WebSocket server URL set to:', this.serverUrl);
+        }
     }
 
     /**

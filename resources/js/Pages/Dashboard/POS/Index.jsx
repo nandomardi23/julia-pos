@@ -97,6 +97,10 @@ export default function Index({
     
     // Register WebSocket status callback
     useEffect(() => {
+        // Configure WebSocket URL from settings before connecting
+        const websocketUrl = settings?.websocket_url || 'ws://localhost:9100';
+        WebSocketPrintService.setServerUrl(websocketUrl);
+        
         WebSocketPrintService.onStatusChange(setWsStatus);
         
         // Try to connect on mount
@@ -108,7 +112,7 @@ export default function Index({
             // Cleanup on unmount
             WebSocketPrintService.disconnect();
         };
-    }, []);
+    }, [settings?.websocket_url]);
     
     // Hide out of stock filter
     const [hideOutOfStock, setHideOutOfStock] = useState(filters?.hide_out_of_stock ?? false);
@@ -698,7 +702,7 @@ export default function Index({
                 result = await WebSocketPrintService.printReceipt(
                     lastTransaction,
                     settings,
-                    'POS-80' // Default printer name, can be made configurable
+                    lastTransaction.payment_method === 'cash' // Auto open drawer for cash payments
                 );
             } else {
                 // QZ Tray (client-side)
@@ -737,7 +741,7 @@ export default function Index({
                     return;
                 }
                 
-                result = await WebSocketPrintService.openCashDrawer('POS-80');
+                result = await WebSocketPrintService.openCashDrawer(settings?.printer_name || 'POS-80');
             } else {
                 // QZ Tray
                 result = await PrintService.openCashDrawer();

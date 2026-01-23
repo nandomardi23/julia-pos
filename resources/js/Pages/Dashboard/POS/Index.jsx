@@ -123,6 +123,21 @@ export default function Index({
         };
     }, [settings?.websocket_url]);
     
+    // Auto-reconnect to USB Serial printer if previously authorized
+    useEffect(() => {
+        if (serialStatus.supported && !serialStatus.connected) {
+            // Try to auto-reconnect to previously authorized printer
+            SerialPrintService.reconnect().then(result => {
+                if (result.success) {
+                    setSerialStatus(prev => ({ ...prev, connected: true }));
+                    console.log('USB Serial: Auto-reconnected');
+                }
+            }).catch(() => {
+                // Silent fail - user will need to manually select printer
+            });
+        }
+    }, []);
+    
     // Hide out of stock filter
     const [hideOutOfStock, setHideOutOfStock] = useState(filters?.hide_out_of_stock ?? false);
     
@@ -1712,10 +1727,14 @@ export default function Index({
                                             setPrintMode('serial');
                                             if (!serialStatus.connected) {
                                                 try {
-                                                    await SerialPrintService.requestPort();
+                                                    const result = await SerialPrintService.requestAndConnect();
                                                     setSerialStatus({ ...serialStatus, connected: true });
+                                                    toast.success(result.message || 'Printer USB terhubung');
                                                 } catch (err) {
-                                                    console.log('User cancelled printer selection');
+                                                    if (err.message !== 'Tidak ada printer dipilih') {
+                                                        toast.error('Gagal connect: ' + err.message);
+                                                    }
+                                                    console.log('Printer selection cancelled or failed:', err.message);
                                                 }
                                             }
                                         }}
@@ -1764,9 +1783,9 @@ export default function Index({
                                     <span>
                                         {serialStatus.supported 
                                             ? serialStatus.connected
-                                                ? '✓ USB Serial: Ready (Click print to select printer)'
-                                                : 'USB Serial: Click print button to select printer'
-                                            : 'USB Serial not supported (use Chrome/Edge)'}
+                                                ? '✓ USB Serial: Terhubung & Siap Print'
+                                                : 'USB Serial: Klik button USB untuk pilih printer'
+                                            : 'USB Serial tidak didukung (gunakan Chrome/Edge)'}
                                     </span>
                                 </div>
                             ) : (

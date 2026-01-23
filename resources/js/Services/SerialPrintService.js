@@ -42,15 +42,9 @@ class SerialPrintService {
         }
 
         try {
-            // Request port with filters for common thermal printer vendors
-            this.port = await navigator.serial.requestPort({
-                filters: [
-                    { usbVendorId: 0x0519 }, // Star Micronics
-                    { usbVendorId: 0x04b8 }, // Epson
-                    { usbVendorId: 0x154f }, // Bixolon
-                    { usbVendorId: 0x0483 }, // Generic USB
-                ]
-            });
+            // Request port WITHOUT filters - show ALL serial devices
+            // This allows any USB thermal printer to be selected
+            this.port = await navigator.serial.requestPort();
             
             return this.port;
         } catch (error) {

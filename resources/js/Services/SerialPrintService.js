@@ -42,16 +42,9 @@ class SerialPrintService {
         }
 
         try {
-            // Request port with filters for common thermal printer vendors
-            this.port = await navigator.serial.requestPort({
-                filters: [
-                    { usbVendorId: 0x0519 }, // Star Micronics
-                    { usbVendorId: 0x04b8 }, // Epson
-                    { usbVendorId: 0x154f }, // Bixolon
-                    { usbVendorId: 0x0483 }, // Generic USB
-                ]
-            });
-            
+            // Request port without filters to allow ANY serial device/printer
+            this.port = await navigator.serial.requestPort({});
+
             return this.port;
         } catch (error) {
             if (error.name === 'NotFoundError') {
@@ -236,7 +229,7 @@ class SerialPrintService {
         // Tax (PPN)
         const tax = Number(transaction.tax) || 0;
         const ppn = Number(transaction.ppn) || 0;
-        
+
         if (tax > 0) {
             let label = 'PPN';
             if (ppn > 0) {

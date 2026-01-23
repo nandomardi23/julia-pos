@@ -6,6 +6,7 @@ import Button from "@/Components/Common/Button";
 import Table from "@/Components/Common/Table";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
 import PrintService, { WebSocketPrintService } from "@/Services/PrintService";
+import SerialPrintService from "@/Services/SerialPrintService";
 import {
     IconArrowLeft,
     IconArrowRight,
@@ -88,11 +89,19 @@ export default function Index({
         checking: false
     });
     
+    
     // WebSocket print status
     const [wsStatus, setWsStatus] = useState({
         connected: false,
         reconnecting: false,
         message: 'Disconnected'
+    });
+    
+    // USB Serial print status
+    const [serialStatus, setSerialStatus] = useState({
+        supported: SerialPrintService.isSupported(),
+        connected: false,
+        printerName: null
     });
     
     // Register WebSocket status callback
@@ -704,6 +713,19 @@ export default function Index({
                     settings,
                     lastTransaction.payment_method === 'cash' // Auto open drawer for cash payments
                 );
+            } else if (printMode === 'serial') {
+                // USB Serial printing
+                if (!serialStatus.supported) {
+                    toast.error('Web Serial API not supported. Please use Chrome or Edge.');
+                    setThermalPrinting(false);
+                    return;
+                }
+                
+                result = await SerialPrintService.printReceipt(
+                    lastTransaction,
+                    settings,
+                    true // Auto open drawer for cash payments
+                );
             } else {
                 // QZ Tray (client-side)
                 result = await PrintService.printReceipt(lastTransaction, settings);
@@ -742,6 +764,15 @@ export default function Index({
                 }
                 
                 result = await WebSocketPrintService.openCashDrawer(settings?.printer_name || 'POS-80');
+            } else if (printMode === 'serial') {
+                // USB Serial
+                if (!serialStatus.supported) {
+                    toast.error('Web Serial API not supported. Please use Chrome or Edge.');
+                    setDrawerOpening(false);
+                    return;
+                }
+                
+                result = await SerialPrintService.openCashDrawer();
             } else {
                 // QZ Tray
                 result = await PrintService.openCashDrawer();
@@ -1675,6 +1706,30 @@ export default function Index({
                                         <IconPrinter size={14} />
                                         WebSocket
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            setPrintMode('serial');
+                                            if (!serialStatus.connected) {
+                                                try {
+                                                    await SerialPrintService.requestPort();
+                                                    setSerialStatus({ ...serialStatus, connected: true });
+                                                } catch (err) {
+                                                    console.log('User cancelled printer selection');
+                                                }
+                                            }
+                                        }}
+                                        disabled={!serialStatus.supported}
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
+                                            printMode === 'serial'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        title={!serialStatus.supported ? 'Web Serial API not supported (use Chrome/Edge)' : ''}
+                                    >
+                                        <IconPrinter size={14} />
+                                        USB
+                                    </button>
                                 </div>
                             </div>
 
@@ -1697,6 +1752,21 @@ export default function Index({
                                             : serverPrintStatus.available 
                                                 ? `✓ Server: ${serverPrintStatus.printerName}`
                                                 : `Server: ${serverPrintStatus.printerName || 'POS-80'}`}
+                                    </span>
+                                </div>
+                             ) : printMode === 'serial' ? (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                                    serialStatus.supported
+                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                        : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                }`}>
+                                    <IconPrinter size={14} />
+                                    <span>
+                                        {serialStatus.supported 
+                                            ? serialStatus.connected
+                                                ? '✓ USB Serial: Ready (Click print to select printer)'
+                                                : 'USB Serial: Click print button to select printer'
+                                            : 'USB Serial not supported (use Chrome/Edge)'}
                                     </span>
                                 </div>
                             ) : (
@@ -1730,7 +1800,7 @@ export default function Index({
                                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <IconPrinter size={16} />
-                                    {thermalPrinting ? 'Mencetak...' : `Cetak (${printMode === 'qz' ? 'QZ Tray' : printMode === 'server' ? 'Server' : 'WebSocket'})`}
+                                    {thermalPrinting ? 'Mencetak...' : `Cetak (${printMode === 'qz' ? 'QZ Tray' : printMode === 'server' ? 'Server' : printMode === 'serial' ? 'USB Serial' : 'WebSocket'})`}
                                 </button>
                                 <button
                                     onClick={handleOpenDrawer}

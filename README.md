@@ -70,30 +70,77 @@ Instalasi untuk server utama yang menyimpan database dan aplikasi web.
 
 ### 2. Cashier Setup (Printer Server)
 
-Aplikasi ini menggunakan **WebSocket Print Server** yang berjalan di komputer kasir untuk mencetak struk secara langsung (tanpa dialog print browser).
+Aplikasi ini menggunakan **WebSocket Print Server** yang berjalan di komputer kasir untuk mencetak struk secara langsung (Direct Thermal Printing) tanpa menampilkan dialog print browser.
 
-**Persyaratan di Komputer Kasir:**
--   PHP Installed (tambahkan ke PATH environment variable)
--   Composer Installed
--   Printer Thermal (USB/LAN/Bluetooth) yang sudah terinstall driver-nya.
+#### 📋 Apa Saja yang Dibutuhkan?
 
-**Langkah Instalasi:**
+Sebelum setup, pastikan komputer kasir memiliki:
 
-1.  Copy folder `printer-server` dari project ini ke komputer kasir (atau clone full repo juga bisa).
-2.  Buka terminal di folder `printer-server`.
-3.  Install dependencies:
+1.  **Hardware**
+    -   PC / Laptop (Windows disarankan).
+    -   Thermal Printer (USB/LAN) yang sudah terhubung dan terinstall driver-nya.
+    -   Kertas thermal (ukuran 58mm atau 80mm).
+
+2.  **Software**
+    -   **PHP (v7.4 atau lebih baru)**: Wajib terinstall dan bisa dipanggil dari CMD/Terminal.
+        -   *Cek:* Buka CMD, ketik `php -v`.
+    -   **Composer**: Untuk install library printer.
+        -   *Cek:* Buka CMD, ketik `composer -v`.
+        -   *Download:* [getcomposer.org](https://getcomposer.org)
+    -   **Printer Driver**: Pastikan printer muncul di *Devices and Printers* dan bisa "Test Print".
+
+#### ⚙️ Langkah Instalasi
+
+1.  **Siapkan Folder Server**
+    Copy folder `printer-server` dari source code ini ke Desktop atau Documents di komputer kasir.
+
+2.  **Install Library**
+    Buka terminal/CMD, masuk ke folder `printer-server` tersebut, lalu jalankan:
     ```bash
     composer install
     ```
-4.  Jalankan server:
-    -   **Windows:** Double click `start.bat`
-    -   **Linux/Mac:** `./start.sh`
+    *Tunggu sampai proses selesai. Folder `vendor` akan muncul.*
 
-**Konfigurasi Printer:**
--   Pastikan nama printer di setting atau code sesuai dengan nama printer di **Control Panel > Devices and Printers**.
--   Contoh: `POS-80` atau `EPSON TM-U220`.
+3.  **Jalankan Server**
+    -   **Windows:** Double click file `start.bat`.
+    -   **Linux/Mac:** Jalankan `./start.sh` di terminal.
 
-> 💡 **Panduan Lengkap:** Baca [printer-server/README.md](printer-server/README.md) untuk detail troubleshooting dan cara menjadikan service otomatis.
+    Jendela terminal baru akan terbuka dengan status:
+    ```
+    Workerman[POS-Julia-Print-Server] start in DEBUG mode
+    WebSocket Server: ws://0.0.0.0:9100
+    ```
+    *Biarkan jendela ini tetap terbuka selama kasir beroperasi.*
+
+4.  **Setting Nama Printer**
+    -   Lihat nama printer persis di **Control Panel > Devices and Printers**.
+    -   Contoh nama: `POS-58`, `EPSON TM-U220 Receipt`, `Generic / Text Only`.
+    -   Masukkan nama printer ini di menu **Settings > Printer** pada aplikasi web POS Julia.
+
+#### 🛠️ Troubleshooting
+
+-   **Error `php is not recognized`**: Artinya PHP belum masuk ke Environment Variables Windows. Cari tutorial "Add PHP to Path Windows" di Google.
+-   **Server tidak bisa connect**:
+    -   Pastikan file `start.bat` sudah berjalan.
+    -   Cek firewall Windows, pastikan port `9100` diizinkan (allow).
+    -   Pastikan tidak ada aplikasi lain yang menggunakan port 9100.
+-   **Printer tidak merespon tapi status sukses**:
+    -   Cek apakah nama printer di setting aplikasi SAMA PERSIS dengan di Control Panel (termasuk spasi/huruf besar).
+    -   Pastikan kabel USB printer tidak kendor.
+
+#### � Agar Jalan Otomatis (Auto Start)
+
+Agar server printer langsung menyala saat komputer kasir dihidupkan, lakukan langkah ini:
+
+**Cara Mudah (Startup Folder):**
+1.  Tekan tombol keyboard **Windows + R** untuk membuka menu Run.
+2.  Ketik `shell:startup` lalu tekan Enter. Akan muncul folder Startup.
+3.  Klik kanan pada file `start.bat` di folder `printer-server`, pilih **Create Shortcut**.
+4.  Pindahkan shortcut yang baru dibuat itu ke dalam folder Startup tadi.
+5.  Selesai! Sekarang server akan otomatis menyala setiap kali komputer masuk Windows.
+
+**Cara Profesional (Hidden Service):**
+Jika ingin server berjalan di background (tanpa jendela hitam), gunakan **NSSM**. Panduan lengkapnya ada di file [printer-server/README.md](printer-server/README.md).
 
 ---
 
@@ -130,12 +177,3 @@ Pengujian ini mensimulasikan checkout lengkap: keranjang ➜ transaksi ➜ invoi
 3. Commit perubahanmu: `git commit -m "Tambah fitur X"`
 4. Push branch: `git push origin feature/namamu`
 5. Buka Pull Request
-
-## Authors
-
--   [Arya Dwi Putra](https://www.github.com/aryadwiputra)
--   Modifikasi & Fitur Tambahan oleh Tim Pengembang POS Julia
-
-## ⭐ Dukung Proyek Ini
-
-Kalau repositori ini membantumu membangun POS lebih cepat, klik **Star**. Dukungan kecil ini bikin proyek tetap aktif dan membantu developer lain menemukannya. Terima kasih! 🙌

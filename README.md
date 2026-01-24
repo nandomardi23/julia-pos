@@ -9,41 +9,103 @@
 
 -   **Kasir cepat & intuitif** – pencarian barcode, keranjang, ringkasan pembayaran, dan kalkulasi diskon otomatis.
 -   **Invoice siap cetak & payment link** – setelah transaksi, kasir bisa melihat preview invoice elegan, membagikan link pembayaran Midtrans/Xendit, dan memilih kapan mau mencetaknya.
+-   **Direct Thermal Printing** – cetak struk langsung ke printer thermal via WebSocket server (tanpa dialog print browser).
 -   **Laporan lengkap** – dari penjualan, profit, sampai riwayat transaksi dengan filter multi parameter.
 -   **Akses berbasis role** – integrasi Spatie Permissions bawaan untuk role, user, dan hak akses yang granular.
--   **Dark mode ready** – UI sudah disiapkan untuk mode gelap/terang tanpa konfigurasi tambahan.
 
 ## 🔧 Teknologi Inti
 
 -   [Laravel 12](https://laravel.com) + [Inertia.js](https://inertiajs.com)
 -   [React](https://react.dev) + [Tailwind CSS](https://tailwindcss.com)
 -   [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission)
--   [Tabler Icons](https://tabler-icons.io) untuk ikon kasir modern
+-   [Workerman](https://github.com/walkor/workerman) untuk Print Server WebSocket
 -   Integrasi payment gateway Midtrans Snap & Xendit Invoice (opsional)
 
-## 🚀 Cara Menjalankan
+---
 
-```bash
-git clone https://github.com/<username>/point-of-sales.git
-cd point-of-sales
-cp .env.example .env
-composer install && npm install
-php artisan key:generate
-php artisan migrate --seed
-npm run dev
-php artisan serve
-```
+## 🚀 Installation Guide
 
-> **Tip:** Jalankan `php artisan test` – tersedia feature test baru untuk memastikan alur transaksi & invoice tetap aman.
+### 1. Production Setup (Server / Cloud)
+
+Instalasi untuk server utama yang menyimpan database dan aplikasi web.
+
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/<username>/point-of-sales.git
+    cd point-of-sales
+    ```
+
+2.  **Setup Environment**
+    ```bash
+    cp .env.example .env
+    ```
+    -   Edit `.env` dan sesuaikan database credentials (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
+    -   Pastikan `APP_URL` sesuai domain Anda.
+
+3.  **Install Dependencies**
+    ```bash
+    composer install --optimize-autoloader --no-dev
+    npm install
+    ```
+
+4.  **Database & Key**
+    ```bash
+    php artisan key:generate
+    php artisan migrate --seed --force
+    php artisan storage:link
+    ```
+    > **Note:** Seed akan membuat user default `admin@gmail.com` / `password`.
+
+5.  **Build Assets**
+    ```bash
+    npm run build
+    ```
+
+6.  **Optimasi (Opsional)**
+    ```bash
+    php artisan config:cache
+    php artisan route:cache
+    php artisan view:cache
+    ```
+
+### 2. Cashier Setup (Printer Server)
+
+Aplikasi ini menggunakan **WebSocket Print Server** yang berjalan di komputer kasir untuk mencetak struk secara langsung (tanpa dialog print browser).
+
+**Persyaratan di Komputer Kasir:**
+-   PHP Installed (tambahkan ke PATH environment variable)
+-   Composer Installed
+-   Printer Thermal (USB/LAN/Bluetooth) yang sudah terinstall driver-nya.
+
+**Langkah Instalasi:**
+
+1.  Copy folder `printer-server` dari project ini ke komputer kasir (atau clone full repo juga bisa).
+2.  Buka terminal di folder `printer-server`.
+3.  Install dependencies:
+    ```bash
+    composer install
+    ```
+4.  Jalankan server:
+    -   **Windows:** Double click `start.bat`
+    -   **Linux/Mac:** `./start.sh`
+
+**Konfigurasi Printer:**
+-   Pastikan nama printer di setting atau code sesuai dengan nama printer di **Control Panel > Devices and Printers**.
+-   Contoh: `POS-80` atau `EPSON TM-U220`.
+
+> 💡 **Panduan Lengkap:** Baca [printer-server/README.md](printer-server/README.md) untuk detail troubleshooting dan cara menjadikan service otomatis.
+
+---
 
 ## 📊 Fitur Utama
 
 -   **Dashboard**: ringkasan kategori, produk, transaksi, pendapatan, dan trend chart.
--   **Kelola Produk & Stok**: CRUD lengkap dengan kategori dan barcode unik.
--   **Modul Kasir**: pencarian barcode, keranjang multi item, diskon, hitung kembalian otomatis, dan pilihan gateway (tunai, Midtrans, Xendit).
--   **Invoice / Payment Link**: tampilan siap cetak + tombol manual print dan tautan pembayaran yang bisa dibagikan ke pelanggan.
+-   **Kelola Produk & Stok**: CRUD lengkap dengan kategori, barcode unik, dan support varian unit.
+-   **Modul Kasir**: pencarian barcode, keranjang multi item, diskon, hitung kembalian otomatis, dan pilihan gateway.
+-   **Invoice / Payment Link**: tampilan siap cetak + tombol manual print dan tautan pembayaran.
 -   **Riwayat Transaksi**: filter per tanggal/invoice/kasir + export laporan.
 -   **Laporan Profit & Penjualan**: pantau performa bisnis dalam sekali klik.
+-   **Manajemen Shift**: tracking uang masuk/keluar kasir per shift.
 
 ## 📷 Cuplikan Layar
 
@@ -53,15 +115,13 @@ php artisan serve
 | Kasir / POS            | ![POS Screenshot](public/media/readme-pos.png)             |
 | Invoice Ready-to-Print | ![Invoice Screenshot](public/media/readme-invoice.png)     |
 
-<sub>_Tidak ada file? Silakan ganti dengan screenshot kamu sendiri di `public/media`. Table akan otomatis menarik namanya._</sub>
-
 ## 🧪 Pengujian
 
 ```bash
 php artisan test --filter=TransactionFlowTest
 ```
 
-Pengujian ini mensimulasikan checkout lengkap: keranjang ➜ transaksi ➜ invoice, termasuk validasi stok, detail transaksi, profit, hitung stok, integrasi Midtrans (HTTP fake), dan render Inertia untuk halaman print.
+Pengujian ini mensimulasikan checkout lengkap: keranjang ➜ transaksi ➜ invoice, termasuk validasi stok, detail transaksi, profit, dan hitung stok.
 
 ## 🤝 Kontribusi
 
@@ -71,19 +131,11 @@ Pengujian ini mensimulasikan checkout lengkap: keranjang ➜ transaksi ➜ invoi
 4. Push branch: `git push origin feature/namamu`
 5. Buka Pull Request
 
-Ada bug atau ide fitur? Buat issue supaya kita bisa diskusi bareng.
-
 ## Authors
 
 -   [Arya Dwi Putra](https://www.github.com/aryadwiputra)
--   Aplikasi ini menggunakan resource dari https://github.com/Raf-Taufiqurrahman/RILT-Starter dengan beberapa modifikasi yang saya lakukan terhadap komponen-komponen untuk mendukung aplikasi kasir
+-   Modifikasi & Fitur Tambahan oleh Tim Pengembang POS Julia
 
 ## ⭐ Dukung Proyek Ini
 
 Kalau repositori ini membantumu membangun POS lebih cepat, klik **Star**. Dukungan kecil ini bikin proyek tetap aktif dan membantu developer lain menemukannya. Terima kasih! 🙌
-
----
-
-Made with ❤️ menggunakan Laravel + React oleh komunitas Point of Sales.
-# 2. Seed permissions baru
-php artisan db:seed --class=InventoryPermissionSeeder

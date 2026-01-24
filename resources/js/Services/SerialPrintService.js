@@ -42,44 +42,119 @@ class SerialPrintService {
         }
 
         try {
-            // Request port without filters to allow ANY serial device/printer
-            this.port = await navigator.serial.requestPort({});
-
+            // Request port WITHOUT filters - show ALL serial devices
+            // This allows any USB thermal printer to be selected
+            this.port = await navigator.serial.requestPort();
+            
             return this.port;
         } catch (error) {
             if (error.name === 'NotFoundError') {
-                throw new Error('No printer selected');
+                throw new Error('Tidak ada printer dipilih');
             }
             throw error;
+        }
+    }
+    
+    /**
+     * Request port AND connect in one step
+     * This is the preferred method for initial setup
+     */
+    static async requestAndConnect() {
+        await this.requestPort();
+        await this.connect();
+        return {
+            success: true,
+            message: 'Printer USB terhubung'
+        };
+    }
+    
+    /**
+     * Try to reconnect to a previously authorized printer
+     * This uses getPorts() which returns ports the user has already granted access to
+     * Call this on page load to auto-reconnect without user interaction
+     */
+    static async reconnect() {
+        if (!this.isSupported()) {
+            return { success: false, message: 'Web Serial tidak didukung' };
+        }
+        
+        try {
+            // Get list of ports that user has previously granted access to
+            const ports = await navigator.serial.getPorts();
+            
+            if (ports.length === 0) {
+                return { success: false, message: 'Belum ada printer yang pernah dipilih' };
+            }
+            
+            // Use the first available port (most recent)
+            this.port = ports[0];
+            await this.connect();
+            
+            console.log('✓ Auto-reconnected to previously authorized printer');
+            return { success: true, message: 'Auto-connect ke printer berhasil' };
+        } catch (error) {
+            console.log('Auto-reconnect failed:', error.message);
+            return { success: false, message: error.message };
+        }
+    }
+    
+    /**
+     * Check if there are any previously authorized printers
+     */
+    static async hasSavedPrinter() {
+        if (!this.isSupported()) return false;
+        try {
+            const ports = await navigator.serial.getPorts();
+            return ports.length > 0;
+        } catch {
+            return false;
         }
     }
 
     /**
      * Connect to the selected printer
+     * Tries multiple baud rates for compatibility
      */
-    static async connect() {
+    static async connect(baudRate = null) {
         if (!this.port) {
-            throw new Error('No printer selected. Please select a printer first.');
+            throw new Error('Belum ada printer dipilih. Silakan pilih printer dulu.');
         }
 
-        try {
-            // Open port with common thermal printer settings
-            await this.port.open({
-                baudRate: 9600,
-                dataBits: 8,
-                stopBits: 1,
-                parity: 'none',
-                flowControl: 'none'
-            });
+        // Common baud rates for thermal printers (most use 9600 or 115200)
+        const baudRates = baudRate ? [baudRate] : [9600, 115200, 38400, 19200];
+        
+        for (const rate of baudRates) {
+            try {
+                // Open port with thermal printer settings
+                await this.port.open({
+                    baudRate: rate,
+                    dataBits: 8,
+                    stopBits: 1,
+                    parity: 'none',
+                    flowControl: 'none'
+                });
 
-            this.isConnected = true;
-            this.writer = this.port.writable.getWriter();
-            console.log('✓ Connected to USB printer');
-            return true;
-        } catch (error) {
-            this.isConnected = false;
-            throw new Error('Failed to connect to printer: ' + error.message);
+                this.isConnected = true;
+                this.writer = this.port.writable.getWriter();
+                console.log(`✓ Connected to USB printer at ${rate} baud`);
+                return true;
+            } catch (error) {
+                // If port already open, that's ok - just get the writer
+                if (error.message.includes('already open')) {
+                    this.isConnected = true;
+                    if (!this.writer) {
+                        this.writer = this.port.writable.getWriter();
+                    }
+                    console.log('✓ Reconnected to already-open USB printer');
+                    return true;
+                }
+                // Try next baud rate
+                console.log(`Baud rate ${rate} failed, trying next...`);
+            }
         }
+        
+        this.isConnected = false;
+        throw new Error('Gagal connect ke printer. Pastikan printer USB terhubung dengan benar.');
     }
 
     /**

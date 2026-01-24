@@ -5,7 +5,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    @php
+        $settings = \App\Models\Setting::getAll();
+        $appName = $settings['store_name'] ?? config('app.name', 'POS Julia');
+        $storeLogo = $settings['store_logo'] ?? null;
+    @endphp
+
+    <script>
+        window.APP_NAME = "{{ $appName }}";
+    </script>
+
+    <title inertia>{{ $appName }}</title>
+
+    <!-- Favicon -->
+    @if($storeLogo)
+        <link rel="icon" href="{{ asset('storage/settings/' . $storeLogo) }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ asset('storage/settings/' . $storeLogo) }}">
+    @else
+        <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

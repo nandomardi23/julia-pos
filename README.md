@@ -82,8 +82,10 @@ Sebelum setup, pastikan komputer kasir memiliki:
     -   Kertas thermal (ukuran 58mm atau 80mm).
 
 2.  **Software**
-    -   **PHP (v7.4 atau lebih baru)**: Wajib terinstall dan bisa dipanggil dari CMD/Terminal.
-        -   *Cek:* Buka CMD, ketik `php -v`.
+    -   **PHP (v7.4 atau lebih baru)**: Wajib terinstall.
+        -   *Solusi Mudah:* Install **Laragon** (Portable) atau **XAMPP**. Ini otomatis menginstall PHP.
+        -   *Solusi Ringan:* Download PHP binary dari [windows.php.net](https://windows.php.net).
+        -   *PENTING:* Pastikan PHP bisa dipanggil dari CMD (ketik `php -v`). Jika pakai XAMPP/Laragon tapi tidak muncul, tambahkan path php ke "Environment Variables".
     -   **Composer**: Untuk install library printer.
         -   *Cek:* Buka CMD, ketik `composer -v`.
         -   *Download:* [getcomposer.org](https://getcomposer.org)
@@ -138,6 +140,20 @@ Agar server printer langsung menyala saat komputer kasir dihidupkan, lakukan lan
 3.  Klik kanan pada file `start.bat` di folder `printer-server`, pilih **Create Shortcut**.
 4.  Pindahkan shortcut yang baru dibuat itu ke dalam folder Startup tadi.
 5.  Selesai! Sekarang server akan otomatis menyala setiap kali komputer masuk Windows.
+
+> [!IMPORTANT]
+> **Pengguna XAMPP / Laragon Wajib Baca:**
+> Agar `start.bat` bisa jalan otomatis, Windows harus "mengenal" perintah `php`.
+> 1.  Cari folder PHP anda.
+>     -   **XAMPP**: Biasanya di `C:\xampp\php`
+>     -   **Laragon**: Biasanya di `C:\laragon\bin\php\php-8.x.x` (pilih versi yg aktif)
+> 2.  **Copy alamat folder tersebut.**
+> 3.  Di Windows Search, ketik **"Edit the system environment variables"**, enter.
+> 4.  Klik tombol **Environment Variables**.
+> 5.  Di bagian *System variables* (bawah), cari dan pilih **Path**, lalu klik **Edit**.
+> 6.  Klik **New**, lalu **Paste** alamat folder PHP tadi. Klik OK di semua jendela.
+>
+> Tanpa langkah ini, `start.bat` akan langsung tertutup sendiri (error) saat komputer nyala.
 
 **Cara Profesional (Hidden Service):**
 Jika ingin server berjalan di background (tanpa jendela hitam), gunakan **NSSM**. Panduan lengkapnya ada di file [printer-server/README.md](printer-server/README.md).

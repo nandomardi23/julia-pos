@@ -20,7 +20,7 @@ export default function Show({ warehouse, stocks, filters }) {
                     onClick={() => router.visit(route('warehouses.index'))}
                 />
             </div>
-            
+
             <div className='grid grid-cols-12 gap-4'>
                 {/* Warehouse Info */}
                 <div className='col-span-12 md:col-span-4'>
@@ -45,17 +45,16 @@ export default function Show({ warehouse, stocks, filters }) {
                             <div>
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
                                 <p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        warehouse.is_active 
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${warehouse.is_active
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                                             : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                    }`}>
+                                        }`}>
                                         {warehouse.is_active ? 'Aktif' : 'Nonaktif'}
                                     </span>
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div className='mt-4 pt-4 border-t dark:border-gray-700'>
                             <Button
                                 type={'link'}
@@ -76,7 +75,7 @@ export default function Show({ warehouse, stocks, filters }) {
                             placeholder='Cari produk di gudang ini...'
                         />
                     </div>
-                    <Table.Card 
+                    <Table.Card
                         title={'Stok di Gudang'}
                         links={stocks.links}
                         meta={{
@@ -110,7 +109,7 @@ export default function Show({ warehouse, stocks, filters }) {
                                             <Table.Td>{stock.product?.category?.name || '-'}</Table.Td>
                                             <Table.Td className='text-center'>
                                                 <span className='bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-green-900 dark:text-green-300'>
-                                                    {stock.quantity}
+                                                    {stock.quantity} {stock.product?.unit}
                                                 </span>
                                             </Table.Td>
                                         </tr>

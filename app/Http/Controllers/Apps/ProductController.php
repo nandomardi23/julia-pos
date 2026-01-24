@@ -22,7 +22,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $type = $request->input('type', 'product');
-        
+
         $products = Product::query()
             // Filter by product_type
             ->when($type === 'product', function ($query) {
@@ -108,7 +108,7 @@ class ProductController extends Controller
 
         // Get category for SKU generation
         $category = Category::find($request->category_id);
-        
+
         // Generate SKU if not provided
         $sku = $request->sku;
         if (empty($sku)) {
@@ -213,12 +213,12 @@ class ProductController extends Controller
     {
         //get categories
         $categories = Category::all();
-        
+
         // Get available ingredients (products that can be used as ingredients)
         $availableIngredients = Product::where('id', '!=', $product->id)
             ->whereIn('product_type', [Product::TYPE_INGREDIENT, Product::TYPE_SUPPLY])
             ->get(['id', 'title', 'unit', 'barcode']);
-        
+
         // Load variants and price history
         $product->load(['variants.ingredients.ingredient', 'priceHistories.user']);
 
@@ -299,10 +299,10 @@ class ProductController extends Controller
             ],
             'barcode' => 'nullable|unique:products,barcode,' . $product->id,
             'title' => 'required',
-            'description' => 'required',
+            'description' => 'nullable',
             'category_id' => 'required',
             'buy_price' => 'required',
-            'sell_price' => 'required',
+            'sell_price' => $isSellableOrRecipe ? 'required' : 'nullable',
             'unit' => 'required',
             'min_stock' => 'nullable|numeric|min:0',
             'product_type' => 'required|in:sellable,ingredient,supply,recipe',

@@ -34,6 +34,10 @@ export default function Create({ categories }) {
 
     const { errors } = usePage().props
 
+    // Get type from query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+
     const { data, setData, post, processing } = useForm({
         image: '',
         sku: '',
@@ -44,7 +48,7 @@ export default function Create({ categories }) {
         buy_price: '',
         sell_price: '',
         unit: 'pcs',
-        product_type: 'sellable'
+        product_type: typeParam || 'sellable'
     })
 
     const [selectedCategory, setSelectedCategory] = useState(null)
@@ -54,9 +58,6 @@ export default function Create({ categories }) {
         setSelectedCategory(value)
         setData('category_id', value.id)
     }
-
-
-
     const handleImageChange = (e) => {
         const image = e.target.files[0]
         setData('image', image)

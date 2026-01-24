@@ -35,7 +35,7 @@ export default function Index({ products, currentType = 'product', typeLabel = '
     return (
         <>
             <Head title={typeLabel} />
-            
+
             <BarcodeModal
                 show={barcodeModal.show}
                 onClose={() => setBarcodeModal({ show: false, product: null })}
@@ -60,7 +60,7 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                     </div>
                 </div>
             </div>
-            <Table.Card 
+            <Table.Card
                 title={`Data ${typeLabel}`}
                 links={products.links}
                 meta={{
@@ -101,7 +101,12 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                                 />
                                             </div>
                                             <div>
-                                                <p className='font-medium text-gray-900 dark:text-white'>{product.title}</p>
+                                                <div className='flex items-center gap-2'>
+                                                    <p className='font-medium text-gray-900 dark:text-white'>{product.title}</p>
+                                                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 whitespace-nowrap">
+                                                        Produk Jual
+                                                    </span>
+                                                </div>
                                                 <p className='text-xs text-gray-500 dark:text-gray-400'>{product.barcode}</p>
                                             </div>
                                         </div>

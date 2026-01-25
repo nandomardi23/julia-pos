@@ -220,7 +220,7 @@ class RealProductSeeder extends Seeder
                     $product->update(array_merge($productData, ['title' => $title]));
                 } else {
                     // Create new
-                    $sku = $barcode ?? Product::generateSku($category, $title);
+                    $sku = !empty($barcode) ? $barcode : Product::generateSku($category, $title);
                     $product = Product::create(array_merge($productData, [
                         'title' => $title,
                         'sku' => $sku

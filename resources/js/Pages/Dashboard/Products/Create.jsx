@@ -46,7 +46,6 @@ export default function Create({ categories }) {
         category_id: '',
         description: '',
         buy_price: '',
-        buy_price: '',
         sell_price: '',
         unit: 'pcs',
         tags: [typeParam || 'sellable']
@@ -237,11 +236,10 @@ export default function Create({ categories }) {
                                                 : [...data.tags, tag.value];
                                             setData('tags', newTags);
                                         }}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                                            data.tags.includes(tag.value)
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${data.tags.includes(tag.value)
                                                 ? 'bg-blue-600 text-white border-blue-600'
                                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
-                                        }`}
+                                            }`}
                                     >
                                         {data.tags.includes(tag.value) && (
                                             <span className="mr-1">✓</span>

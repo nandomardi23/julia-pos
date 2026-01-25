@@ -57,6 +57,7 @@ class Product extends Model
         'min_stock',
         'product_type',
         'tags',
+        'is_active',
     ];
 
     /**
@@ -67,7 +68,16 @@ class Product extends Model
     protected $casts = [
         'min_stock' => 'decimal:3',
         'tags' => 'array',
+        'is_active' => 'boolean',
     ];
+
+    /**
+     * Scope a query to only include active products.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 
     /**
      * The accessors to append to the model's array form.

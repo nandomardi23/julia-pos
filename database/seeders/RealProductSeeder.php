@@ -185,6 +185,7 @@ class RealProductSeeder extends Seeder
                         'image' => 'default.png', // Placeholder image
                         'barcode' => $item[5],
                         'min_stock' => 5,
+                        'is_active' => true,
                         // Generate SKU if barcode is missing, or use barcode
                         'sku' => $item[5] ?? Product::generateSku($category, $item[0]),
                     ]
@@ -193,12 +194,58 @@ class RealProductSeeder extends Seeder
                 // 3. Initial Stock
                 $qty = $item[6];
                 if ($qty > 0) {
-                    WarehouseStock::firstOrCreate(
+                    // Start from 0, add to Warehouse (Inbound)
+                    // Create Stock Movement: Adjustment In -> Warehouse
+                    \App\Models\StockMovement::create([
+                        'product_id' => $product->id,
+                        'from_type' => 'adjustment', // Source is adjustment (initial stock)
+                        'from_id' => null,
+                        'to_type' => 'warehouse',
+                        'to_id' => $warehouse->id,
+                        'quantity' => $qty,
+                        'purchase_price' => $item[2], // Buy price
+                        'user_id' => 1, // Assume Admin/System (User ID 1)
+                        'note' => 'Initial Stock Seeding (Opname Awal)',
+                        'created_at' => now(),
+                    ]);
+
+                    // Update Warehouse Stock
+                    $warehouseStock = WarehouseStock::firstOrCreate(
                         ['warehouse_id' => $warehouse->id, 'product_id' => $product->id],
-                        ['quantity' => $qty]
+                        ['quantity' => 0]
                     );
+                    $warehouseStock->increment('quantity', $qty);
                     
-                    // Add stock to display as well based on user request "Display Lantai 1" having stock
+                    // Transfer ALL stock to Display (as requested)
+                    // Create Stock Movement: Warehouse -> Display
+                    \App\Models\StockMovement::create([
+                        'product_id' => $product->id,
+                        'from_type' => 'warehouse',
+                        'from_id' => $warehouse->id,
+                        'to_type' => 'display',
+                        'to_id' => $display->id,
+                        'quantity' => $qty,
+                        'purchase_price' => $item[2],
+                        'user_id' => 1,
+                        'note' => 'Migrasi awal ke Display Toko',
+                        'created_at' => now()->addSecond(), // Ensure it appears after adjustment
+                    ]);
+
+                    // Decrement Warehouse
+                    $warehouseStock->decrement('quantity', $qty);
+
+                    // Increment Display
+                     $displayStock = \App\Models\DisplayStock::firstOrCreate(
+                        ['display_id' => $display->id, 'product_id' => $product->id],
+                        ['quantity' => 0]
+                    );
+                    $displayStock->increment('quantity', $qty);
+                } else {
+                    // If 0 stock, just create empty records
+                     WarehouseStock::firstOrCreate(
+                        ['warehouse_id' => $warehouse->id, 'product_id' => $product->id],
+                        ['quantity' => 0]
+                    );
                      \App\Models\DisplayStock::firstOrCreate(
                         ['display_id' => $display->id, 'product_id' => $product->id],
                         ['quantity' => 0]
@@ -207,7 +254,7 @@ class RealProductSeeder extends Seeder
             }
 
             DB::commit();
-            $this->command->info('Real products seeded successfully!');
+            $this->command->info('Real products seeded successfully with Stock Movements!');
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -222,14 +222,12 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
     const handleEditSubmit = (e) => {
         e.preventDefault()
-        const payload = {
-            quantity: parseFloat(editForm.data.quantity),
-            note: editForm.data.note,
-            purchase_price: editForm.data.type === 'warehouse' ? parseCurrency(editForm.data.purchase_price) : null,
-            reason: editForm.data.reason,
-        }
 
-        editForm.put(route('stock-movements.update', editForm.data.id), {
+        editForm.transform((data) => ({
+            ...data,
+            quantity: parseFloat(data.quantity),
+            purchase_price: data.type === 'warehouse' ? parseCurrency(data.purchase_price) : null,
+        })).put(route('stock-movements.update', editForm.data.id), {
             onSuccess: () => {
                 toast.success('Pergerakan stok berhasil diperbarui')
                 setShowEditModal(false)
@@ -842,7 +840,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                         </div>
 
                         {editForm.data.type === 'warehouse' && (
-                             <div className='col-span-12'>
+                            <div className='col-span-12'>
                                 <Input
                                     name='purchase_price'
                                     label={'Harga Beli Total (Rp)'}

@@ -134,6 +134,34 @@ class RealProductSeeder extends Seeder
         DB::beginTransaction();
 
         try {
+            // 0. Create Supplier and Display
+            $supplier = \App\Models\Supplier::firstOrCreate(
+                ['name' => 'Owner (Julia)'],
+                [
+                    'company' => 'Julia Freshmart',
+                    'phone' => '08123456789',
+                    'email' => '-',
+                    'address' => 'Medan',
+                    'description' => 'Owner',
+                ]
+            );
+
+            $display = \App\Models\Display::firstOrCreate(
+                ['name' => 'Display Lantai 1'],
+                [
+                    'location' => '-',
+                    'is_active' => true,
+                ]
+            );
+
+            $warehouse = \App\Models\Warehouse::firstOrCreate(
+                ['name' => 'Gudang Utama'],
+                [
+                    'location' => 'Lantai Bawah',
+                    'is_active' => true,
+                ]
+            );
+
             foreach ($data as $item) {
                 // 1. Get or Create Category
                 $categoryName = $item[1];
@@ -146,30 +174,35 @@ class RealProductSeeder extends Seeder
                 );
 
                 // 2. Create Product
-                $product = Product::create([
-                    'title' => $item[0],
-                    'category_id' => $category->id,
-                    'buy_price' => $item[2],
-                    'sell_price' => $item[3],
-                    'unit' => $item[4],
-                    'product_type' => Product::TYPE_SELLABLE,
-                    'image' => 'default.png', // Placeholder image
-                    'barcode' => $item[5],
-                    'min_stock' => 5,
-                    // Generate SKU if barcode is missing, or use barcode
-                    'sku' => $item[5] ?? Product::generateSku($category, $item[0]),
-                ]);
+                $product = Product::firstOrCreate(
+                    ['title' => $item[0]],
+                    [
+                        'category_id' => $category->id,
+                        'buy_price' => $item[2],
+                        'sell_price' => $item[3],
+                        'unit' => $item[4],
+                        'product_type' => Product::TYPE_SELLABLE,
+                        'image' => 'default.png', // Placeholder image
+                        'barcode' => $item[5],
+                        'min_stock' => 5,
+                        // Generate SKU if barcode is missing, or use barcode
+                        'sku' => $item[5] ?? Product::generateSku($category, $item[0]),
+                    ]
+                );
 
                 // 3. Initial Stock
                 $qty = $item[6];
                 if ($qty > 0) {
-                    WarehouseStock::create([
-                        'warehouse_id' => 1, // Assuming Main Warehouse ID 1 exists
-                        'product_id' => $product->id,
-                        'quantity' => $qty,
-                    ]);
-
-                    // Optional: Update average cost if needed, but buy_price is already set on product
+                    WarehouseStock::firstOrCreate(
+                        ['warehouse_id' => $warehouse->id, 'product_id' => $product->id],
+                        ['quantity' => $qty]
+                    );
+                    
+                    // Add stock to display as well based on user request "Display Lantai 1" having stock
+                     \App\Models\DisplayStock::firstOrCreate(
+                        ['display_id' => $display->id, 'product_id' => $product->id],
+                        ['quantity' => 0]
+                    );
                 }
             }
 

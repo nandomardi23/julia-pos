@@ -196,7 +196,51 @@ export default function Index({ movements, filters, warehouses, displays, transf
         setShowStockInModal(true)
     }
 
-    // ==================== STOCK OUT MODAL LOGIC ====================
+    // Edit Modal State
+    const [showEditModal, setShowEditModal] = useState(false)
+    const editForm = useForm({
+        id: '',
+        quantity: '',
+        purchase_price: '',
+        note: '',
+        type: '', // for conditional rendering
+        reason: '', // for stock out reason
+    })
+
+    const handleEdit = (movement) => {
+        editForm.reset()
+        editForm.setData({
+            id: movement.id,
+            quantity: movement.quantity,
+            purchase_price: movement.purchase_price ? formatCurrency(movement.purchase_price) : '',
+            note: movement.note ? movement.note.replace(/^\[.*?\]\s*/, '') : '', // Remove reason prefix if present
+            type: movement.to_type,
+            reason: movement.to_type === 'out' ? Object.keys(stockOutReasons).find(key => movement.note?.includes(stockOutReasons[key])) || 'other' : '',
+        })
+        setShowEditModal(true)
+    }
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault()
+        const payload = {
+            quantity: parseFloat(editForm.data.quantity),
+            note: editForm.data.note,
+            purchase_price: editForm.data.type === 'warehouse' ? parseCurrency(editForm.data.purchase_price) : null,
+            reason: editForm.data.reason,
+        }
+
+        editForm.put(route('stock-movements.update', editForm.data.id), {
+            onSuccess: () => {
+                toast.success('Pergerakan stok berhasil diperbarui')
+                setShowEditModal(false)
+                editForm.reset()
+            },
+            onError: () => {
+                toast.error('Gagal memperbarui pergerakan stok')
+            }
+        })
+    }
+
     useEffect(() => {
         if (stockOutForm.data.location_type === 'warehouse') {
             const warehouse = warehouses.find(w => w.id == stockOutForm.data.location_id)
@@ -518,7 +562,14 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                         <Table.Td className='text-sm'>{movement.user?.name}</Table.Td>
                                         <Table.Td>
                                             {movement.to_type !== 'transaction' && (
-                                                <div className='flex items-center justify-center'>
+                                                <div className='flex items-center justify-center gap-1'>
+                                                    <button
+                                                        onClick={() => handleEdit(movement)}
+                                                        className='p-1.5 rounded-md text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/30'
+                                                        title='Edit'
+                                                    >
+                                                        <IconPencilPlus size={14} />
+                                                    </button>
                                                     <button
                                                         onClick={() => handleDelete(movement.id)}
                                                         className='p-1.5 rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
@@ -744,6 +795,92 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
                             className={'border bg-green-500 text-white hover:bg-green-600'}
                             disabled={stockInForm.processing}
+                        />
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ==================== EDIT MODAL ==================== */}
+            <Modal
+                show={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                maxWidth="lg"
+                title={
+                    <div className='flex items-center gap-2'>
+                        <IconPencilPlus size={20} strokeWidth={1.5} />
+                        <span>Edit Pergerakan Stok</span>
+                    </div>
+                }
+            >
+                <form onSubmit={handleEditSubmit}>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <IconAlertTriangle className="h-5 w-5 text-yellow-500" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                                    Perhatian: Mengedit stok akan mengembalikan stok sebelumnya dan menerapkan ulang perubahan baru. Pastikan data benar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='grid grid-cols-12 gap-4'>
+                        <div className='col-span-12'>
+                            <Input
+                                name='quantity'
+                                label={'Jumlah (Qty)'}
+                                type={'number'}
+                                min='0.01'
+                                step='any'
+                                placeholder={'Jumlah stok'}
+                                value={editForm.data.quantity}
+                                errors={editForm.errors.quantity}
+                                onChange={e => editForm.setData('quantity', e.target.value)}
+                            />
+                        </div>
+
+                        {editForm.data.type === 'warehouse' && (
+                             <div className='col-span-12'>
+                                <Input
+                                    name='purchase_price'
+                                    label={'Harga Beli Total (Rp)'}
+                                    type={'text'}
+                                    placeholder={'Total harga beli'}
+                                    value={editForm.data.purchase_price}
+                                    errors={editForm.errors.purchase_price}
+                                    onChange={e => editForm.setData('purchase_price', parseCurrency(e.target.value) ? formatCurrency(parseCurrency(e.target.value)) : e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <div className="col-span-12">
+                            <Input
+                                name='note'
+                                label={'Catatan'}
+                                placeholder={'Catatan pergerakan stok'}
+                                value={editForm.data.note}
+                                errors={editForm.errors.note}
+                                onChange={e => editForm.setData('note', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className='flex items-center justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-800'>
+                        <Button
+                            type={'button'}
+                            label={'Batal'}
+                            icon={<IconX size={18} strokeWidth={1.5} />}
+                            className={'border bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700'}
+                            onClick={() => setShowEditModal(false)}
+                        />
+                        <Button
+                            type={'submit'}
+                            label={editForm.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                            icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
+                            className={'border bg-blue-500 text-white hover:bg-blue-600'}
+                            disabled={editForm.processing}
                         />
                     </div>
                 </form>

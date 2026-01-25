@@ -334,4 +334,147 @@ class StockService
 
         return $stock ? (float) $stock->quantity : 0;
     }
+
+    /**
+     * Update stock movement.
+     * 
+     * @param int $id
+     * @param array $data
+     * @return array ['success' => bool, 'message' => string]
+     */
+    public function updateStockMovement(int $id, array $data): array
+    {
+        $movement = StockMovement::findOrFail($id);
+
+        // Validation for sensitive edits
+        if ($movement->to_type === StockMovement::TYPE_TRANSACTION) {
+            return ['success' => false, 'message' => 'Tidak dapat mengedit pergerakan stok dari transaksi!'];
+        }
+
+        DB::transaction(function () use ($movement, $data) {
+            // 1. Revert previous stock effect
+            // Logic mirrors destroy() but keeps the record
+            
+            if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
+                // Was In: Decrease previously added stock
+                $stock = WarehouseStock::where('warehouse_id', $movement->to_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($stock) {
+                    $stock->decrement('quantity', $movement->quantity);
+                }
+            } elseif ($movement->to_type === StockMovement::TYPE_DISPLAY) {
+                // Was Transfer: Return to warehouse, decrease display
+                $warehouseStock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($warehouseStock) {
+                    $warehouseStock->increment('quantity', $movement->quantity);
+                }
+                
+                $displayStock = DisplayStock::where('display_id', $movement->to_id)
+                    ->where('product_id', $movement->product_id)
+                    ->first();
+                if ($displayStock) {
+                    $displayStock->decrement('quantity', $movement->quantity);
+                }
+            } elseif ($movement->to_type === StockMovement::TYPE_OUT) {
+                // Was Out: Add back to stock
+                if ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
+                    $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                    if ($stock) {
+                        $stock->increment('quantity', $movement->quantity);
+                    }
+                } elseif ($movement->from_type === StockMovement::TYPE_DISPLAY) {
+                    $stock = DisplayStock::where('display_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                    if ($stock) {
+                        $stock->increment('quantity', $movement->quantity);
+                    }
+                }
+            }
+
+            // 2. Update the movement record with new data
+            // Only allow updating safe fields
+            $movement->quantity = $data['quantity'] ?? $movement->quantity;
+            $movement->note = $data['note'] ?? $movement->note;
+            
+            if (isset($data['purchase_price'])) {
+                $movement->purchase_price = $data['purchase_price'];
+            }
+            
+            // Recalculate loss if it was a stock out
+            if ($movement->to_type === StockMovement::TYPE_OUT) {
+                $product = Product::find($movement->product_id);
+                $lossAmount = $this->calculateLoss($product, $movement->quantity, $data['reason'] ?? 'other'); // Need to handle reason update if allowed
+                $movement->loss_amount = $lossAmount;
+            }
+
+            // 3. Apply new stock effect
+            if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
+                // Is In: Add new quantity
+                $stock = WarehouseStock::firstOrCreate(
+                    ['warehouse_id' => $movement->to_id, 'product_id' => $movement->product_id],
+                    ['quantity' => 0]
+                );
+                $stock->increment('quantity', $movement->quantity);
+            } elseif ($movement->to_type === StockMovement::TYPE_DISPLAY) {
+                // Is Transfer: Check warehouse stock first (integrity check)
+                $warehouseStock = WarehouseStock::firstOrCreate(
+                    ['warehouse_id' => $movement->from_id, 'product_id' => $movement->product_id],
+                    ['quantity' => 0]
+                );
+                
+                // Note: If new Qty > Available (after revert), this might fail. 
+                // But since we are inside transaction, we can just check directly.
+                if ($warehouseStock->quantity < $movement->quantity) {
+                    throw new \Exception("Stok gudang tidak mencukupi untuk update transfer (Butuh: {$movement->quantity}, Ada: {$warehouseStock->quantity})");
+                }
+                
+                $warehouseStock->decrement('quantity', $movement->quantity);
+                
+                $displayStock = DisplayStock::firstOrCreate(
+                    ['display_id' => $movement->to_id, 'product_id' => $movement->product_id],
+                    ['quantity' => 0]
+                );
+                $displayStock->increment('quantity', $movement->quantity);
+                
+            } elseif ($movement->to_type === StockMovement::TYPE_OUT) {
+                // Is Out: Remove new quantity
+                if ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
+                    $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                        
+                    if (!$stock || $stock->quantity < $movement->quantity) {
+                        throw new \Exception("Stok gudang tidak mencukupi untuk update barang keluar");
+                    }
+                    $stock->decrement('quantity', $movement->quantity);
+                    
+                } elseif ($movement->from_type === StockMovement::TYPE_DISPLAY) {
+                    $stock = DisplayStock::where('display_id', $movement->from_id)
+                        ->where('product_id', $movement->product_id)
+                        ->first();
+                        
+                    if (!$stock || $stock->quantity < $movement->quantity) {
+                        throw new \Exception("Stok display tidak mencukupi untuk update barang keluar");
+                    }
+                    $stock->decrement('quantity', $movement->quantity);
+                }
+            }
+            
+            $movement->save();
+        });
+
+        // Recalculate average cost if needed
+        if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
+             $product = Product::find($movement->product_id);
+             $product?->updateAverageCost();
+        }
+
+        return ['success' => true, 'message' => 'Pergerakan stok berhasil diperbarui!'];
+    }
 }

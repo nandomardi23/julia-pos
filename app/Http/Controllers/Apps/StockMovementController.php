@@ -403,6 +403,27 @@ class StockMovementController extends Controller
      */
 
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'quantity' => 'required|numeric|min:0.01',
+            'note' => 'nullable|string',
+            'purchase_price' => 'nullable|numeric|min:0', // Only for stock in
+        ]);
+
+        try {
+            $result = $this->stockService->updateStockMovement($id, $request->all());
+            
+            if (!$result['success']) {
+                return redirect()->back()->with('error', $result['message']);
+            }
+            
+            return redirect()->back()->with('success', $result['message']);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
     /**
      * Delete stock movement and revert stock changes.
      */

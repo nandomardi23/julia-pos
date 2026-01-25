@@ -173,6 +173,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::delete('/stock-movements/{id}', [StockMovementController::class, 'destroy'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.destroy');
+    Route::put('/stock-movements/{id}', [StockMovementController::class, 'update'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.update');
     
     // API routes for enhanced stock movement form
     Route::get('/stock-movements/last-price', [StockMovementController::class, 'getLastPurchasePrice'])

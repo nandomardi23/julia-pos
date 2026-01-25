@@ -227,7 +227,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
             ...data,
             quantity: parseFloat(data.quantity),
             purchase_price: data.type === 'warehouse' ? parseCurrency(data.purchase_price) : null,
-        })).put(route('stock-movements.update', editForm.data.id), {
+        }))
+
+        editForm.put(route('stock-movements.update', editForm.data.id), {
             onSuccess: () => {
                 toast.success('Pergerakan stok berhasil diperbarui')
                 setShowEditModal(false)

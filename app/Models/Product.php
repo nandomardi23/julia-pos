@@ -16,6 +16,28 @@ class Product extends Model
     const TYPE_SUPPLY = 'supply';
     const TYPE_RECIPE = 'recipe';
     
+    // Tag Constants (Mirror Types for now, but allow combinations)
+    const TAG_SELLABLE = 'sellable';
+    const TAG_INGREDIENT = 'ingredient';
+    const TAG_SUPPLY = 'supply';
+    const TAG_RECIPE = 'recipe';
+
+    /**
+     * Check if product has a specific tag.
+     */
+    public function hasTag($tag): bool
+    {
+        return in_array($tag, $this->tags ?? []);
+    }
+
+    /**
+     * Scope to filter by tag.
+     */
+    public function scopeWithTag($query, $tag)
+    {
+        return $query->whereJsonContains('tags', $tag);
+    }
+    
     /**
      * fillable
      *
@@ -34,6 +56,7 @@ class Product extends Model
         'unit',
         'min_stock',
         'product_type',
+        'tags',
     ];
 
     /**
@@ -43,6 +66,7 @@ class Product extends Model
      */
     protected $casts = [
         'min_stock' => 'decimal:3',
+        'tags' => 'array',
     ];
 
     /**

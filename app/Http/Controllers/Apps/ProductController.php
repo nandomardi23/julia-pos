@@ -21,22 +21,34 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $type = $request->input('type', 'product');
+        // Default to 'all' to show mixed content for "Data Produk"
+        $type = $request->input('type', 'all');
 
         $products = Product::query()
-            // Filter by product_type
+            // Filter by product_type/tags
             ->when($type === 'product', function ($query) {
                 // Produk jual (sellable)
-                $query->where('product_type', Product::TYPE_SELLABLE);
+                $query->whereJsonContains('tags', Product::TAG_SELLABLE);
             })
             ->when($type === 'ingredient', function ($query) {
-                $query->where('product_type', Product::TYPE_INGREDIENT);
+                $query->whereJsonContains('tags', Product::TAG_INGREDIENT);
             })
             ->when($type === 'recipe', function ($query) {
-                $query->where('product_type', Product::TYPE_RECIPE);
+                $query->whereJsonContains('tags', Product::TAG_RECIPE);
             })
             ->when($type === 'supply', function ($query) {
-                $query->where('product_type', Product::TYPE_SUPPLY);
+                $query->whereJsonContains('tags', Product::TAG_SUPPLY);
+            })
+            // If type is 'all', we might want to show Sellable AND Ingredients (but maybe not Supply/Recipe unless asked?)
+            // User put Supply and Recipe in separate menus.
+            // "Data Produk" should probably contain Sellable + Ingredient.
+            // But for simplicity let's make 'all' show everything EXCEPT maybe supply/recipe if they are distinct?
+            // Actually, let's filter 'all' to include Sellable OR Ingredient to match the merged menu idea.
+            ->when($type === 'all', function ($query) {
+                 $query->where(function($q) {
+                     $q->whereJsonContains('tags', Product::TAG_SELLABLE)
+                       ->orWhereJsonContains('tags', Product::TAG_INGREDIENT);
+                 });
             })
             // Search filter
             ->when($request->search, function ($query, $search) {
@@ -49,6 +61,7 @@ class ProductController extends Controller
 
         // Get page titles based on type
         $typeLabels = [
+            'all' => 'Data Produk', // Combined title
             'product' => 'Produk Jual',
             'ingredient' => 'Bahan Baku',
             'recipe' => 'Resep',
@@ -100,7 +113,8 @@ class ProductController extends Controller
             'buy_price' => 'required',
             'sell_price' => 'required',
             'unit' => 'required',
-            'product_type' => 'required|in:sellable,ingredient,supply,recipe',
+            'tags' => 'required|array|min:1', // Tags are required
+            'tags.*' => 'string|in:sellable,ingredient,supply,recipe',
         ]);
         //upload image
         $image = $request->file('image');
@@ -115,6 +129,14 @@ class ProductController extends Controller
             $sku = Product::generateSku($category, $request->title);
         }
 
+        // Determine primary product_type (for backward compatibility)
+        // Order of precedence: sellable > recipe > ingredient > supply
+        $primaryType = 'sellable';
+        if (in_array('sellable', $request->tags)) $primaryType = 'sellable';
+        elseif (in_array('recipe', $request->tags)) $primaryType = 'recipe';
+        elseif (in_array('ingredient', $request->tags)) $primaryType = 'ingredient';
+        elseif (in_array('supply', $request->tags)) $primaryType = 'supply';
+
         //create product
         $product = Product::create([
             'image' => $image->hashName(),
@@ -126,7 +148,8 @@ class ProductController extends Controller
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
-            'product_type' => $request->product_type,
+            'product_type' => $primaryType,
+            'tags' => $request->tags,
         ]);
 
         // Note: Recipe ingredients are now managed via ProductVariant and ProductVariantIngredient
@@ -290,7 +313,8 @@ class ProductController extends Controller
         /**
          * validate
          */
-        $isSellableOrRecipe = in_array($request->product_type, [Product::TYPE_SELLABLE, Product::TYPE_RECIPE]);
+        $tags = $request->tags ?? [];
+        $isSellableOrRecipe = in_array('sellable', $tags) || in_array('recipe', $tags);
 
         $request->validate([
             'sku' => [
@@ -305,8 +329,18 @@ class ProductController extends Controller
             'sell_price' => $isSellableOrRecipe ? 'required' : 'nullable',
             'unit' => 'required',
             'min_stock' => 'nullable|numeric|min:0',
-            'product_type' => 'required|in:sellable,ingredient,supply,recipe',
+            'tags' => 'required|array|min:1',
+            'tags.*' => 'string|in:sellable,ingredient,supply,recipe',
         ]);
+        
+        // Determine primary product_type (for backward compatibility)
+        $primaryType = $product->product_type; // keep existing if valid
+        if (!in_array($primaryType, $tags)) {
+             if (in_array('sellable', $tags)) $primaryType = 'sellable';
+             elseif (in_array('recipe', $tags)) $primaryType = 'recipe';
+             elseif (in_array('ingredient', $tags)) $primaryType = 'ingredient';
+             elseif (in_array('supply', $tags)) $primaryType = 'supply';
+        }
 
         $updateData = [
             'sku' => $request->sku,
@@ -318,7 +352,8 @@ class ProductController extends Controller
             'sell_price' => $request->sell_price,
             'unit' => $request->unit,
             'min_stock' => $request->min_stock ?? 0,
-            'product_type' => $request->product_type,
+            'product_type' => $primaryType,
+            'tags' => $tags,
         ];
 
         //check image update

@@ -49,7 +49,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         sell_price: product.sell_price || 0,
         min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
-        product_type: product.product_type || 'sellable',
+        tags: product.tags || [product.product_type || 'sellable'],
     }), [product.id])
 
 
@@ -65,7 +65,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         sell_price: product.sell_price || 0,
         min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
-        product_type: product.product_type || 'sellable',
+        tags: product.tags || [product.product_type || 'sellable'],
         _method: 'PUT'
     })
 
@@ -82,7 +82,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         if (parseFloat(data.sell_price) !== parseFloat(originalData.sell_price)) return true
         if (parseFloat(data.min_stock || 0) !== parseFloat(originalData.min_stock || 0)) return true
         if (data.unit !== originalData.unit) return true
-        if (data.product_type !== originalData.product_type) return true
+        if (JSON.stringify(data.tags.sort()) !== JSON.stringify(originalData.tags.sort())) return true
         return false
     }
 
@@ -313,18 +313,42 @@ export default function Edit({ categories, product, availableIngredients }) {
                         />
                     </div>
 
-                    <div className='col-span-6'>
-                        <Select
-                            label="Tipe Produk"
-                            value={data.product_type}
-                            onChange={e => setData('product_type', e.target.value)}
-                            errors={errors.product_type}
-                        >
-                            <option value="sellable">Sellable (Produk Jual)</option>
-                            <option value="ingredient">Ingredient (Bahan Baku)</option>
-                            <option value="supply">Supply (Alat Pendukung)</option>
-                            <option value="recipe">Recipe (Resep)</option>
-                        </Select>
+                    <div className='col-span-12'>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Tipe Produk (Tags) <span className='text-red-500'>*</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { value: 'sellable', label: 'Produk Jual' },
+                                    { value: 'ingredient', label: 'Bahan Baku' },
+                                    { value: 'supply', label: 'Alat Pendukung' },
+                                    { value: 'recipe', label: 'Resep' },
+                                ].map((tag) => (
+                                    <button
+                                        key={tag.value}
+                                        type="button"
+                                        onClick={() => {
+                                            const newTags = data.tags.includes(tag.value)
+                                                ? data.tags.filter(t => t !== tag.value)
+                                                : [...data.tags, tag.value];
+                                            setData('tags', newTags);
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                            data.tags.includes(tag.value)
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        {data.tags.includes(tag.value) && (
+                                            <span className="mr-1">✓</span>
+                                        )}
+                                        {tag.label}
+                                    </button>
+                                ))}
+                            </div>
+                            {errors.tags && <div className='text-sm text-red-500'>{errors.tags}</div>}
+                        </div>
                     </div>
                 </div>
             </Card>

@@ -44,13 +44,31 @@ export default function Index({ products, currentType = 'product', typeLabel = '
             />
 
             <div className='mb-4'>
+                <div className='flex items-center gap-2 mb-4 overflow-x-auto pb-2'>
+                   {['all', 'product', 'ingredient'].map((t) => (
+                        <Link
+                            key={t}
+                            href={route('products.index', { type: t })}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                currentType === t
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                            }`}
+                        >
+                            {t === 'all' ? 'Semua' : 
+                             t === 'product' ? 'Produk Jual' : 
+                             t === 'ingredient' ? 'Bahan Baku' : t}
+                        </Link>
+                   ))}
+                </div>
+
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
                     <Button
                         type={'link'}
                         icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
                         className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={`Tambah ${typeLabel}`}
-                        href={route('products.create') + `?type=${currentType}`}
+                        label={`Tambah Data`}
+                        href={route('products.create') + `?type=${currentType === 'all' ? 'sellable' : (currentType === 'product' ? 'sellable' : currentType)}`}
                     />
                     <div className='w-full sm:w-80'>
                         <Search
@@ -77,6 +95,7 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                             <Table.Th className='w-12 text-center'>No</Table.Th>
                             <Table.Th>Produk</Table.Th>
                             <Table.Th className='text-center'>Kategori</Table.Th>
+                            <Table.Th className='text-center'>Tipe</Table.Th>
                             <Table.Th className='text-center'>Satuan</Table.Th>
                             <Table.Th className='text-right'>Harga Beli</Table.Th>
                             <Table.Th className='text-right'>Harga Jual</Table.Th>
@@ -103,9 +122,6 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                             <div>
                                                 <div className='flex items-center gap-2'>
                                                     <p className='font-medium text-gray-900 dark:text-white'>{product.title}</p>
-                                                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 whitespace-nowrap">
-                                                        Produk Jual
-                                                    </span>
                                                 </div>
                                                 <p className='text-xs text-gray-500 dark:text-gray-400'>{product.barcode}</p>
                                             </div>
@@ -115,6 +131,26 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                         <span className='inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'>
                                             {product.category?.name || '-'}
                                         </span>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <div className="flex flex-wrap gap-1 justify-center">
+                                            {(product.tags || [product.product_type]).map((tag, index) => (
+                                                <span 
+                                                    key={index}
+                                                    className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap ${
+                                                        tag === 'sellable' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                                                        tag === 'ingredient' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
+                                                        tag === 'supply' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
+                                                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                                                    }`}
+                                                >
+                                                    {tag === 'sellable' ? 'Produk Jual' :
+                                                     tag === 'ingredient' ? 'Bahan Baku' :
+                                                     tag === 'supply' ? 'Alat' :
+                                                     tag === 'recipe' ? 'Resep' : tag}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </Table.Td>
                                     <Table.Td className='text-center'>
                                         <span className='inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'>
@@ -165,7 +201,7 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                     </Table.Td>
                                 </tr>
                             )) :
-                            <Table.Empty colSpan={7} message={
+                            <Table.Empty colSpan={8} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={48} strokeWidth={1} className='text-gray-300 dark:text-gray-600' />

@@ -46,9 +46,10 @@ export default function Create({ categories }) {
         category_id: '',
         description: '',
         buy_price: '',
+        buy_price: '',
         sell_price: '',
         unit: 'pcs',
-        product_type: typeParam || 'sellable'
+        tags: [typeParam || 'sellable']
     })
 
     const [selectedCategory, setSelectedCategory] = useState(null)
@@ -214,6 +215,43 @@ export default function Create({ categories }) {
                             errors={errors.sell_price}
                             placeholder={'Harga jual produk'}
                         />
+                    </div>
+                    <div className='col-span-12'>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Tipe Produk (Tags) <span className='text-red-500'>*</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { value: 'sellable', label: 'Produk Jual' },
+                                    { value: 'ingredient', label: 'Bahan Baku' },
+                                    { value: 'supply', label: 'Alat Pendukung' },
+                                    { value: 'recipe', label: 'Resep' },
+                                ].map((tag) => (
+                                    <button
+                                        key={tag.value}
+                                        type="button"
+                                        onClick={() => {
+                                            const newTags = data.tags.includes(tag.value)
+                                                ? data.tags.filter(t => t !== tag.value)
+                                                : [...data.tags, tag.value];
+                                            setData('tags', newTags);
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                                            data.tags.includes(tag.value)
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        {data.tags.includes(tag.value) && (
+                                            <span className="mr-1">✓</span>
+                                        )}
+                                        {tag.label}
+                                    </button>
+                                ))}
+                            </div>
+                            {errors.tags && <div className='text-sm text-red-500'>{errors.tags}</div>}
+                        </div>
                     </div>
                 </div>
             </Card>

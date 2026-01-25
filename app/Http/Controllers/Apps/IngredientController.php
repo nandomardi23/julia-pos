@@ -17,7 +17,7 @@ class IngredientController extends Controller
      */
     public function index()
     {
-        $ingredients = Product::where('product_type', Product::TYPE_INGREDIENT)
+        $ingredients = Product::whereJsonContains('tags', Product::TAG_INGREDIENT)
             ->with('category')
             ->when(request()->search, function ($query) {
                 $query->where('title', 'like', '%' . request()->search . '%');
@@ -79,6 +79,7 @@ class IngredientController extends Controller
             'unit' => $validated['unit'],
             'min_stock' => $validated['min_stock'] ?? 0,
             'product_type' => Product::TYPE_INGREDIENT,
+            'tags' => [Product::TAG_INGREDIENT],
         ]);
 
         return redirect()->route('ingredients.index')->with('success', 'Bahan baku berhasil ditambahkan!');
@@ -141,6 +142,13 @@ class IngredientController extends Controller
 
         $validated['sell_price'] = $newSellPrice;
         $validated['product_type'] = Product::TYPE_INGREDIENT; // Ensure type remains ingredient
+        
+        // Ensure ingredient tag is present (merge with existing if needed, but for now simple)
+        $existingTags = $ingredient->tags ?? [];
+        if (!in_array(Product::TAG_INGREDIENT, $existingTags)) {
+             $existingTags[] = Product::TAG_INGREDIENT;
+        }
+        $validated['tags'] = $existingTags;
 
         $ingredient->update($validated);
 

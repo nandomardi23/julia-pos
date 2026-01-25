@@ -66,17 +66,10 @@ export default function Menu() {
                     permissions: hasAnyPermission(["categories-access"]),
                 },
                 {
-                    title: "Produk Jual",
+                    title: "Data Produk",
                     href: route("products.index"),
-                    active: url.startsWith("/dashboard/products"),
+                    active: url.startsWith("/dashboard/products") && !url.includes('type=supply'), 
                     icon: <IconBox size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["products-access"]),
-                },
-                {
-                    title: "Bahan Baku",
-                    href: route("products.index") + '?type=ingredient',
-                    active: url.startsWith("/dashboard/products") && url.includes('type=ingredient'),
-                    icon: <IconLeaf size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["products-access"]),
                 },
                 {

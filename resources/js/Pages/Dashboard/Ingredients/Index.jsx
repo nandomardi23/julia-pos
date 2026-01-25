@@ -77,6 +77,7 @@ export default function Index({ ingredients }) {
                             <Table.Th className='w-12 text-center'>No</Table.Th>
                             <Table.Th>Bahan Baku</Table.Th>
                             <Table.Th className='text-center'>Kategori</Table.Th>
+                            <Table.Th className='text-center'>Tipe</Table.Th>
                             <Table.Th className='text-center'>Satuan</Table.Th>
                             <Table.Th className='text-right'>Harga Beli</Table.Th>
                             <Table.Th className='text-right'>Harga Jual</Table.Th>
@@ -103,9 +104,6 @@ export default function Index({ ingredients }) {
                                             <div>
                                                 <div className='flex items-center gap-2'>
                                                     <p className='font-medium text-gray-900 dark:text-white'>{ingredient.title}</p>
-                                                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 whitespace-nowrap">
-                                                        Bahan Baku
-                                                    </span>
                                                 </div>
                                                 <p className='text-xs text-gray-500 dark:text-gray-400'>{ingredient.barcode}</p>
                                             </div>
@@ -115,6 +113,26 @@ export default function Index({ ingredients }) {
                                         <span className='inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'>
                                             {ingredient.category?.name || '-'}
                                         </span>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <div className="flex flex-wrap gap-1 justify-center">
+                                            {(ingredient.tags || [ingredient.product_type]).map((tag, index) => (
+                                                <span 
+                                                    key={index}
+                                                    className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap ${
+                                                        tag === 'sellable' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                                                        tag === 'ingredient' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
+                                                        tag === 'supply' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
+                                                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                                                    }`}
+                                                >
+                                                    {tag === 'sellable' ? 'Produk Jual' :
+                                                     tag === 'ingredient' ? 'Bahan Baku' :
+                                                     tag === 'supply' ? 'Alat' :
+                                                     tag === 'recipe' ? 'Resep' : tag}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </Table.Td>
                                     <Table.Td className='text-center'>
                                         <span className='inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'>
@@ -165,7 +183,7 @@ export default function Index({ ingredients }) {
                                     </Table.Td>
                                 </tr>
                             )) :
-                            <Table.Empty colSpan={7} message={
+                            <Table.Empty colSpan={8} message={
                                 <>
                                     <div className='flex justify-center items-center text-center mb-2'>
                                         <IconDatabaseOff size={48} strokeWidth={1} className='text-gray-300 dark:text-gray-600' />

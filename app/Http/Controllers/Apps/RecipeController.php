@@ -41,14 +41,15 @@ class RecipeController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         
-        // Get ingredients and supplies for recipe components
-        $ingredients = Product::where('product_type', Product::TYPE_INGREDIENT)
+        // Use tags to allow 'sellable' items that are also tagged as 'ingredient'
+        $ingredients = Product::whereJsonContains('tags', Product::TAG_INGREDIENT)
             ->orderBy('title')
-            ->get(['id', 'title', 'unit']);
+            ->get(['id', 'title', 'unit', 'buy_price']);
         
-        $supplies = Product::where('product_type', Product::TYPE_SUPPLY)
+        // Use tags for supplies
+        $supplies = Product::whereJsonContains('tags', Product::TAG_SUPPLY)
             ->orderBy('title')
-            ->get(['id', 'title', 'unit']);
+            ->get(['id', 'title', 'unit', 'buy_price']);
         
         return Inertia::render('Dashboard/Recipes/Create', [
             'categories' => $categories,
@@ -147,11 +148,11 @@ class RecipeController extends Controller
         
         $categories = Category::orderBy('name')->get();
         
-        $ingredients = Product::where('product_type', Product::TYPE_INGREDIENT)
+        $ingredients = Product::whereJsonContains('tags', Product::TAG_INGREDIENT)
             ->orderBy('title')
             ->get(['id', 'title', 'unit']);
         
-        $supplies = Product::where('product_type', Product::TYPE_SUPPLY)
+        $supplies = Product::whereJsonContains('tags', Product::TAG_SUPPLY)
             ->orderBy('title')
             ->get(['id', 'title', 'unit']);
 

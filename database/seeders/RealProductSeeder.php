@@ -142,7 +142,7 @@ class RealProductSeeder extends Seeder
             ['Ayam Dada Filet 1KG', 'Daging Ayam', 39000, 45000, 'PCS', '621110600018', 65],
             ['Chicken Drum Stick Jumbo', 'Daging Ayam', 36000, 55000, 'KG', '621110600019', 10],
             ['Paha Fillet', 'Daging Ayam', 51000, 62500, 'KG', '', 7.3],
-        ];        ];
+        ];
 
         DB::beginTransaction();
 

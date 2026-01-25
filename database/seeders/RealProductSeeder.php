@@ -212,6 +212,7 @@ class RealProductSeeder extends Seeder
                     'sell_price' => $item[3],
                     'unit' => $item[4],
                     'product_type' => Product::TYPE_SELLABLE,
+                    'tags' => ['sellable'],
                     'image' => 'default.png',
                     'barcode' => $barcode,
                     'min_stock' => 5,

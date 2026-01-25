@@ -188,6 +188,11 @@ class RealProductSeeder extends Seeder
 
                 // 2. Create or Update Product
                 $barcode = $item[5];
+                // Fix: Convert empty string to null to avoid unique constraint violation on ''
+                if ($barcode === '') {
+                    $barcode = null;
+                }
+
                 $title = $item[0];
 
                 $product = null;

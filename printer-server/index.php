@@ -53,7 +53,7 @@ $ws_worker->onConnect = function ($connection) {
 $ws_worker->onMessage = function ($connection, $data) {
     try {
         $payload = json_decode($data, true);
-        
+
         if (!$payload) {
             throw new Exception('Invalid JSON payload');
         }
@@ -81,6 +81,11 @@ $ws_worker->onMessage = function ($connection, $data) {
 
             case 'open_drawer':
                 $result = openCashDrawer($payload['printer_name'] ?? null);
+                $connection->send(json_encode($result));
+                break;
+
+            case 'get_printers':
+                $result = getInstalledPrinters();
                 $connection->send(json_encode($result));
                 break;
 
@@ -250,13 +255,60 @@ function openCashDrawer($printerName = null)
 }
 
 /**
+ * Get installed printers
+ */
+function getInstalledPrinters()
+{
+    try {
+        echo "  → Fetching installed printers...\n";
+        $printers = [];
+        $os = strtoupper(substr(PHP_OS, 0, 3));
+
+        if ($os === 'WIN') {
+            // Use PowerShell to get printer names
+            $cmd = 'powershell -Command "Get-Printer | Select-Object -ExpandProperty Name"';
+            exec($cmd, $output, $return_var);
+
+            if ($return_var === 0) {
+                // Filter out empty lines
+                $printers = array_values(array_filter($output, function ($line) {
+                    return !empty(trim($line));
+                }));
+            }
+        } else {
+            // Linux/Mac (lpstat)
+            exec('lpstat -p | cut -d " " -f 2', $output, $return_var);
+            if ($return_var === 0) {
+                $printers = array_values(array_filter($output));
+            }
+        }
+
+        echo "  ✓ Found " . count($printers) . " printers\n";
+
+        return [
+            'type' => 'success',
+            'printers' => $printers,
+            'message' => 'Found ' . count($printers) . ' printers'
+        ];
+
+    } catch (Exception $e) {
+        echo "  ✗ Failed to get printers: " . $e->getMessage() . "\n";
+        return [
+            'type' => 'error',
+            'message' => 'Failed to get printers: ' . $e->getMessage(),
+            'printers' => []
+        ];
+    }
+}
+
+/**
  * Create printer connector based on OS
  */
 function createPrinterConnector($printerName)
 {
     // Detect OS
     $os = strtoupper(substr(PHP_OS, 0, 3));
-    
+
     if ($os === 'WIN') {
         // Windows
         return new WindowsPrintConnector($printerName);
@@ -291,7 +343,7 @@ function createPrinterConnector($printerName)
 function printHeader($printer, $settings)
 {
     $printer->setJustification(Printer::JUSTIFY_CENTER);
-    
+
     // Store logo if available
     if (!empty($settings['store_logo'])) {
         try {
@@ -333,11 +385,11 @@ function printTransactionInfo($printer, $transaction)
 {
     $printer->setJustification(Printer::JUSTIFY_LEFT);
     $printer->text(str_repeat('-', 48) . "\n");
-    
+
     $printer->text($transaction['invoice'] . "\n");
     $printer->text(date('d/m/Y H:i:s', strtotime($transaction['created_at'])) . "\n");
     $printer->text("Kasir: " . ($transaction['cashier']['name'] ?? 'Admin') . "\n");
-    
+
     $printer->text(str_repeat('-', 48) . "\n");
 }
 
@@ -347,12 +399,12 @@ function printTransactionInfo($printer, $transaction)
 function printItems($printer, $details)
 {
     $printer->setJustification(Printer::JUSTIFY_LEFT);
-    
+
     foreach ($details as $idx => $detail) {
         $productName = $detail['product']['title'] ?? 'Item';
         $variantName = $detail['variant_name'] ?? '';
         $name = $productName . ($variantName ? " ($variantName)" : '');
-        
+
         $qty = (int) $detail['qty'];
         $price = (int) $detail['price'];
         $subtotal = $qty * $price;
@@ -377,12 +429,12 @@ function printItems($printer, $details)
 function printTotals($printer, $transaction)
 {
     $printer->setJustification(Printer::JUSTIFY_LEFT);
-    
+
     $subtotal = 0;
     foreach ($transaction['details'] as $detail) {
         $subtotal += $detail['qty'] * $detail['price'];
     }
-    
+
     $discount = (int) ($transaction['discount'] ?? 0);
     $tax = (int) ($transaction['tax'] ?? 0);
     $ppn = (float) ($transaction['ppn'] ?? 0);
@@ -425,7 +477,7 @@ function printTotals($printer, $transaction)
 
     // Change
     $printer->text(formatLine('Kembali', 'Rp ' . number_format($change, 0, ',', '.'), 48) . "\n");
-    
+
     $printer->text(str_repeat('-', 48) . "\n");
 }
 
@@ -437,7 +489,7 @@ function printFooter($printer, $settings)
     $printer->setJustification(Printer::JUSTIFY_CENTER);
     $printer->feed(1);
     $printer->text("Terima kasih atas kunjungan Anda\n");
-    
+
     if (!empty($settings['store_website'])) {
         $printer->text($settings['store_website'] . "\n");
     }

@@ -6,9 +6,9 @@ import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
 import Textarea from '@/Components/Common/TextArea'
 import toast from 'react-hot-toast'
-import { 
-    IconSettings, 
-    IconBuildingStore, 
+import {
+    IconSettings,
+    IconBuildingStore,
     IconPhoto,
     IconDeviceFloppy,
     IconDatabaseExport,
@@ -28,6 +28,8 @@ export default function Index({ settings }) {
     const [activeTab, setActiveTab] = useState('store')
     const [testingConnection, setTestingConnection] = useState(false)
     const [connectionStatus, setConnectionStatus] = useState(null)
+    const [printers, setPrinters] = useState([])
+    const [loadingPrinters, setLoadingPrinters] = useState(false)
 
     // Form untuk masing-masing tab
     const storeForm = useForm({
@@ -60,7 +62,7 @@ export default function Index({ settings }) {
     const handleSubmit = (e) => {
         e.preventDefault()
         const form = getActiveForm()
-        
+
         form.post(route('settings.update'), {
             forceFormData: true,
             onSuccess: () => toast.success('Pengaturan berhasil disimpan!'),
@@ -79,16 +81,18 @@ export default function Index({ settings }) {
     const handleTestConnection = async () => {
         setTestingConnection(true)
         setConnectionStatus(null)
-        
+
         try {
             // Set WebSocket URL before testing
             WebSocketPrintService.setServerUrl(printForm.data.settings.websocket_url)
-            
+
             const status = await WebSocketPrintService.checkConnection()
             setConnectionStatus(status)
-            
+
             if (status.connected) {
                 toast.success('Koneksi berhasil!')
+                // Auto fetch printers if connected
+                fetchPrinters()
             } else {
                 toast.error('Gagal terhubung ke print server')
             }
@@ -103,10 +107,29 @@ export default function Index({ settings }) {
         }
     }
 
+    const fetchPrinters = async () => {
+        setLoadingPrinters(true)
+        try {
+            WebSocketPrintService.setServerUrl(printForm.data.settings.websocket_url)
+            const printerList = await WebSocketPrintService.getPrinters()
+            setPrinters(printerList)
+            if (printerList.length > 0) {
+                toast.success(`Ditemukan ${printerList.length} printer`)
+            } else {
+                toast('Tidak ada printer ditemukan', { icon: 'ℹ️' })
+            }
+        } catch (error) {
+            console.error('Error fetching printers:', error)
+            toast.error('Gagal mengambil daftar printer')
+        } finally {
+            setLoadingPrinters(false)
+        }
+    }
+
     return (
         <>
             <Head title="Pengaturan Aplikasi" />
-            
+
             <Card
                 title="Pengaturan Aplikasi"
                 icon={<IconSettings size={20} strokeWidth={1.5} />}
@@ -121,11 +144,10 @@ export default function Index({ settings }) {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                                        isActive
+                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${isActive
                                             ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
+                                        }`}
                                 >
                                     <Icon size={18} />
                                     <span className="hidden sm:inline">{tab.label}</span>
@@ -147,13 +169,13 @@ export default function Index({ settings }) {
                                     <div className="relative group">
                                         <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900">
                                             {storeForm.data.settings.logo ? (
-                                                <img 
-                                                    src={URL.createObjectURL(storeForm.data.settings.logo)} 
+                                                <img
+                                                    src={URL.createObjectURL(storeForm.data.settings.logo)}
                                                     className="w-full h-full object-contain"
                                                 />
                                             ) : storeForm.data.settings.store_logo ? (
-                                                <img 
-                                                    src={`/storage/settings/${storeForm.data.settings.store_logo}`} 
+                                                <img
+                                                    src={`/storage/settings/${storeForm.data.settings.store_logo}`}
                                                     className="w-full h-full object-contain"
                                                 />
                                             ) : (
@@ -169,7 +191,7 @@ export default function Index({ settings }) {
                                             accept="image/*"
                                             onChange={(e) => updateSetting('logo', e.target.files[0])}
                                         />
-                                        <label 
+                                        <label
                                             htmlFor="logo-upload"
                                             className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                                         >
@@ -236,14 +258,47 @@ export default function Index({ settings }) {
                                     placeholder="ws://localhost:9100"
                                     helpText="Format: ws://IP_ADDRESS:9100 (contoh: ws://192.168.1.100:9100)"
                                 />
-                                
-                                <Input
-                                    label="Nama Printer"
-                                    value={printForm.data.settings.printer_name}
-                                    onChange={(e) => updateSetting('printer_name', e.target.value)}
-                                    placeholder="POS-80"
-                                    helpText="Nama printer Windows yang terhubung (cek di Devices and Printers)"
-                                />
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Nama Printer {loadingPrinters && <span className="text-blue-500 text-xs animate-pulse">(Memuat...)</span>}
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            {printers.length > 0 ? (
+                                                <select
+                                                    value={printForm.data.settings.printer_name}
+                                                    onChange={(e) => updateSetting('printer_name', e.target.value)}
+                                                    className="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                                >
+                                                    <option value="">-- Pilih Printer --</option>
+                                                    {printers.map((p, i) => (
+                                                        <option key={i} value={p}>{p}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    value={printForm.data.settings.printer_name}
+                                                    onChange={(e) => updateSetting('printer_name', e.target.value)}
+                                                    className="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                                    placeholder="Contoh: POS-80"
+                                                />
+                                            )}
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            onClick={fetchPrinters}
+                                            icon={<IconPrinter size={18} />}
+                                            className="px-3 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700"
+                                            title="Ambil Daftar Printer"
+                                            disabled={loadingPrinters}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Klik tombol refresh untuk mengambil daftar printer dari server.
+                                    </p>
+                                </div>
 
                                 <div>
                                     <Button
@@ -254,13 +309,12 @@ export default function Index({ settings }) {
                                         className="bg-green-600 text-white hover:bg-green-700"
                                         disabled={testingConnection}
                                     />
-                                    
+
                                     {connectionStatus && (
-                                        <div className={`mt-3 p-3 rounded-lg text-sm ${
-                                            connectionStatus.connected 
+                                        <div className={`mt-3 p-3 rounded-lg text-sm ${connectionStatus.connected
                                                 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30'
                                                 : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/30'
-                                        }`}>
+                                            }`}>
                                             <strong>{connectionStatus.connected ? '✓ Terhubung' : '✗ Tidak Terhubung'}</strong>
                                             <p className="mt-1">{connectionStatus.message}</p>
                                             {connectionStatus.serverUrl && (
@@ -284,7 +338,7 @@ export default function Index({ settings }) {
                                 <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
                                     Unduh salinan basis data Anda untuk cadangan. File ini berisi semua data produk, transaksi, dan pengaturan.
                                 </p>
-                                <a 
+                                <a
                                     href={route('settings.backup')}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                                 >

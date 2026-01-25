@@ -174,7 +174,7 @@ class PrintService {
 
         // Initialize printer (Only reset if NO logo, otherwise we might clear the logo buffer)
         if (!hasLogo) {
-            receipt += ESC + '@'; 
+            receipt += ESC + '@';
         }
 
         // ===== HEADER =====
@@ -183,7 +183,7 @@ class PrintService {
 
         // Add padding if logo was printed (prevent text from touching logo)
         if (hasLogo) {
-            receipt += LF; 
+            receipt += LF;
         }
 
         // Store Initial placeholder (only if no logo image)
@@ -288,7 +288,7 @@ class PrintService {
         // Tax (PPN)
         const tax = Number(transaction.tax) || 0;
         const ppn = Number(transaction.ppn) || 0;
-        
+
         if (tax > 0) {
             let label = 'PPN';
             if (ppn > 0) {
@@ -374,13 +374,13 @@ class PrintService {
             }
 
             const config = this.qz.configs.create(printer);
-            
+
             // 1. Print Logo (Separate Job to prevent Mixed Content Errors)
             let hasLogo = false;
             if (settings.store_logo) {
                 const logoUrl = `/storage/settings/${settings.store_logo}`;
                 const base64Image = await this.fetchImageBase64(logoUrl);
-                
+
                 if (base64Image) {
                     try {
                         console.log('Printing logo...');
@@ -407,7 +407,7 @@ class PrintService {
             // Note: If logo was printed, the printer is already initialized. 
             // We pass hasLogo=true to generateReceiptCommands to skip big initial letter if desired.
             const receiptData = this.generateReceiptCommands(transaction, settings, hasLogo);
-            
+
             try {
                 console.log('Printing text...');
                 await this.qz.print(config, [{
@@ -636,7 +636,7 @@ class PrintService {
             let code = str.charCodeAt(i);
             // Force 8-bit range. Replace non-ASCII (>255) with '?' (0x3F)
             if (code > 255) {
-                code = 0x3F; 
+                code = 0x3F;
             }
             hex += code.toString(16).padStart(2, '0');
         }
@@ -724,7 +724,7 @@ class WebSocketPrintService {
                     try {
                         const message = JSON.parse(event.data);
                         console.log('WebSocket message:', message);
-                        
+
                         // Handle queued message resolution
                         if (this.messageQueue.length > 0) {
                             const pending = this.messageQueue.shift();
@@ -745,12 +745,12 @@ class WebSocketPrintService {
                     this.isConnected = false;
                     console.log('WebSocket print server disconnected');
                     this.notifyStatusChange({ connected: false, message: 'Disconnected from print server' });
-                    
+
                     // Auto-reconnect
                     if (this.reconnectAttempts < this.maxReconnectAttempts) {
                         this.scheduleReconnect();
                     }
-                    
+
                     reject(new Error('Connection closed'));
                 };
 
@@ -770,12 +770,12 @@ class WebSocketPrintService {
 
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 5);
-        
+
         console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-        this.notifyStatusChange({ 
-            connected: false, 
-            reconnecting: true, 
-            message: `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})` 
+        this.notifyStatusChange({
+            connected: false,
+            reconnecting: true,
+            message: `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
         });
 
         this.reconnectTimer = setTimeout(() => {
@@ -816,7 +816,7 @@ class WebSocketPrintService {
             try {
                 const payload = { command, ...data };
                 this.ws.send(JSON.stringify(payload));
-                
+
                 // Queue the pending message
                 this.messageQueue.push({ resolve, reject });
 
@@ -856,8 +856,8 @@ class WebSocketPrintService {
 
             if (response.type === 'success') {
                 console.log('✓ Receipt printed via WebSocket');
-                return { 
-                    success: true, 
+                return {
+                    success: true,
                     message: response.message || 'Struk berhasil dicetak'
                 };
             } else {
@@ -927,6 +927,27 @@ class WebSocketPrintService {
     }
 
     /**
+     * Get list of installed printers from server
+     */
+    static async getPrinters() {
+        try {
+            if (!this.isConnected) {
+                await this.connect();
+            }
+
+            const response = await this.sendCommand('get_printers');
+
+            if (response.type === 'success') {
+                return response.printers || [];
+            }
+            return [];
+        } catch (error) {
+            console.error('Failed to get printers:', error);
+            return [];
+        }
+    }
+
+    /**
      * Print receipt and optionally open cash drawer
      */
     static async printAndOpenDrawer(transaction, settings = {}) {
@@ -940,10 +961,10 @@ class WebSocketPrintService {
     static async checkConnection() {
         try {
             await this.connect();
-            
+
             // Send ping to verify
             const response = await this.sendCommand('ping');
-            
+
             return {
                 available: true,
                 connected: response.type === 'pong',

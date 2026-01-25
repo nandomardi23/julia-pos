@@ -1053,8 +1053,7 @@ export default function Index({
                                                             alt={product.title}
                                                             className={`w-full h-full object-cover ${isOutOfStock ? "grayscale" : ""}`}
                                                             onError={(e) => {
-                                                                e.target.src =
-                                                                    "https://via.placeholder.com/200x200?text=No+Image";
+                                                                e.target.src = "/assets/no-image.svg";
                                                             }}
                                                         />
                                                         {/* Stock Badge */}
@@ -1172,7 +1171,7 @@ export default function Index({
                                                 alt={cart.product?.title}
                                                 className="w-12 h-12 rounded-lg object-cover"
                                                 onError={(e) => {
-                                                    e.target.src = "https://via.placeholder.com/48";
+                                                    e.target.src = "/assets/no-image.svg";
                                                 }}
                                             />
                                             <div className="flex-1 min-w-0">

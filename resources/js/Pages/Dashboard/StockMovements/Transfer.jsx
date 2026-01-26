@@ -159,7 +159,8 @@ export default function Transfer({ warehouses, displays, products }) {
                             name='quantity'
                             label={'Jumlah Transfer'}
                             type={'number'}
-                            min='1'
+                            min='0.001'
+                            step='any'
                             max={availableStock}
                             placeholder={'Jumlah yang akan ditransfer'}
                             value={data.quantity}

@@ -16,10 +16,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
-            UserSeeder::class,
+            ProductionUserSeeder::class,
+            ProductionCategorySeeder::class, // New
             PaymentSettingSeeder::class,
-            SettingsSeeder::class,
-            DemoDataSeeder::class,
+            ProductionSettingSeeder::class, // Store config
+            ProductionProductSeeder::class,
+            ProductionInventorySeeder::class, // New (Stock & Movements)
+            ProductionShiftSeeder::class,
+            ProductionTransactionSeeder::class,
         ]);
     }
 }

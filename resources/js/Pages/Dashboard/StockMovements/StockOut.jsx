@@ -204,7 +204,8 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
                             name='quantity'
                             label={'Jumlah'}
                             type={'number'}
-                            min='1'
+                            min='0.001'
+                            step='any'
                             max={availableStock}
                             placeholder={'Jumlah barang keluar'}
                             value={data.quantity}

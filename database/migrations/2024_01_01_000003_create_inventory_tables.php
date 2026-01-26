@@ -31,7 +31,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('quantity')->default(0);
+            $table->decimal('quantity', 15, 3)->default(0);
             $table->timestamps();
 
             $table->unique(['warehouse_id', 'product_id']);
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('display_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('quantity')->default(0);
+            $table->decimal('quantity', 15, 3)->default(0);
             $table->integer('min_stock')->default(0);
             $table->timestamps();
 
@@ -62,7 +62,8 @@ return new class extends Migration
             $table->date('expiry_date')->nullable()->comment('Product expiry date');
             $table->string('to_type'); // warehouse, display, transaction, out
             $table->unsignedBigInteger('to_id')->nullable();
-            $table->integer('quantity');
+            $table->decimal('quantity', 15, 3);
+
             $table->decimal('purchase_price', 15, 2)->nullable()->comment('Purchase price from supplier');
             $table->decimal('loss_amount', 15, 2)->nullable()->comment('Loss = quantity × buy_price (for stock out)');
             $table->text('note')->nullable();

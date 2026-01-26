@@ -161,7 +161,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
             warehouse_id: stockInForm.data.warehouse_id,
             supplier_id: stockInForm.data.supplier_id || null,
             product_id: stockInForm.data.product_id,
-            quantity: parseInt(stockInForm.data.quantity) || 0,
+            quantity: stockInForm.data.quantity,
             purchase_price: parseCurrency(stockInForm.data.purchase_price) || null,
             note: stockInForm.data.note || null,
         }
@@ -660,7 +660,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                 name='quantity'
                                 label={'Jumlah Transfer'}
                                 type={'number'}
-                                min='1'
+                                step='0.001'
                                 max={transferAvailableStock}
                                 placeholder={'Jumlah yang akan ditransfer'}
                                 value={transferForm.data.quantity}
@@ -751,7 +751,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                 name='quantity'
                                 label={'Jumlah (Qty)'}
                                 type={'number'}
-                                min='1'
+                                min='0.001'
+                                step='0.001'
                                 placeholder={'Jumlah barang masuk'}
                                 value={stockInForm.data.quantity}
                                 errors={stockInForm.errors.quantity}

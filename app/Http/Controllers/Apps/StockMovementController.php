@@ -69,14 +69,18 @@ class StockMovementController extends Controller
             ->withQueryString();
 
         // Data for Transfer Modal
-        $warehouses = Warehouse::active()->with(['stocks' => function ($query) {
-            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
-        }])->get();
-        
-        $displays = Display::active()->with(['stocks' => function ($query) {
-            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
-        }])->get();
-        
+        $warehouses = Warehouse::active()->with([
+            'stocks' => function ($query) {
+                $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+            }
+        ])->get();
+
+        $displays = Display::active()->with([
+            'stocks' => function ($query) {
+                $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+            }
+        ])->get();
+
         $transferProducts = Product::whereHas('warehouseStocks', function ($query) {
             $query->where('quantity', '>', 0);
         })->with('category:id,name')->get(['id', 'title', 'barcode', 'category_id']);
@@ -156,7 +160,7 @@ class StockMovementController extends Controller
         ];
 
         return Excel::download(
-            new StockReportExport($filters), 
+            new StockReportExport($filters),
             'laporan_stok_' . date('Y-m-d') . '.xlsx'
         );
     }
@@ -194,7 +198,7 @@ class StockMovementController extends Controller
                 'items.*.packaging_qty' => 'required|integer|min:1',
                 'items.*.packaging_unit' => 'nullable|string|max:50',
                 'items.*.qty_per_package' => 'nullable|integer|min:1',
-                'items.*.quantity' => 'nullable|integer|min:0', // Calculated field
+                'items.*.quantity' => 'nullable|numeric|min:0', // Calculated field
                 'items.*.purchase_price' => 'nullable|numeric|min:0',
                 'items.*.batch_number' => 'nullable|string|max:100',
                 'items.*.expiry_date' => 'nullable|date',
@@ -211,7 +215,7 @@ class StockMovementController extends Controller
                 'invoice_number' => 'nullable|string|max:100',
                 'batch_number' => 'nullable|string|max:100',
                 'expiry_date' => 'nullable|date',
-                'quantity' => 'required|integer|min:1',
+                'quantity' => 'required|numeric|min:0.001',
                 'purchase_price' => 'nullable|numeric|min:0',
                 'note' => 'nullable|string',
             ]);
@@ -227,12 +231,14 @@ class StockMovementController extends Controller
      */
     public function transfer()
     {
-        $warehouses = Warehouse::active()->with(['stocks' => function ($query) {
-            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
-        }])->get();
-        
+        $warehouses = Warehouse::active()->with([
+            'stocks' => function ($query) {
+                $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+            }
+        ])->get();
+
         $displays = Display::active()->get();
-        
+
         $products = Product::whereHas('warehouseStocks', function ($query) {
             $query->where('quantity', '>', 0);
         })->with('category:id,name')->get(['id', 'title', 'barcode', 'category_id']);
@@ -253,7 +259,7 @@ class StockMovementController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'display_id' => 'required|exists:displays,id',
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|numeric|min:0.001',
             'note' => 'nullable|string',
         ]);
 
@@ -355,16 +361,20 @@ class StockMovementController extends Controller
      */
     public function stockOut()
     {
-        $warehouses = Warehouse::active()->with(['stocks' => function ($query) {
-            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
-        }])->get();
-        
-        $displays = Display::active()->with(['stocks' => function ($query) {
-            $query->where('quantity', '>', 0)->with('product:id,title,barcode');
-        }])->get();
-        
+        $warehouses = Warehouse::active()->with([
+            'stocks' => function ($query) {
+                $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+            }
+        ])->get();
+
+        $displays = Display::active()->with([
+            'stocks' => function ($query) {
+                $query->where('quantity', '>', 0)->with('product:id,title,barcode');
+            }
+        ])->get();
+
         $products = Product::with('category:id,name')->get(['id', 'title', 'barcode', 'category_id']);
-        
+
         $reasons = StockMovement::getStockOutReasons();
 
         return Inertia::render('Dashboard/StockMovements/StockOut', [
@@ -413,11 +423,11 @@ class StockMovementController extends Controller
 
         try {
             $result = $this->stockService->updateStockMovement($id, $request->all());
-            
+
             if (!$result['success']) {
                 return redirect()->back()->with('error', $result['message']);
             }
-            
+
             return redirect()->back()->with('success', $result['message']);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -454,7 +464,7 @@ class StockMovementController extends Controller
                 if ($warehouseStock) {
                     $warehouseStock->increment('quantity', $movement->quantity);
                 }
-                
+
                 $displayStock = DisplayStock::where('display_id', $movement->to_id)
                     ->where('product_id', $movement->product_id)
                     ->first();

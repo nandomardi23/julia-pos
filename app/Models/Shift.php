@@ -58,7 +58,7 @@ class Shift extends Model
     {
         $date = now()->format('Ymd');
         $prefix = 'SFT-' . $date . '-';
-        
+
         $lastShift = self::where('shift_number', 'like', $prefix . '%')
             ->orderBy('shift_number', 'desc')
             ->first();
@@ -127,7 +127,7 @@ class Shift extends Model
     public static function getActiveShift($userId = null)
     {
         $userId = $userId ?? auth()->id();
-        
+
         return self::where('user_id', $userId)
             ->where('status', self::STATUS_ACTIVE)
             ->first();
@@ -191,10 +191,9 @@ class Shift extends Model
      */
     public function calculateExpectedCash(): float
     {
-        return $this->opening_cash 
-            + $this->total_cash_sales 
-            - $this->total_change
-            + $this->total_cash_in 
+        return $this->opening_cash
+            + $this->total_cash_sales
+            + $this->total_cash_in
             - $this->total_cash_out;
     }
 
@@ -212,7 +211,7 @@ class Shift extends Model
     public function close(float $closingCash, ?string $notes = null): self
     {
         $expectedCash = $this->calculateExpectedCash();
-        
+
         $this->update([
             'ended_at' => now(),
             'closing_cash' => $closingCash,

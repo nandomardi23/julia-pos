@@ -24,6 +24,20 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
+const isWeightBasedUnit = (unit) => {
+    const weightUnits = ["kg", "gram", "g", "liter", "l", "ml", "ons", "ton"];
+    return weightUnits.includes(unit?.toLowerCase());
+};
+
+const formatQty = (qty, unit) => {
+    const numQty = parseFloat(qty);
+    if (isWeightBasedUnit(unit) || (numQty % 1 !== 0)) {
+        // Allow decimals but strip unnecessary trailing zeros, max 3 places
+        return parseFloat(numQty.toFixed(3)).toString();
+    }
+    return Math.floor(numQty).toString();
+};
+
 const perPageOptions = [
     { id: 10, name: "10" },
     { id: 25, name: "25" },
@@ -35,7 +49,7 @@ const StockOpnameShow = ({ opname }) => {
     // State for Tabs & Search
     const [tab, setTab] = useState("all"); // 'all', 'mismatch'
     const [search, setSearch] = useState("");
-    
+
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
@@ -90,7 +104,7 @@ const StockOpnameShow = ({ opname }) => {
         // Filter by Search
         if (search) {
             const lowerSearch = search.toLowerCase();
-            result = result.filter((i) => 
+            result = result.filter((i) =>
                 (i.product?.title?.toLowerCase() || "").includes(lowerSearch) ||
                 (i.product?.sku?.toLowerCase() || "").includes(lowerSearch) ||
                 (i.product?.barcode?.toLowerCase() || "").includes(lowerSearch)
@@ -149,11 +163,10 @@ const StockOpnameShow = ({ opname }) => {
                         key={index}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
                         disabled={typeof page !== 'number'}
-                        className={`min-w-[32px] h-8 rounded-md border text-sm font-medium transition-colors ${
-                            page === currentPage
+                        className={`min-w-[32px] h-8 rounded-md border text-sm font-medium transition-colors ${page === currentPage
                                 ? "bg-indigo-600 border-indigo-600 text-white"
                                 : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                        } ${typeof page !== 'number' ? 'border-transparent hover:bg-transparent cursor-default' : ''}`}
+                            } ${typeof page !== 'number' ? 'border-transparent hover:bg-transparent cursor-default' : ''}`}
                     >
                         {page}
                     </button>
@@ -226,21 +239,19 @@ const StockOpnameShow = ({ opname }) => {
                     <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                         <button
                             onClick={() => setTab("all")}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                                tab === "all"
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === "all"
                                     ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                                     : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            }`}
+                                }`}
                         >
                             Semua Item
                         </button>
                         <button
                             onClick={() => setTab("mismatch")}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${
-                                tab === "mismatch"
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${tab === "mismatch"
                                     ? "bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm"
                                     : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            }`}
+                                }`}
                         >
                             <IconAlertTriangle size={16} />
                             Hanya Selisih ({itemsWithDifference.length})
@@ -278,8 +289,8 @@ const StockOpnameShow = ({ opname }) => {
                     <Table.Tbody>
                         {currentItems.length > 0 ? (
                             currentItems.map((item, index) => (
-                                <tr 
-                                    key={item.id} 
+                                <tr
+                                    key={item.id}
                                     className={item.difference != 0 ? "bg-red-50 dark:bg-red-900/10" : ""}
                                 >
                                     <Table.Td className="text-center">
@@ -290,20 +301,19 @@ const StockOpnameShow = ({ opname }) => {
                                         <div className="text-xs text-gray-500">{item.product?.barcode ?? "-"}</div>
                                     </Table.Td>
                                     <Table.Td className="text-gray-500">{item.product?.sku ?? "-"}</Table.Td>
-                                    <Table.Td className="text-center">{item.system_qty ?? 0}</Table.Td>
-                                    <Table.Td className="text-center font-medium">{item.physical_qty ?? 0}</Table.Td>
+                                    <Table.Td className="text-center">{formatQty(item.system_qty ?? 0, item.product?.unit)}</Table.Td>
+                                    <Table.Td className="text-center font-medium">{formatQty(item.physical_qty ?? 0, item.product?.unit)}</Table.Td>
                                     <Table.Td className="text-center">
                                         <span
-                                            className={`font-bold px-2 py-1 rounded text-xs ${
-                                                item.difference < 0
+                                            className={`font-bold px-2 py-1 rounded text-xs ${item.difference < 0
                                                     ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                                                     : item.difference > 0
-                                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                                            }`}
+                                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                                        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                                                }`}
                                         >
                                             {item.difference > 0 ? "+" : ""}
-                                            {item.difference}
+                                            {formatQty(item.difference, item.product?.unit)}
                                         </span>
                                     </Table.Td>
                                     <Table.Td className="text-right font-medium text-red-600">
@@ -362,7 +372,7 @@ const StockOpnameShow = ({ opname }) => {
                             icon={<IconArrowLeft size={18} />}
                             className="w-full md:w-auto border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 justify-center"
                         />
-                        
+
                         {opname.status === "draft" && (
                             <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                                 <Button

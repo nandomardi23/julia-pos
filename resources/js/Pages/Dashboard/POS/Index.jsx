@@ -49,7 +49,7 @@ export default function Index({
     );
     const [discountInput, setDiscountInput] = useState("");
     const [discountType, setDiscountType] = useState("nominal");
-    const [taxInput, setTaxInput] = useState("12"); // Default 12%
+    const [taxInput, setTaxInput] = useState("0"); // Default 0%, input when needed
     const [cashInput, setCashInput] = useState("");
     const [paymentMethod, setPaymentMethod] = useState(
         defaultPaymentGateway ?? "cash"

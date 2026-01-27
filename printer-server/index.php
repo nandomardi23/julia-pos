@@ -405,9 +405,12 @@ function printItems($printer, $details)
         $variantName = $detail['variant_name'] ?? '';
         $name = $productName . ($variantName ? " ($variantName)" : '');
 
-        $qty = (int) $detail['qty'];
+        $qty = (float) $detail['qty'];
         $price = (int) $detail['price'];
         $subtotal = $qty * $price;
+
+        // Format qty - show decimals only if needed
+        $qtyFormatted = ($qty == floor($qty)) ? number_format($qty, 0) : rtrim(rtrim(number_format($qty, 3, ',', '.'), '0'), ',');
 
         // Item name
         $printer->setEmphasis(true);
@@ -415,7 +418,7 @@ function printItems($printer, $details)
         $printer->setEmphasis(false);
 
         // Qty x Price = Subtotal
-        $qtyPrice = "   $qty x " . number_format($price, 0, ',', '.');
+        $qtyPrice = "   $qtyFormatted x " . number_format($price, 0, ',', '.');
         $subtotalStr = "Rp " . number_format($subtotal, 0, ',', '.');
         $printer->text(formatLine($qtyPrice, $subtotalStr, 48) . "\n");
     }

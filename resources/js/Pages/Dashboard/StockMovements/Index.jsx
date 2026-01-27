@@ -10,6 +10,7 @@ import SearchableSelect from '@/Components/Common/SearchableSelect'
 import Modal from '@/Components/Common/Modal'
 import toast from 'react-hot-toast'
 import axios from 'axios'
+import ImportModal from '@/Components/ImportModal'
 
 export default function Index({ movements, filters, warehouses, displays, transferProducts, allProducts, suppliers, stockOutReasons }) {
     const { auth } = usePage().props;
@@ -26,6 +27,38 @@ export default function Index({ movements, filters, warehouses, displays, transf
     const [showTransferModal, setShowTransferModal] = useState(false)
     const [showStockInModal, setShowStockInModal] = useState(false)
     const [showStockOutModal, setShowStockOutModal] = useState(false)
+
+    // Import States
+    const [showImport, setShowImport] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importErrors, setImportErrors] = useState({});
+    const [importData, setImportData] = useState({
+        warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+        supplier_id: ''
+    });
+
+    const handleImport = (file) => {
+        setImporting(true);
+        router.post(route('stock-movements.import'), {
+            file: file,
+            warehouse_id: importData.warehouse_id,
+            supplier_id: importData.supplier_id
+        }, {
+            forceFormData: true,
+            onSuccess: () => {
+                setShowImport(false);
+                setImporting(false);
+                setImportErrors({});
+                toast.success('Stok berhasil diimport!');
+            },
+            onError: (err) => {
+                setImporting(false);
+                setImportErrors(err);
+                toast.error('Gagal Import Stok');
+            },
+            onFinish: () => setImporting(false)
+        });
+    };
 
     // Stock availability states
     const [transferAvailableStock, setTransferAvailableStock] = useState(0)
@@ -437,6 +470,13 @@ export default function Index({ movements, filters, warehouses, displays, transf
                         type='button'
                         onClick={handleExport}
                         label='Export Riwayat'
+                        icon={<IconFileSpreadsheet size={18} />}
+                        className='bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                    />
+                    <Button
+                        type='button'
+                        onClick={() => setShowImport(true)}
+                        label='Import Excel'
                         icon={<IconFileSpreadsheet size={18} />}
                         className='bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                     />
@@ -1042,6 +1082,47 @@ export default function Index({ movements, filters, warehouses, displays, transf
                     </div>
                 </form>
             </Modal>
+
+            {/* ==================== IMPORT MODAL ==================== */}
+            <ImportModal
+                show={showImport}
+                onClose={() => setShowImport(false)}
+                title="Import Stok Masuk"
+                templateUrl={route('stock-movements.template')}
+                onSubmit={handleImport}
+                processing={importing}
+                errors={importErrors}
+            >
+                <div className="mb-4 space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 text-sm text-blue-800 dark:text-blue-300">
+                        <p>Pastikan file Excel Anda menggunakan format yang sesuai. Download template untuk melihat format yang benar.</p>
+                        <p className="mt-1 font-semibold">Semua item dalam file akan dimasukkan ke Gudang yang dipilih.</p>
+                    </div>
+
+                    <div>
+                        <Select
+                            label="Gudang Tujuan"
+                            value={importData.warehouse_id}
+                            onChange={e => setImportData({ ...importData, warehouse_id: e.target.value })}
+                        >
+                            {warehouses.map(w => (
+                                <option key={w.id} value={w.id}>{w.name}</option>
+                            ))}
+                        </Select>
+                    </div>
+
+                    <div>
+                        <SearchableSelect
+                            label="Supplier (Opsional)"
+                            options={importSupplierOptions}
+                            value={selectedImportSupplier}
+                            onChange={(option) => setImportData({ ...importData, supplier_id: option ? option.value : '' })}
+                            placeholder="Pilih Supplier..."
+                            isClearable={true}
+                        />
+                    </div>
+                </div>
+            </ImportModal>
         </>
     )
 }

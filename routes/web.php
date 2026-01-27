@@ -64,6 +64,15 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('products/print-barcode', [ProductController::class, 'printBarcode'])
         ->middleware('permission:products-access')
         ->name('products.print_barcode');
+
+    // Product Import Routes
+    Route::get('products/template', [ProductController::class, 'templateImport'])
+        ->middleware('permission:products-create')
+        ->name('products.template');
+    Route::post('products/import', [ProductController::class, 'storeImport'])
+        ->middleware('permission:products-create')
+        ->name('products.import');
+
     Route::resource('products', ProductController::class)
         ->middlewareFor(['index', 'show'], 'permission:products-access')
         ->middlewareFor(['create', 'store'], 'permission:products-create')
@@ -104,7 +113,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middlewareFor(['create', 'store'], 'permission:purchase-orders-create')
         ->middlewareFor(['edit', 'update'], 'permission:purchase-orders-edit')
         ->middlewareFor('destroy', 'permission:purchase-orders-delete');
-    
+
     // Additional PO routes
     Route::post('/purchase-orders/{id}/status', [PurchaseOrderController::class, 'updateStatus'])
         ->middleware('permission:purchase-orders-edit')
@@ -146,6 +155,15 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/stock-movements/export-stock-report', [StockMovementController::class, 'exportStockReport'])
         ->middleware('permission:stock-movements-access')
         ->name('stock-movements.exportStockReport');
+
+    // Stock Movement Import Routes
+    Route::get('/stock-movements/template', [StockMovementController::class, 'templateImport'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.template');
+    Route::post('/stock-movements/import', [StockMovementController::class, 'storeImport'])
+        ->middleware('permission:stock-movements-create')
+        ->name('stock-movements.import');
+
     Route::get('/stock-movements/create', [StockMovementController::class, 'create'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.create');
@@ -176,7 +194,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::put('/stock-movements/{id}', [StockMovementController::class, 'update'])
         ->middleware('permission:stock-movements-create')
         ->name('stock-movements.update');
-    
+
     // API routes for enhanced stock movement form
     Route::get('/stock-movements/last-price', [StockMovementController::class, 'getLastPurchasePrice'])
         ->middleware('permission:stock-movements-access')

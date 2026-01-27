@@ -11,6 +11,9 @@ use App\Models\PriceHistory;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use App\Imports\ProductImport;
+use App\Exports\ProductTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -45,10 +48,10 @@ class ProductController extends Controller
             // But for simplicity let's make 'all' show everything EXCEPT maybe supply/recipe if they are distinct?
             // Actually, let's filter 'all' to include Sellable OR Ingredient to match the merged menu idea.
             ->when($type === 'all', function ($query) {
-                 $query->where(function($q) {
-                     $q->whereJsonContains('tags', Product::TAG_SELLABLE)
-                       ->orWhereJsonContains('tags', Product::TAG_INGREDIENT);
-                 });
+                $query->where(function ($q) {
+                    $q->whereJsonContains('tags', Product::TAG_SELLABLE)
+                        ->orWhereJsonContains('tags', Product::TAG_INGREDIENT);
+                });
             })
             // Search filter
             ->when($request->search, function ($query, $search) {
@@ -132,10 +135,14 @@ class ProductController extends Controller
         // Determine primary product_type (for backward compatibility)
         // Order of precedence: sellable > recipe > ingredient > supply
         $primaryType = 'sellable';
-        if (in_array('sellable', $request->tags)) $primaryType = 'sellable';
-        elseif (in_array('recipe', $request->tags)) $primaryType = 'recipe';
-        elseif (in_array('ingredient', $request->tags)) $primaryType = 'ingredient';
-        elseif (in_array('supply', $request->tags)) $primaryType = 'supply';
+        if (in_array('sellable', $request->tags))
+            $primaryType = 'sellable';
+        elseif (in_array('recipe', $request->tags))
+            $primaryType = 'recipe';
+        elseif (in_array('ingredient', $request->tags))
+            $primaryType = 'ingredient';
+        elseif (in_array('supply', $request->tags))
+            $primaryType = 'supply';
 
         //create product
         $product = Product::create([
@@ -332,14 +339,18 @@ class ProductController extends Controller
             'tags' => 'required|array|min:1',
             'tags.*' => 'string|in:sellable,ingredient,supply,recipe',
         ]);
-        
+
         // Determine primary product_type (for backward compatibility)
         $primaryType = $product->product_type; // keep existing if valid
         if (!in_array($primaryType, $tags)) {
-             if (in_array('sellable', $tags)) $primaryType = 'sellable';
-             elseif (in_array('recipe', $tags)) $primaryType = 'recipe';
-             elseif (in_array('ingredient', $tags)) $primaryType = 'ingredient';
-             elseif (in_array('supply', $tags)) $primaryType = 'supply';
+            if (in_array('sellable', $tags))
+                $primaryType = 'sellable';
+            elseif (in_array('recipe', $tags))
+                $primaryType = 'recipe';
+            elseif (in_array('ingredient', $tags))
+                $primaryType = 'ingredient';
+            elseif (in_array('supply', $tags))
+                $primaryType = 'supply';
         }
 
         $updateData = [
@@ -460,5 +471,33 @@ class ProductController extends Controller
             'product' => $product,
             'qty' => (int) $qty,
         ]);
+    }
+
+    /**
+     * Import products from Excel
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storeImport(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xls,xlsx'
+        ]);
+
+        try {
+            Excel::import(new ProductImport, $request->file('file'));
+            return back()->with('success', 'Produk berhasil diimport!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download template for product import
+     */
+    public function templateImport()
+    {
+        return Excel::download(new ProductTemplateExport, 'template_produk.xlsx');
     }
 }

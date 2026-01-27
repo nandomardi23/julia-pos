@@ -18,6 +18,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\StockMovementImport;
+use App\Exports\StockMovementTemplateExport;
 
 class StockMovementController extends Controller
 {
@@ -412,6 +414,53 @@ class StockMovementController extends Controller
      * Show bulk import form.
      */
 
+
+    /**
+     * Import stock movements from Excel
+     */
+    public function storeImport(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xls,xlsx',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        try {
+            $import = new StockMovementImport(
+                $request->warehouse_id,
+                $request->supplier_id
+            );
+
+            Excel::import($import, $request->file('file'));
+
+            $count = $import->getImportedCount();
+            $errors = $import->getErrors();
+
+            $message = "Berhasil import {$count} item.";
+            if (count($errors) > 0) {
+                // If there are errors, we might want to show them.
+                // For now, let's just append first few errors to message or flash them
+                $errorMsg = implode("\n", array_slice($errors, 0, 5));
+                if (count($errors) > 5)
+                    $errorMsg .= "\n...dan " . (count($errors) - 5) . " error lainnya.";
+
+                return back()->with('warning', $message . "\nError:\n" . $errorMsg);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download template for stock movement import
+     */
+    public function templateImport()
+    {
+        return Excel::download(new StockMovementTemplateExport, 'template_stok_masuk.xlsx');
+    }
 
     public function update(Request $request, $id)
     {

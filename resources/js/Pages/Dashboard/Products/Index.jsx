@@ -7,6 +7,8 @@ import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
 import BarcodeModal from '@/Components/Common/BarcodeModal'
 import toast from 'react-hot-toast'
+import ImportModal from '@/Components/ImportModal'
+import { IconFileSpreadsheet } from '@tabler/icons-react'
 
 export default function Index({ products, currentType = 'product', typeLabel = 'Produk' }) {
     const [barcodeModal, setBarcodeModal] = useState({ show: false, product: null });
@@ -32,6 +34,32 @@ export default function Index({ products, currentType = 'product', typeLabel = '
         }
     };
 
+    // Import State
+    const [showImport, setShowImport] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importErrors, setImportErrors] = useState({});
+
+    const handleImport = (file) => {
+        setImporting(true);
+        router.post(route('products.import'), {
+            file: file
+        }, {
+            forceFormData: true,
+            onSuccess: () => {
+                setShowImport(false);
+                setImporting(false);
+                setImportErrors({});
+                toast.success('Produk berhasil diimport!');
+            },
+            onError: (err) => {
+                setImporting(false);
+                setImportErrors(err);
+                toast.error('Gagal Import Produk');
+            },
+            onFinish: () => setImporting(false)
+        });
+    };
+
     return (
         <>
             <Head title={typeLabel} />
@@ -43,26 +71,42 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                 productName={barcodeModal.product?.title || ''}
             />
 
+            <ImportModal
+                show={showImport}
+                onClose={() => setShowImport(false)}
+                title="Import Produk"
+                templateUrl={route('products.template')}
+                onSubmit={handleImport}
+                processing={importing}
+                errors={importErrors}
+            />
+
             <div className='mb-4'>
                 <div className='flex items-center gap-2 mb-4 overflow-x-auto pb-2'>
-                   {['all', 'product', 'ingredient'].map((t) => (
+                    {['all', 'product', 'ingredient'].map((t) => (
                         <Link
                             key={t}
                             href={route('products.index', { type: t })}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                                currentType === t
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
-                            }`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${currentType === t
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                }`}
                         >
-                            {t === 'all' ? 'Semua' : 
-                             t === 'product' ? 'Produk Jual' : 
-                             t === 'ingredient' ? 'Bahan Baku' : t}
+                            {t === 'all' ? 'Semua' :
+                                t === 'product' ? 'Produk Jual' :
+                                    t === 'ingredient' ? 'Bahan Baku' : t}
                         </Link>
-                   ))}
+                    ))}
                 </div>
 
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
+                    <Button
+                        type={'button'}
+                        icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
+                        className={'border bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-700 dark:hover:bg-emerald-700'}
+                        label={`Import`}
+                        onClick={() => setShowImport(true)}
+                    />
                     <Button
                         type={'link'}
                         icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
@@ -135,19 +179,18 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                     <Table.Td>
                                         <div className="flex flex-wrap gap-1.5 justify-center">
                                             {(product.tags || [product.product_type]).map((tag, index) => (
-                                                <span 
+                                                <span
                                                     key={index}
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border ${
-                                                        tag === 'sellable' ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-900' :
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border ${tag === 'sellable' ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-900' :
                                                         tag === 'ingredient' ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900' :
-                                                        tag === 'supply' ? 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-900' :
-                                                        'bg-gray-50 text-gray-700 border-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                                                    }`}
+                                                            tag === 'supply' ? 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-900' :
+                                                                'bg-gray-50 text-gray-700 border-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                                                        }`}
                                                 >
                                                     {tag === 'sellable' ? 'Produk Jual' :
-                                                     tag === 'ingredient' ? 'Bahan Baku' :
-                                                     tag === 'supply' ? 'Alat' :
-                                                     tag === 'recipe' ? 'Resep' : tag}
+                                                        tag === 'ingredient' ? 'Bahan Baku' :
+                                                            tag === 'supply' ? 'Alat' :
+                                                                tag === 'recipe' ? 'Resep' : tag}
                                                 </span>
                                             ))}
                                         </div>

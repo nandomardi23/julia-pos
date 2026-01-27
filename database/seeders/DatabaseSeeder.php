@@ -17,13 +17,16 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             ProductionUserSeeder::class,
-            ProductionCategorySeeder::class, // New
+            ProductionCategorySeeder::class, 
             PaymentSettingSeeder::class,
-            ProductionSettingSeeder::class, // Store config
+            ProductionSettingSeeder::class, 
             ProductionProductSeeder::class,
-            ProductionInventorySeeder::class, // New (Stock & Movements)
+            ProductionWarehouseStockSeeder::class, // 1. Warehouse Stock
+            ProductionStockMovementSeeder::class, // 2. Movements & Display Stock
+            ProductionTransactionSeeder::class, // 3. Transactions
+            ProductionTransactionDetailSeeder::class, // 4. Details
             ProductionShiftSeeder::class,
-            ProductionTransactionSeeder::class,
+            // ProductionInventorySeeder::class, // Deprecated in favor of specific seeders
         ]);
     }
 }

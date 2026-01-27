@@ -273,7 +273,7 @@ const StockOpnameCreate = ({
                                         <Table.Td className="text-center">
                                             <input
                                                 type="number"
-                                                step="0.001"
+                                                step="any"
                                                 min="0"
                                                 value={item.physical_qty}
                                                 onChange={(e) =>

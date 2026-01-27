@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product;
-use App\Models\Transaction;
-use App\Models\StockMovement;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -12,117 +9,60 @@ class ProductionTransactionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reconstructing Transactions from StockMovements (to_type = 'transaction')
-        // We group movements by 'to_id' (Transaction ID)
-        
-        // Raw data extracted from dump 'stock_movements' where to_type='transaction'
-        // Format: [id, product_id, to_id (trx_id), quantity, created_at]
-        $movements = [
-            [181, 7, 7, 390, 42500, '2026-01-26 13:05:52'], // Deducted from logic
-            // Wait, I need to map the dump's movement rows to transactions.
-            // Since I cannot parse the *entire* missing text, I will auto-generate based on the 'profits' table which existed in the visible dump.
-            // Profits table: id, transaction_id, total, created_at
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('transactions')->truncate();
+
+        $transactions = [
+            [1, 3, 1, 'TRX-96MR4T7TV2', 10000, 0, 0, 0.00, 0, 10000, 'cash', 'paid', NULL, NULL, '2026-01-26 10:41:01', '2026-01-26 10:41:01'],
+            [2, 3, 1, 'TRX-55D86I9FO5', 5400, 0, 0, 0.00, 0, 5400, 'qris', 'pending', NULL, NULL, '2026-01-26 10:43:38', '2026-01-26 10:43:38'],
+            [3, 3, 1, 'TRX-3181107I1M', 5400, 0, 0, 0.00, 0, 5400, 'qris', 'pending', NULL, NULL, '2026-01-26 10:45:10', '2026-01-26 10:45:10'],
+            [4, 3, 1, 'TRX-H72349TXP7', 58800, 0, 0, 0.00, 0, 58800, 'cash', 'paid', NULL, NULL, '2026-01-26 11:08:20', '2026-01-26 11:08:20'],
+            [5, 3, 1, 'TRX-P7MHU8S296', 58800, 0, 0, 0.00, 0, 58800, 'cash', 'paid', NULL, NULL, '2026-01-26 11:09:15', '2026-01-26 11:09:15'],
+            [6, 3, 1, 'TRX-1JH9MB2SN2', 5400, 0, 0, 0.00, 0, 5400, 'qris', 'pending', NULL, NULL, '2026-01-26 11:09:51', '2026-01-26 11:09:51'],
+            [7, 3, 1, 'TRX-3D2K9U05U4', 42200, 0, 0, 0.00, 0, 42200, 'qris', 'pending', NULL, NULL, '2026-01-26 13:05:52', '2026-01-26 13:05:52'],
+            [8, 3, 1, 'TRX-0ZU0670WAY', 50825, 0, 0, 0.00, 0, 50825, 'qris', 'pending', NULL, NULL, '2026-01-26 13:33:36', '2026-01-26 13:33:36'],
+            [9, 3, 1, 'TRX-Q4VSR3XLQ4', 36000, 0, 0, 0.00, 0, 36000, 'cash', 'paid', NULL, NULL, '2026-01-26 14:38:48', '2026-01-26 14:38:48'],
+            [10, 3, 1, 'TRX-91CUPIY4YA', 18720, 0, 0, 0.00, 0, 18720, 'cash', 'paid', NULL, NULL, '2026-01-26 14:50:40', '2026-01-26 14:50:40'],
+            [11, 3, 1, 'TRX-433876ZXHT', 52024, 5574, 0, 0.00, 0, 46450, 'cash', 'paid', NULL, NULL, '2026-01-26 15:12:45', '2026-01-26 15:12:45'],
+            [12, 3, 1, 'TRX-0I04BZH5RV', 50000, 3550, 0, 0.00, 0, 46450, 'cash', 'paid', NULL, NULL, '2026-01-26 15:14:44', '2026-01-26 15:14:44'],
+            [13, 3, 1, 'TRX-P0EZSGPX2P', 20000, 0, 0, 0.00, 0, 20000, 'cash', 'paid', NULL, NULL, '2026-01-26 15:30:49', '2026-01-26 15:30:49'],
+            [16, 3, 1, 'TRX-50Y4LE9M3B', 15000, 1000, 0, 0.00, 0, 14000, 'cash', 'paid', NULL, NULL, '2026-01-26 15:57:28', '2026-01-26 15:57:28'],
+            [18, 6, 2, 'TRX-OL71H5FR33', 100000, 56600, 0, 0.00, 0, 43400, 'cash', 'paid', NULL, NULL, '2026-01-26 16:43:27', '2026-01-26 16:43:27'],
+            [19, 6, 2, 'TRX-IKB782J9S3', 92850, 0, 0, 0.00, 0, 92850, 'qris', 'pending', NULL, NULL, '2026-01-26 16:55:57', '2026-01-26 16:55:57'],
+            [20, 6, 2, 'TRX-AM4RLY418I', 80000, 0, 0, 0.00, 0, 80000, 'qris', 'pending', NULL, NULL, '2026-01-26 17:19:22', '2026-01-26 17:19:22'],
+            [21, 6, 2, 'TRX-65G4H88691', 50000, 5000, 0, 0.00, 0, 45000, 'cash', 'paid', NULL, NULL, '2026-01-26 17:29:23', '2026-01-26 17:29:23'],
+            [22, 6, 2, 'TRX-1V16015545', 50000, 15000, 0, 0.00, 0, 35000, 'cash', 'paid', NULL, NULL, '2026-01-26 17:44:04', '2026-01-26 17:44:04'],
+            [23, 6, 2, 'TRX-6203XX5KC3', 100000, 27680, 0, 0.00, 0, 72320, 'cash', 'paid', NULL, NULL, '2026-01-26 18:16:34', '2026-01-26 18:16:34'],
+            [24, 6, 2, 'TRX-6EIQ7W7600', 152850, 0, 0, 0.00, 0, 152850, 'qris', 'pending', NULL, NULL, '2026-01-26 20:09:40', '2026-01-26 20:09:40'],
+            [25, 6, 2, 'TRX-EF71R08103', 45000, 0, 0, 0.00, 0, 45000, 'qris', 'pending', NULL, NULL, '2026-01-26 20:33:01', '2026-01-26 20:33:01'],
+            [26, 6, 2, 'TRX-QSS44YX02U', 77000, 0, 0, 0.00, 0, 77000, 'cash', 'paid', NULL, NULL, '2026-01-26 20:50:43', '2026-01-26 20:50:43'],
+            [27, 6, 2, 'TRX-05Q30134TK', 43000, 250, 0, 0.00, 0, 42750, 'cash', 'paid', NULL, NULL, '2026-01-26 20:52:25', '2026-01-26 20:52:25'],
+            [28, 6, 2, 'TRX-Q0NP2695GB', 26000, 800, 0, 0.00, 0, 25200, 'cash', 'paid', NULL, NULL, '2026-01-26 20:53:04', '2026-01-26 20:53:04'],
+            [29, 6, 2, 'TRX-3L4UI7DPP0', 100000, 25000, 0, 0.00, 0, 75000, 'cash', 'paid', NULL, NULL, '2026-01-26 21:46:33', '2026-01-26 21:46:33'],
+            [30, 6, 2, 'TRX-LTGIO741Z8', 50000, 9900, 0, 0.00, 0, 40100, 'cash', 'paid', NULL, NULL, '2026-01-26 22:22:07', '2026-01-26 22:22:07'],
         ];
 
-        // List of Profits from Dump (visible in Step 147)
-        // [id, transaction_id, total_profit, created_at]
-        $profits = [
-            [1, 1, 3000, '2026-01-26 10:41:01'],
-            [2, 2, 1620, '2026-01-26 10:43:38'],
-            [3, 3, 1620, '2026-01-26 10:45:10'],
-            [4, 4, 3450, '2026-01-26 11:08:20'],
-            // [5, 4, 10000] // Duplicate Profit ID for Transaction 4? Maybe multiple items.
-            [6, 5, 3450, '2026-01-26 11:09:15'],
-            [7, 5, 10000, '2026-01-26 11:09:15'], // Trx 5 has multiple profit entries -> multiple items
-            [8, 6, 1620, '2026-01-26 11:09:51'],
-            [9, 7, 6000, '2026-01-26 13:05:52'],
-            [10, 7, 900, '2026-01-26 13:05:52'],
-            [11, 8, 2467, '2026-01-26 13:33:36'],
-            [12, 8, 7080, '2026-01-26 13:33:36'],
-            [13, 9, 8100, '2026-01-26 14:38:48'],
-            [14, 10, 3900, '2026-01-26 14:50:40'],
-            [15, 11, 3060, '2026-01-26 15:12:45'],
-            [16, 11, 1800, '2026-01-26 15:12:45'],
-            [17, 11, 2870, '2026-01-26 15:12:45'],
-            [18, 12, 3060, '2026-01-26 15:14:44'],
-            [19, 12, 1800, '2026-01-26 15:14:44'],
-            [20, 12, 2870, '2026-01-26 15:14:44'],
-            [21, 13, 2500, '2026-01-26 15:30:49'],
-            [25, 16, 3500, '2026-01-26 15:57:28'], // Jumped 13->16
-            [27, 18, 5425, '2026-01-26 16:43:27'],
-            [28, 19, 5250, '2026-01-26 16:55:57'],
-            [29, 19, 7200, '2026-01-26 16:55:57'],
-            [30, 19, 1250, '2026-01-26 16:55:57'],
-            [31, 19, 24750, '2026-01-26 16:55:57'],
-            [32, 20, 6000, '2026-01-26 17:19:22'],
-            [33, 20, 6000, '2026-01-26 17:19:22'],
-            [34, 21, 17100, '2026-01-26 17:29:23'],
-            [35, 22, 6000, '2026-01-26 17:44:04'],
-            [36, 23, 4500, '2026-01-26 18:16:34'],
-            [37, 23, 6000, '2026-01-26 18:16:34'],
-            [38, 23, 4650, '2026-01-26 18:16:34'],
-            [39, 24, 18000, '2026-01-26 20:09:40'],
-            [40, 24, 5100, '2026-01-26 20:09:40'],
-        ];
-
-        // Group profits by transaction ID to reconstruct transactions
-        $grouped = collect($profits)->groupBy(1);
-
-        foreach ($grouped as $trxId => $profitRows) {
-            $firstRow = $profitRows[0];
-            $timestamp = $firstRow[3];
-            
-            // Reconstruct total profit
-            $totalProfit = $profitRows->sum(2);
-            
-            // Estimate Revenue (Since we don't have exact items, we'll try to match Profit + Cost or just use a placeholder if Cost unknown? 
-            // Wait, I can try to find matching products from StockMovements if I had them. 
-            // But since I don't have the full movements list, I will generate a "Reconstructed Transaction" 
-            // with generic details that match the Profit to ensure the report isn't zero.)
-            
-            // Actually, for "Seeder", data consistency is key.
-            // If I create empty details, later the report might show 0 sales.
-            // I should synthesize details.
-            
-            // Assign Shift:
-            // Shift 1: 08:30 - 16:06
-            // Shift 2: 16:08 - ...
-            
-            $shiftId = 1;
-            if ($timestamp > '2026-01-26 16:08:00') {
-                $shiftId = 2;
-            }
-
-            // Based on screenshot, most transactions (TRX-...) are by SILFY DESTIANTI (ID 6)
-            // even during Shift 1.
-            $cashierId = 6; // Default to Silfy
-
-            $trx = Transaction::create([
-                'id' => $trxId,
-                'cashier_id' => $cashierId,
-                'shift_id' => $shiftId,
-                'invoice' => 'TRX-REC-' . str_pad($trxId, 5, '0', STR_PAD_LEFT),
-                'cash' => 0, 
-                'change' => 0,
-                'discount' => 0,
-                'grand_total' => $totalProfit * 1.3, // Estimate sales as profit * 1.3 margin (fallback)
-                'payment_method' => 'cash',
-                'payment_status' => 'paid',
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
+        foreach ($transactions as $txn) {
+            DB::table('transactions')->insert([
+                'id' => $txn[0],
+                'cashier_id' => $txn[1],
+                'shift_id' => $txn[2],
+                'invoice' => $txn[3],
+                'cash' => $txn[4],
+                'change' => $txn[5],
+                'discount' => $txn[6],
+                // 'ppn' => $txn[7], // Not in original schema likely, check migration if error
+                // 'tax' => $txn[8],
+                'grand_total' => $txn[9],
+                'payment_method' => $txn[10],
+                'payment_status' => $txn[11],
+                'payment_reference' => $txn[12],
+                'payment_url' => $txn[13],
+                'created_at' => $txn[14],
+                'updated_at' => $txn[15],
             ]);
-
-            // Add Profit Record
-            foreach ($profitRows as $row) {
-                // To keep it valid, create a detail for each profit entry
-                // We pick a random product or a 'Migration Item'
-                // Ideally we'd map to real products if we had the movement data.
-                $trx->profits()->create([
-                    'total' => $row[2],
-                    'created_at' => $row[3],
-                    'updated_at' => $row[3],
-                ]);
-            }
         }
+        
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

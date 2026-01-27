@@ -169,8 +169,8 @@ export default function Create({ warehouses = [], products = [], suppliers = [] 
 
             // Auto-calculate total quantity when packaging fields change
             if (['packaging_qty', 'qty_per_package', 'packaging_unit'].includes(field)) {
-                const packagingQty = parseInt(updatedItem.packaging_qty) || 0
-                const qtyPerPackage = parseInt(updatedItem.qty_per_package) || 1
+                const packagingQty = parseFloat(updatedItem.packaging_qty) || 0
+                const qtyPerPackage = parseFloat(updatedItem.qty_per_package) || 1
 
                 // If unit is 'pcs', no conversion needed
                 if (updatedItem.packaging_unit === 'pcs') {
@@ -242,10 +242,10 @@ export default function Create({ warehouses = [], products = [], suppliers = [] 
             invoice_number: formData.invoice_number || null,
             items: validItems.map(item => ({
                 product_id: item.product_id,
-                packaging_qty: parseInt(item.packaging_qty) || 0,
+                packaging_qty: parseFloat(item.packaging_qty) || 0,
                 packaging_unit: item.packaging_unit || 'pcs',
-                qty_per_package: parseInt(item.qty_per_package) || 1,
-                quantity: parseInt(item.quantity) || 0, // Calculated total
+                qty_per_package: parseFloat(item.qty_per_package) || 1,
+                quantity: parseFloat(item.quantity) || 0, // Calculated total
                 purchase_price: parseCurrency(item.purchase_price) || null,
                 batch_number: item.batch_number || null,
                 expiry_date: item.expiry_date || null,

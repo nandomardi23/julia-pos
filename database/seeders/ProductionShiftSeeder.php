@@ -9,7 +9,9 @@ class ProductionShiftSeeder extends Seeder
 {
     public function run(): void
     {
-        // Shift 1: Suci (ID 3), Closed
+        // Disable Foreign Key Checks
+        \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Shift::truncate();
         Shift::create([
             'id' => 1,
             'user_id' => 3, // suci
@@ -21,7 +23,7 @@ class ProductionShiftSeeder extends Seeder
             'expected_cash' => 567096.00,
             'difference' => -327396.00,
             'status' => 'closed',
-            'notes' => "ada tiga barang yang tidak masuk dikarenakan salah harga perkilo nya, seharusnya jeruk raja 35.000 \n(jeruk raja 185 gram = 6.475)\n(jeruk raja 925 gram = 32.375)\n(kelengkeng 390 gram = 18.720) kelengkeng tidak masuk karena satu pembayaran dengan jeruk raja.",
+            'notes' => "Adjustment: Tiga barang tidak masuk dikarenakan salah harga perkilo: Jeruk Raja (185g & 925g) dan Kelengkeng (390g). Kelengkeng satu pembayaran dengan Jeruk Raja.",
             'created_at' => '2026-01-26 08:30:48',
             'updated_at' => '2026-01-26 16:06:30',
         ]);
@@ -42,5 +44,6 @@ class ProductionShiftSeeder extends Seeder
             'created_at' => '2026-01-26 16:08:40',
             'updated_at' => '2026-01-26 16:08:40',
         ]);
+        \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

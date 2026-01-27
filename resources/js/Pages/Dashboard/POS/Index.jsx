@@ -1201,6 +1201,7 @@ export default function Index({
                                                         <div className="relative">
                                                             <input
                                                                 type="number"
+                                                                step="any"
                                                                 value={isWeightBasedUnit(cart.product?.unit) ? cart.qty : Math.floor(cart.qty)}
                                                                 onClick={(e) => e.stopPropagation()}
                                                                 onChange={(e) => {
@@ -1450,6 +1451,7 @@ export default function Index({
                             <input
                                 type="text"
                                 inputMode="decimal"
+                                step="any"
                                 value={qtyModalValue}
                                 onChange={(e) => setQtyModalValue(sanitizeDecimalInput(e.target.value))}
                                 placeholder="0.00"

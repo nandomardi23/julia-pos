@@ -204,9 +204,9 @@ class ProductionProductSeeder extends Seeder
         ];
 
         // Add 120 if missing from list but present in dump?
-        // Let's add it explicitly to avoid gap issues if logic depends on 120 existance.
-        // It was "Chicken Wing 500 gram"
-        $products[] = [120, 'Chicken Wing 500 gram', 'Daging Ayam', 19500, 25000, 'PCS', '621110600120', 5.000];
+        // ID 120 is already in the main $products array (Row 151), so we remove this duplicate append.
+        // $products[] = [120, 'Chicken Wing 500 gram', 'Daging Ayam', 19500, 25000, 'PCS', '621110600120', 5.000];
+        
         // Wait, array index order is loose. I'll sort by ID before insert to be safe.
         usort($products, fn($a, $b) => $a[0] <=> $b[0]);
 

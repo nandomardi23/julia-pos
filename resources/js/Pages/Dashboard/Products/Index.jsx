@@ -100,13 +100,7 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                 </div>
 
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
-                    <Button
-                        type={'button'}
-                        icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
-                        className={'border bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-700 dark:hover:bg-emerald-700'}
-                        label={`Import`}
-                        onClick={() => setShowImport(true)}
-                    />
+                    <div className='flex items-center gap-2'>
                     <Button
                         type={'link'}
                         icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
@@ -114,6 +108,14 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                         label={`Tambah Data`}
                         href={route('products.create') + `?type=${currentType === 'all' ? 'sellable' : (currentType === 'product' ? 'sellable' : currentType)}`}
                     />
+                    <Button
+                        type={'button'}
+                        icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
+                        className={'border bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-700 dark:hover:bg-emerald-700'}
+                        label={`Import`}
+                        onClick={() => setShowImport(true)}
+                    />
+                </div>    
                     <div className='w-full sm:w-80'>
                         <Search
                             url={route('products.index') + `?type=${currentType}`}

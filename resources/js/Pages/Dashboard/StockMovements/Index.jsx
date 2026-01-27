@@ -1114,8 +1114,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
                     <div>
                         <SearchableSelect
                             label="Supplier (Opsional)"
-                            options={importSupplierOptions}
-                            value={selectedImportSupplier}
+                            options={supplierOptions}
+                            value={supplierOptions.find(opt => opt.value == importData.supplier_id) || null}
                             onChange={(option) => setImportData({ ...importData, supplier_id: option ? option.value : '' })}
                             placeholder="Pilih Supplier..."
                             isClearable={true}

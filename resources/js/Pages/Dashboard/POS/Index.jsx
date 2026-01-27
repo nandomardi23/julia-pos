@@ -898,10 +898,10 @@ export default function Index({
                             title="Klik untuk cek koneksi printer"
                         >
                             <div className={`p-2 rounded-lg transition-colors ${qzStatus.checking
-                                    ? 'text-gray-400 animate-pulse'
-                                    : qzStatus.connected
-                                        ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'text-gray-400 animate-pulse'
+                                : qzStatus.connected
+                                    ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                    : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                                 }`}>
                                 <IconPrinter size={20} />
                             </div>
@@ -982,8 +982,8 @@ export default function Index({
                                 <button
                                     onClick={() => handleCategoryChange(null)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                                         }`}
                                 >
                                     Semua
@@ -993,8 +993,8 @@ export default function Index({
                                         key={category.id}
                                         onClick={() => handleCategoryChange(category)}
                                         className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory?.id === category.id
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                                             }`}
                                     >
                                         {category.name}
@@ -1038,8 +1038,8 @@ export default function Index({
                                                         handleAddToCart(product);
                                                     }}
                                                     className={`bg-white dark:bg-gray-950 rounded-xl border dark:border-gray-800 overflow-hidden transition-all ${isOutOfStock
-                                                            ? "opacity-60 cursor-not-allowed"
-                                                            : "cursor-pointer hover:shadow-lg hover:scale-[1.02]"
+                                                        ? "opacity-60 cursor-not-allowed"
+                                                        : "cursor-pointer hover:shadow-lg hover:scale-[1.02]"
                                                         }`}
                                                 >
                                                     {/* Product Image */}
@@ -1055,10 +1055,10 @@ export default function Index({
                                                         {/* Stock Badge */}
                                                         <span
                                                             className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium ${isOutOfStock
-                                                                    ? "bg-rose-500 text-white"
-                                                                    : product.display_qty > 10
-                                                                        ? "bg-emerald-500 text-white"
-                                                                        : "bg-amber-500 text-white"
+                                                                ? "bg-rose-500 text-white"
+                                                                : product.display_qty > 10
+                                                                    ? "bg-emerald-500 text-white"
+                                                                    : "bg-amber-500 text-white"
                                                                 }`}
                                                         >
                                                             {isOutOfStock
@@ -1267,8 +1267,8 @@ export default function Index({
                                             <button
                                                 onClick={() => setDiscountType("nominal")}
                                                 className={`text-xs px-2 py-1 rounded transition-colors ${discountType === "nominal"
-                                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
-                                                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                                                     }`}
                                             >
                                                 Rp
@@ -1276,8 +1276,8 @@ export default function Index({
                                             <button
                                                 onClick={() => setDiscountType("percent")}
                                                 className={`text-xs px-2 py-1 rounded transition-colors ${discountType === "percent"
-                                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
-                                                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                                                     }`}
                                             >
                                                 %
@@ -1365,8 +1365,8 @@ export default function Index({
                                             type="button"
                                             onClick={() => setPaymentMethod(option.value)}
                                             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${isActive
-                                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                                : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                                                 }`}
                                         >
                                             <IconComponent size={16} />
@@ -1403,8 +1403,8 @@ export default function Index({
                                 onClick={handleSubmitTransaction}
                                 disabled={isSubmitDisabled}
                                 className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-colors ${isSubmitDisabled
-                                        ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
-                                        : "bg-blue-600 hover:bg-blue-700"
+                                    ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700"
                                     }`}
                             >
                                 {submitLabel}
@@ -1434,7 +1434,7 @@ export default function Index({
                                 Harga: {formatPrice(qtyModalProduct.sell_price)} / {qtyModalProduct.unit}
                             </p>
                             <p className="text-sm text-gray-500">
-                                Stok tersedia: {qtyModalProduct.display_qty} {qtyModalProduct.unit}
+                                Stok tersedia: {formatQty(qtyModalProduct.display_qty, qtyModalProduct.unit)} {qtyModalProduct.unit}
                             </p>
                         </div>
 
@@ -1516,19 +1516,19 @@ export default function Index({
                                     type="button"
                                     onClick={() => setSelectedVariant(variant)}
                                     className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${selectedVariant?.id === variant.id
-                                            ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30"
-                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                                        ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30"
+                                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                 >
                                     <span className={`font-medium ${selectedVariant?.id === variant.id
-                                            ? "text-blue-600 dark:text-blue-400"
-                                            : "text-gray-700 dark:text-gray-300"
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-gray-700 dark:text-gray-300"
                                         }`}>
                                         {variant.name}
                                     </span>
                                     <span className={`font-bold ${selectedVariant?.id === variant.id
-                                            ? "text-blue-600 dark:text-blue-400"
-                                            : "text-gray-900 dark:text-white"
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-gray-900 dark:text-white"
                                         }`}>
                                         {formatPrice(variant.sell_price)}
                                     </span>
@@ -1678,8 +1678,8 @@ export default function Index({
                                         type="button"
                                         onClick={() => setPrintMode('qz')}
                                         className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'qz'
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
                                             }`}
                                     >
                                         <IconPrinter size={14} />
@@ -1689,8 +1689,8 @@ export default function Index({
                                         type="button"
                                         onClick={handleSwitchToServerMode}
                                         className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'server'
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
                                             }`}
                                     >
                                         <IconPrinter size={14} />
@@ -1700,8 +1700,8 @@ export default function Index({
                                         type="button"
                                         onClick={() => setPrintMode('websocket')}
                                         className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'websocket'
-                                                ? 'bg-purple-600 text-white'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
                                             }`}
                                     >
                                         <IconPrinter size={14} />
@@ -1726,8 +1726,8 @@ export default function Index({
                                         }}
                                         disabled={!serialStatus.supported}
                                         className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'serial'
-                                                ? 'bg-green-600 text-white'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
                                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                                         title={!serialStatus.supported ? 'Web Serial API not supported (use Chrome/Edge)' : ''}
                                     >
@@ -1745,8 +1745,8 @@ export default function Index({
                                 </div>
                             ) : printMode === 'server' ? (
                                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${serverPrintStatus.available
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                                        : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                                     }`}>
                                     <IconPrinter size={14} />
                                     <span>
@@ -1759,8 +1759,8 @@ export default function Index({
                                 </div>
                             ) : printMode === 'serial' ? (
                                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${serialStatus.supported
-                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                                        : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                                     }`}>
                                     <IconPrinter size={14} />
                                     <span>
@@ -1773,14 +1773,14 @@ export default function Index({
                                 </div>
                             ) : (
                                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${wsStatus.connected
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                                        : wsStatus.reconnecting
-                                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
-                                            : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
+                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                    : wsStatus.reconnecting
+                                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                                        : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
                                     }`}>
                                     <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-emerald-500 animate-pulse' :
-                                            wsStatus.reconnecting ? 'bg-amber-500 animate-pulse' :
-                                                'bg-rose-500'
+                                        wsStatus.reconnecting ? 'bg-amber-500 animate-pulse' :
+                                            'bg-rose-500'
                                         }`} />
                                     <span>
                                         {wsStatus.connected

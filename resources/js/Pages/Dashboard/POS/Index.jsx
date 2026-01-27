@@ -61,14 +61,14 @@ export default function Index({
     const [variantModalProduct, setVariantModalProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const searchInputRef = useRef(null);
-    
+
     // QZ Tray connection status
     const [qzStatus, setQzStatus] = useState({
         checking: true,
         connected: false,
         printerName: null
     });
-    
+
     // Print mode: 'qz' or 'server' (persisted in localStorage)
     const [printMode, setPrintMode] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -76,53 +76,53 @@ export default function Index({
         }
         return 'qz';
     });
-    
+
     // Save printMode to localStorage when changed
     useEffect(() => {
         localStorage.setItem('pos_print_mode', printMode);
     }, [printMode]);
-    
+
     // Server print status
     const [serverPrintStatus, setServerPrintStatus] = useState({
         available: false,
         printerName: null,
         checking: false
     });
-    
-    
+
+
     // WebSocket print status
     const [wsStatus, setWsStatus] = useState({
         connected: false,
         reconnecting: false,
         message: 'Disconnected'
     });
-    
+
     // USB Serial print status
     const [serialStatus, setSerialStatus] = useState({
         supported: SerialPrintService.isSupported(),
         connected: false,
         printerName: null
     });
-    
+
     // Register WebSocket status callback
     useEffect(() => {
         // Configure WebSocket URL from settings before connecting
         const websocketUrl = settings?.websocket_url || 'ws://localhost:9100';
         WebSocketPrintService.setServerUrl(websocketUrl);
-        
+
         WebSocketPrintService.onStatusChange(setWsStatus);
-        
+
         // Try to connect on mount
         WebSocketPrintService.connect().catch(() => {
             // Silent fail - status will be updated via callback
         });
-        
+
         return () => {
             // Cleanup on unmount
             WebSocketPrintService.disconnect();
         };
     }, [settings?.websocket_url]);
-    
+
     // Auto-reconnect to USB Serial printer if previously authorized
     useEffect(() => {
         if (serialStatus.supported && !serialStatus.connected) {
@@ -137,16 +137,16 @@ export default function Index({
             });
         }
     }, []);
-    
+
     // Hide out of stock filter
     const [hideOutOfStock, setHideOutOfStock] = useState(filters?.hide_out_of_stock ?? false);
-    
+
     // Receipt modal state
     const [receiptModalOpen, setReceiptModalOpen] = useState(false);
     const [lastTransaction, setLastTransaction] = useState(null);
     const [thermalPrinting, setThermalPrinting] = useState(false);
     const [drawerOpening, setDrawerOpening] = useState(false);
-    
+
     // Check for flash transaction (after successful payment)
     useEffect(() => {
         if (flash?.transaction) {
@@ -155,12 +155,12 @@ export default function Index({
             // Note: Cash drawer will be opened automatically when printing receipt (for cash payments)
         }
     }, [flash?.transaction]);
-    
 
-    
+
+
     // Local state for optimistic updates - Moved up to fix ReferenceError
     const [localCarts, setLocalCarts] = useState(carts);
-    
+
     // Sync local state when props change (server response)
     useEffect(() => {
         setLocalCarts(carts);
@@ -179,14 +179,14 @@ export default function Index({
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            
+
             oscillator.frequency.value = success ? 800 : 300;
             oscillator.type = "sine";
             gainNode.gain.value = 0.3;
-            
+
             oscillator.start();
             oscillator.stop(audioContext.currentTime + (success ? 0.1 : 0.3));
         } catch (e) {
@@ -197,11 +197,11 @@ export default function Index({
     useEffect(() => {
         setPaymentMethod(defaultPaymentGateway ?? "cash");
     }, [defaultPaymentGateway]);
-    
+
     // QZ Tray connection check handler (lazy - on demand)
     const handleQzCheck = async () => {
         if (qzStatus.checking) return; // Prevent multiple checks
-        
+
         setQzStatus(prev => ({ ...prev, checking: true }));
         try {
             const status = await PrintService.checkConnection();
@@ -219,12 +219,12 @@ export default function Index({
     const searchTimeoutRef = useRef(null);
     const handleSearchChange = (value) => {
         setSearch(value);
-        
+
         // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-        
+
         // Debounce 500ms before sending to server
         searchTimeoutRef.current = setTimeout(() => {
             router.get(route('pos.index'), {
@@ -250,7 +250,7 @@ export default function Index({
             preserveScroll: true,
         });
     };
-    
+
     // Handle hide out of stock toggle
     const handleHideOutOfStockChange = (checked) => {
         setHideOutOfStock(checked);
@@ -269,7 +269,7 @@ export default function Index({
 
     // Barcode scanner detection - auto-add when Enter is pressed after fast input
     const scanningRef = useRef(false); // Lock to prevent concurrent scans
-    
+
     // Buffer for headless scanning
     const bufferTimeoutRef = useRef(null);
 
@@ -288,7 +288,7 @@ export default function Index({
                 // Check inter-keypress timing. Scanners are fast (<50ms). Humans are slow.
                 // If gap > 100ms, assume new sequence or manual type.
                 if (now - lastInputTimeRef.current > 100) {
-                     barcodeBufferRef.current = ""; 
+                    barcodeBufferRef.current = "";
                 }
                 lastInputTimeRef.current = now;
                 barcodeBufferRef.current += e.key;
@@ -321,7 +321,7 @@ export default function Index({
                     setSearch("");
                     barcodeBufferRef.current = "";
                     if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
-                    
+
                     if (searchTimeoutRef.current) {
                         clearTimeout(searchTimeoutRef.current);
                         searchTimeoutRef.current = null;
@@ -330,26 +330,26 @@ export default function Index({
                     scanningRef.current = true;
                     // Provide immediate feedback to reduce perceived delay
                     const loadingToast = toast.loading("Mencari produk...");
-                    
+
                     try {
                         // First try to find in current products list (fast)
                         const localProduct = productsList.find(
                             (p) => p.barcode && p.barcode.toLowerCase() === barcode.toLowerCase()
                         );
-                        
+
                         if (localProduct) {
                             toast.dismiss(loadingToast); // Dismiss loading immediately
                             playBeep(true);
                             handleAddToCart(localProduct);
                             return;
                         }
-                        
+
                         // If not found locally, search in database via API
                         const response = await fetch(`/dashboard/pos/find-by-barcode?barcode=${encodeURIComponent(barcode)}`);
                         const data = await response.json();
-                        
+
                         toast.dismiss(loadingToast); // Dismiss loading before showing result
-                        
+
                         if (data.found && data.product) {
                             playBeep(true);
                             handleAddToCart(data.product);
@@ -367,7 +367,7 @@ export default function Index({
                 }
             }
         };
-        
+
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [search, productsList, playBeep]);
@@ -388,9 +388,9 @@ export default function Index({
 
         return Math.min(value, total);
     }, [discountInput, discountType, localCartsTotal]);
-    
+
     const subtotal = useMemo(() => localCartsTotal ?? 0, [localCartsTotal]);
-    
+
     // Tax calculation: (Subtotal - Discount) * Tax%
     // Only apply tax if result is positive
     const taxAmount = useMemo(() => {
@@ -423,9 +423,9 @@ export default function Index({
     const paymentOptions = useMemo(() => {
         const options = Array.isArray(paymentGateways)
             ? paymentGateways.filter(
-                  (gateway) =>
-                      gateway?.value && gateway.value.toLowerCase() !== "cash"
-              )
+                (gateway) =>
+                    gateway?.value && gateway.value.toLowerCase() !== "cash"
+            )
             : [];
 
         return [
@@ -518,7 +518,7 @@ export default function Index({
 
     const handleAddToCart = (product, customQty = null, variantId = null) => {
         const qty = customQty || 1;
-        
+
         // Check if product has variants and no variant selected
         if (product.variants && product.variants.length > 0 && !variantId && customQty === null) {
             setVariantModalProduct(product);
@@ -526,7 +526,7 @@ export default function Index({
             setVariantModalOpen(true);
             return;
         }
-        
+
         if (product.display_qty < qty) {
             // Smart Warning: Check if product has warehouse stock
             if (product.warehouse_qty > 0) {
@@ -608,10 +608,10 @@ export default function Index({
         if (sync && !isRecipe && newQty > availableStock) {
             toast.error(`Stok tidak mencukupi! (Tersedia: ${availableStock})`);
             // Revert to max available stock
-            setLocalCarts(prevCarts => 
-                prevCarts.map(cart => 
-                    cart.id === cartId 
-                        ? { ...cart, qty: availableStock } 
+            setLocalCarts(prevCarts =>
+                prevCarts.map(cart =>
+                    cart.id === cartId
+                        ? { ...cart, qty: availableStock }
                         : cart
                 )
             );
@@ -622,10 +622,10 @@ export default function Index({
         const previousQty = cartItem.qty;
 
         // Optimistic update
-        setLocalCarts(prevCarts => 
-            prevCarts.map(cart => 
-                cart.id === cartId 
-                    ? { ...cart, qty: newQty } 
+        setLocalCarts(prevCarts =>
+            prevCarts.map(cart =>
+                cart.id === cartId
+                    ? { ...cart, qty: newQty }
                     : cart
             )
         );
@@ -643,10 +643,10 @@ export default function Index({
                     onError: (errors) => {
                         // Rollback on error
                         toast.error(errors.message || "Stok tidak mencukupi!");
-                        setLocalCarts(prevCarts => 
-                            prevCarts.map(cart => 
-                                cart.id === cartId 
-                                    ? { ...cart, qty: previousQty } 
+                        setLocalCarts(prevCarts =>
+                            prevCarts.map(cart =>
+                                cart.id === cartId
+                                    ? { ...cart, qty: previousQty }
                                     : cart
                             )
                         );
@@ -706,11 +706,11 @@ export default function Index({
     // Handle thermal print from receipt modal (supports QZ Tray, Server, and WebSocket modes)
     const handleThermalPrint = async () => {
         if (thermalPrinting || !lastTransaction) return;
-        
+
         setThermalPrinting(true);
         try {
             let result;
-            
+
             if (printMode === 'server') {
                 // Server-side printing (using axios for proper CSRF)
                 const response = await window.axios.post(`/dashboard/print/receipt/${lastTransaction.invoice}`);
@@ -722,7 +722,7 @@ export default function Index({
                     setThermalPrinting(false);
                     return;
                 }
-                
+
                 result = await WebSocketPrintService.printReceipt(
                     lastTransaction,
                     settings,
@@ -735,7 +735,7 @@ export default function Index({
                     setThermalPrinting(false);
                     return;
                 }
-                
+
                 result = await SerialPrintService.printReceipt(
                     lastTransaction,
                     settings,
@@ -745,7 +745,7 @@ export default function Index({
                 // QZ Tray (client-side)
                 result = await PrintService.printReceipt(lastTransaction, settings);
             }
-            
+
             if (result.success) {
                 toast.success('Struk dicetak ke printer thermal');
             } else {
@@ -761,11 +761,11 @@ export default function Index({
     // Handle cash drawer open (supports QZ Tray, Server, and WebSocket modes)
     const handleOpenDrawer = async () => {
         if (drawerOpening) return;
-        
+
         setDrawerOpening(true);
         try {
             let result;
-            
+
             if (printMode === 'server') {
                 // Server-side (using axios for proper CSRF)
                 const response = await window.axios.post('/dashboard/print/drawer');
@@ -777,7 +777,7 @@ export default function Index({
                     setDrawerOpening(false);
                     return;
                 }
-                
+
                 result = await WebSocketPrintService.openCashDrawer(settings?.printer_name || 'POS-80');
             } else if (printMode === 'serial') {
                 // USB Serial
@@ -786,13 +786,13 @@ export default function Index({
                     setDrawerOpening(false);
                     return;
                 }
-                
+
                 result = await SerialPrintService.openCashDrawer();
             } else {
                 // QZ Tray
                 result = await PrintService.openCashDrawer();
             }
-            
+
             if (result.success) {
                 toast.success('Laci kasir dibuka');
             } else {
@@ -871,8 +871,8 @@ export default function Index({
                         <div className="h-6 w-px bg-gray-300 dark:bg-gray-700" />
                         <div className="flex items-center gap-2">
                             {settings.store_logo ? (
-                                <img 
-                                    src={`/storage/settings/${settings.store_logo}`} 
+                                <img
+                                    src={`/storage/settings/${settings.store_logo}`}
                                     className="w-7 h-7 object-contain"
                                     alt="Logo"
                                 />
@@ -897,22 +897,21 @@ export default function Index({
                             className="relative group"
                             title="Klik untuk cek koneksi printer"
                         >
-                            <div className={`p-2 rounded-lg transition-colors ${
-                                qzStatus.checking 
+                            <div className={`p-2 rounded-lg transition-colors ${qzStatus.checking
                                     ? 'text-gray-400 animate-pulse'
                                     : qzStatus.connected
-                                    ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                                    : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                            }`}>
+                                        ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                }`}>
                                 <IconPrinter size={20} />
                             </div>
                             {/* Tooltip */}
                             <div className="absolute right-0 top-full mt-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
-                                {qzStatus.checking 
+                                {qzStatus.checking
                                     ? 'Memeriksa koneksi printer...'
                                     : qzStatus.connected
-                                    ? `✓ ${qzStatus.printerName || 'Printer terhubung'}`
-                                    : 'Klik untuk cek printer'}
+                                        ? `✓ ${qzStatus.printerName || 'Printer terhubung'}`
+                                        : 'Klik untuk cek printer'}
                             </div>
                         </button>
                         <button
@@ -982,11 +981,10 @@ export default function Index({
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                 <button
                                     onClick={() => handleCategoryChange(null)}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                                        !selectedCategory
+                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${!selectedCategory
                                             ? "bg-blue-600 text-white"
                                             : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    }`}
+                                        }`}
                                 >
                                     Semua
                                 </button>
@@ -994,17 +992,16 @@ export default function Index({
                                     <button
                                         key={category.id}
                                         onClick={() => handleCategoryChange(category)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                                            selectedCategory?.id === category.id
+                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory?.id === category.id
                                                 ? "bg-blue-600 text-white"
                                                 : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                        }`}
+                                            }`}
                                     >
                                         {category.name}
                                     </button>
                                 ))}
                             </div>
-                            
+
                             {/* Hide Out of Stock Toggle */}
                             <label className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                                 <input
@@ -1029,7 +1026,7 @@ export default function Index({
                                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                                         {paginatedProducts.map((product) => {
                                             const isOutOfStock = product.display_qty <= 0 || product.is_available === false;
-                                            
+
                                             return (
                                                 <div
                                                     key={product.id}
@@ -1040,11 +1037,10 @@ export default function Index({
                                                         }
                                                         handleAddToCart(product);
                                                     }}
-                                                    className={`bg-white dark:bg-gray-950 rounded-xl border dark:border-gray-800 overflow-hidden transition-all ${
-                                                        isOutOfStock
+                                                    className={`bg-white dark:bg-gray-950 rounded-xl border dark:border-gray-800 overflow-hidden transition-all ${isOutOfStock
                                                             ? "opacity-60 cursor-not-allowed"
                                                             : "cursor-pointer hover:shadow-lg hover:scale-[1.02]"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {/* Product Image */}
                                                     <div className="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
@@ -1058,19 +1054,18 @@ export default function Index({
                                                         />
                                                         {/* Stock Badge */}
                                                         <span
-                                                            className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium ${
-                                                                isOutOfStock
+                                                            className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium ${isOutOfStock
                                                                     ? "bg-rose-500 text-white"
                                                                     : product.display_qty > 10
-                                                                    ? "bg-emerald-500 text-white"
-                                                                    : "bg-amber-500 text-white"
-                                                            }`}
+                                                                        ? "bg-emerald-500 text-white"
+                                                                        : "bg-amber-500 text-white"
+                                                                }`}
                                                         >
-                                                            {isOutOfStock 
+                                                            {isOutOfStock
                                                                 ? 'Habis'
-                                                                : (product.is_recipe || product.product_type === 'recipe' 
-                                                                    ? '✓' 
-                                                                    : product.display_qty)}
+                                                                : (product.is_recipe || product.product_type === 'recipe'
+                                                                    ? '✓'
+                                                                    : formatQty(product.display_qty, product.unit))}
                                                         </span>
                                                         {/* Out of Stock Overlay */}
                                                         {isOutOfStock && (
@@ -1183,7 +1178,7 @@ export default function Index({
                                                         </span>
                                                     )}
                                                 </h4>
-                                                
+
                                                 {/* Qty Controls */}
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm h-8">
@@ -1211,14 +1206,14 @@ export default function Index({
                                                                 onBlur={(e) => {
                                                                     const val = parseFloat(e.target.value);
                                                                     if (!isNaN(val) && val > 0) {
-                                                                         handleUpdateCartQty(cart.id, val, true);
+                                                                        handleUpdateCartQty(cart.id, val, true);
                                                                     } else {
-                                                                         // Reset to 1 if invalid
-                                                                         handleUpdateCartQty(cart.id, 1, true);
+                                                                        // Reset to 1 if invalid
+                                                                        handleUpdateCartQty(cart.id, 1, true);
                                                                     }
                                                                 }}
                                                                 onKeyDown={(e) => {
-                                                                    if(e.key === 'Enter') {
+                                                                    if (e.key === 'Enter') {
                                                                         e.currentTarget.blur();
                                                                     }
                                                                 }}
@@ -1260,104 +1255,102 @@ export default function Index({
 
                         {/* Cart Summary & Payment */}
                         <div className="border-t dark:border-gray-800 p-4 space-y-4">
-                                    {/* Discount & Tax Section */}
-                                    <div className="space-y-3 pt-4 border-t dark:border-gray-800">
-                                        {/* Discount Input */}
-                                        <div>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    Diskon
-                                                </label>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => setDiscountType("nominal")}
-                                                        className={`text-xs px-2 py-1 rounded transition-colors ${
-                                                            discountType === "nominal"
-                                                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
-                                                                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                                                        }`}
-                                                    >
-                                                        Rp
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDiscountType("percent")}
-                                                        className={`text-xs px-2 py-1 rounded transition-colors ${
-                                                            discountType === "percent"
-                                                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
-                                                                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                                                        }`}
-                                                    >
-                                                        %
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="relative">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                                    {discountType === "nominal" ? "Rp" : "%"}
-                                                </div>
-                                                <input
-                                                    type="text" // Keep as text to control input logic
-                                                    value={discountInput}
-                                                    onChange={(e) => {
-                                                        const val = sanitizeNumericInput(e.target.value);
-                                                        setDiscountInput(val);
-                                                    }}
-                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
-                                                    placeholder="0"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Tax Input */}
-                                        <div>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    Pajak (PPN)
-                                                </label>
-                                                <span className="text-xs text-gray-500">%</span>
-                                            </div>
-                                            <div className="relative">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                                    %
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={taxInput}
-                                                    onChange={(e) => {
-                                                        const val = sanitizeDecimalInput(e.target.value);
-                                                        setTaxInput(val);
-                                                    }}
-                                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
-                                                    placeholder="0"
-                                                />
-                                            </div>
+                            {/* Discount & Tax Section */}
+                            <div className="space-y-3 pt-4 border-t dark:border-gray-800">
+                                {/* Discount Input */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Diskon
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setDiscountType("nominal")}
+                                                className={`text-xs px-2 py-1 rounded transition-colors ${discountType === "nominal"
+                                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    }`}
+                                            >
+                                                Rp
+                                            </button>
+                                            <button
+                                                onClick={() => setDiscountType("percent")}
+                                                className={`text-xs px-2 py-1 rounded transition-colors ${discountType === "percent"
+                                                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                                                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                                                    }`}
+                                            >
+                                                %
+                                            </button>
                                         </div>
                                     </div>
-
-                                    {/* Summary Totals */}
-                                    <div className="pt-4 space-y-2 border-t dark:border-gray-800">
-                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-                                            <span>Subtotal</span>
-                                            {/* Fix hydration mismatch by forcing a string initially or suppression */}
-                                            <span>{formatPrice(subtotal)}</span>
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                            {discountType === "nominal" ? "Rp" : "%"}
                                         </div>
-                                        {discount > 0 && (
-                                            <div className="flex justify-between text-red-500 text-sm">
-                                                <span>Diskon</span>
-                                                <span>-{formatPrice(discount)}</span>
-                                            </div>
-                                        )}
-                                        {taxAmount > 0 && (
-                                            <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-                                                <span>PPN ({parseFloat(taxInput) || 0}%)</span>
-                                                <span>{formatPrice(taxAmount)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-gray-900 dark:text-white font-bold text-lg pt-2 border-t dark:border-gray-800">
-                                            <span>Total</span>
-                                            <span>{formatPrice(payable)}</span>
-                                        </div>
+                                        <input
+                                            type="text" // Keep as text to control input logic
+                                            value={discountInput}
+                                            onChange={(e) => {
+                                                const val = sanitizeNumericInput(e.target.value);
+                                                setDiscountInput(val);
+                                            }}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
+                                            placeholder="0"
+                                        />
                                     </div>
+                                </div>
+
+                                {/* Tax Input */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Pajak (PPN)
+                                        </label>
+                                        <span className="text-xs text-gray-500">%</span>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                            %
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={taxInput}
+                                            onChange={(e) => {
+                                                const val = sanitizeDecimalInput(e.target.value);
+                                                setTaxInput(val);
+                                            }}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white text-right"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Summary Totals */}
+                            <div className="pt-4 space-y-2 border-t dark:border-gray-800">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                                    <span>Subtotal</span>
+                                    {/* Fix hydration mismatch by forcing a string initially or suppression */}
+                                    <span>{formatPrice(subtotal)}</span>
+                                </div>
+                                {discount > 0 && (
+                                    <div className="flex justify-between text-red-500 text-sm">
+                                        <span>Diskon</span>
+                                        <span>-{formatPrice(discount)}</span>
+                                    </div>
+                                )}
+                                {taxAmount > 0 && (
+                                    <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                                        <span>PPN ({parseFloat(taxInput) || 0}%)</span>
+                                        <span>{formatPrice(taxAmount)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-gray-900 dark:text-white font-bold text-lg pt-2 border-t dark:border-gray-800">
+                                    <span>Total</span>
+                                    <span>{formatPrice(payable)}</span>
+                                </div>
+                            </div>
 
                             {/* Payment Method */}
                             <div className="flex gap-2">
@@ -1371,11 +1364,10 @@ export default function Index({
                                             key={option.value}
                                             type="button"
                                             onClick={() => setPaymentMethod(option.value)}
-                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                                                isActive
+                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${isActive
                                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
                                                     : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                            }`}
+                                                }`}
                                         >
                                             <IconComponent size={16} />
                                             {option.label}
@@ -1410,11 +1402,10 @@ export default function Index({
                                 type="button"
                                 onClick={handleSubmitTransaction}
                                 disabled={isSubmitDisabled}
-                                className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-colors ${
-                                    isSubmitDisabled
+                                className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-colors ${isSubmitDisabled
                                         ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
                                         : "bg-blue-600 hover:bg-blue-700"
-                                }`}
+                                    }`}
                             >
                                 {submitLabel}
                                 <IconArrowRight size={18} />
@@ -1434,7 +1425,7 @@ export default function Index({
                                 Masukkan Jumlah
                             </h3>
                         </div>
-                        
+
                         <div className="mb-4 text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 {qtyModalProduct.title}
@@ -1524,24 +1515,21 @@ export default function Index({
                                     key={variant.id}
                                     type="button"
                                     onClick={() => setSelectedVariant(variant)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
-                                        selectedVariant?.id === variant.id
+                                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${selectedVariant?.id === variant.id
                                             ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                    }`}
+                                        }`}
                                 >
-                                    <span className={`font-medium ${
-                                        selectedVariant?.id === variant.id
+                                    <span className={`font-medium ${selectedVariant?.id === variant.id
                                             ? "text-blue-600 dark:text-blue-400"
                                             : "text-gray-700 dark:text-gray-300"
-                                    }`}>
+                                        }`}>
                                         {variant.name}
                                     </span>
-                                    <span className={`font-bold ${
-                                        selectedVariant?.id === variant.id
+                                    <span className={`font-bold ${selectedVariant?.id === variant.id
                                             ? "text-blue-600 dark:text-blue-400"
                                             : "text-gray-900 dark:text-white"
-                                    }`}>
+                                        }`}>
                                         {formatPrice(variant.sell_price)}
                                     </span>
                                 </button>
@@ -1689,11 +1677,10 @@ export default function Index({
                                     <button
                                         type="button"
                                         onClick={() => setPrintMode('qz')}
-                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
-                                            printMode === 'qz'
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'qz'
                                                 ? 'bg-blue-600 text-white'
                                                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
-                                        }`}
+                                            }`}
                                     >
                                         <IconPrinter size={14} />
                                         QZ Tray
@@ -1701,11 +1688,10 @@ export default function Index({
                                     <button
                                         type="button"
                                         onClick={handleSwitchToServerMode}
-                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
-                                            printMode === 'server'
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'server'
                                                 ? 'bg-blue-600 text-white'
                                                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
-                                        }`}
+                                            }`}
                                     >
                                         <IconPrinter size={14} />
                                         Server
@@ -1713,11 +1699,10 @@ export default function Index({
                                     <button
                                         type="button"
                                         onClick={() => setPrintMode('websocket')}
-                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
-                                            printMode === 'websocket'
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'websocket'
                                                 ? 'bg-purple-600 text-white'
                                                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
-                                        }`}
+                                            }`}
                                     >
                                         <IconPrinter size={14} />
                                         WebSocket
@@ -1740,11 +1725,10 @@ export default function Index({
                                             }
                                         }}
                                         disabled={!serialStatus.supported}
-                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${
-                                            printMode === 'serial'
+                                        className={`flex-1 px-3 py-1.5 flex items-center justify-center gap-1 transition-colors ${printMode === 'serial'
                                                 ? 'bg-green-600 text-white'
                                                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                                         title={!serialStatus.supported ? 'Web Serial API not supported (use Chrome/Edge)' : ''}
                                     >
                                         <IconPrinter size={14} />
@@ -1760,29 +1744,27 @@ export default function Index({
                                     <span>QZ Tray: {qzStatus.connected ? `✓ ${qzStatus.printerName || 'Connected'}` : 'Klik icon printer di header untuk cek koneksi'}</span>
                                 </div>
                             ) : printMode === 'server' ? (
-                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                                    serverPrintStatus.available
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${serverPrintStatus.available
                                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                                         : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                                }`}>
+                                    }`}>
                                     <IconPrinter size={14} />
                                     <span>
-                                        {serverPrintStatus.checking 
-                                            ? 'Memeriksa printer...' 
-                                            : serverPrintStatus.available 
+                                        {serverPrintStatus.checking
+                                            ? 'Memeriksa printer...'
+                                            : serverPrintStatus.available
                                                 ? `✓ Server: ${serverPrintStatus.printerName}`
                                                 : `Server: ${serverPrintStatus.printerName || 'POS-80'}`}
                                     </span>
                                 </div>
-                             ) : printMode === 'serial' ? (
-                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                                    serialStatus.supported
+                            ) : printMode === 'serial' ? (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${serialStatus.supported
                                         ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
                                         : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                                }`}>
+                                    }`}>
                                     <IconPrinter size={14} />
                                     <span>
-                                        {serialStatus.supported 
+                                        {serialStatus.supported
                                             ? serialStatus.connected
                                                 ? '✓ USB Serial: Terhubung & Siap Print'
                                                 : 'USB Serial: Klik button USB untuk pilih printer'
@@ -1790,28 +1772,26 @@ export default function Index({
                                     </span>
                                 </div>
                             ) : (
-                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                                    wsStatus.connected
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${wsStatus.connected
                                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                                         : wsStatus.reconnecting
                                             ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
                                             : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
-                                }`}>
-                                    <span className={`w-2 h-2 rounded-full ${
-                                        wsStatus.connected ? 'bg-emerald-500 animate-pulse' : 
-                                        wsStatus.reconnecting ? 'bg-amber-500 animate-pulse' : 
-                                        'bg-rose-500'
-                                    }`} />
+                                    }`}>
+                                    <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-emerald-500 animate-pulse' :
+                                            wsStatus.reconnecting ? 'bg-amber-500 animate-pulse' :
+                                                'bg-rose-500'
+                                        }`} />
                                     <span>
-                                        {wsStatus.connected 
-                                            ? '✓ WebSocket: Connected (localhost:9100)' 
+                                        {wsStatus.connected
+                                            ? '✓ WebSocket: Connected (localhost:9100)'
                                             : wsStatus.reconnecting
                                                 ? 'WebSocket: Reconnecting...'
                                                 : 'WebSocket: Disconnected - Start print server'}
                                     </span>
                                 </div>
                             )}
-                            
+
                             {/* Print Buttons */}
                             <div className="flex gap-2">
                                 <button

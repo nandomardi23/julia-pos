@@ -18,7 +18,8 @@ export default function Show({ transaction }) {
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-        });
+            hour12: false,
+        }).replace(/\./g, ':');
 
     const items = transaction?.details ?? [];
     const totalQty = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
@@ -82,7 +83,7 @@ export default function Show({ transaction }) {
                                     {statusLabels[transaction.payment_status] || "Lunas"}
                                 </span>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3 text-sm">
                                     <IconReceipt size={18} className="text-gray-400" />
@@ -110,7 +111,7 @@ export default function Show({ transaction }) {
                         {/* Payment Summary */}
                         <div className="bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Ringkasan Pembayaran</h3>
-                            
+
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500 dark:text-gray-400">Subtotal ({totalQty} item)</span>
@@ -152,7 +153,7 @@ export default function Show({ transaction }) {
                             <div className="p-6 border-b dark:border-gray-800">
                                 <h3 className="font-semibold text-gray-900 dark:text-white">Daftar Produk</h3>
                             </div>
-                            
+
                             <div className="divide-y dark:divide-gray-800">
                                 {items.map((item, index) => {
                                     const qty = Number(item.qty) || 1;
@@ -164,7 +165,7 @@ export default function Show({ transaction }) {
                                             {/* Product Image */}
                                             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
                                                 {item.product?.image ? (
-                                                    <img 
+                                                    <img
                                                         src={item.product.image}
                                                         alt={item.product.title}
                                                         className="w-full h-full object-cover"

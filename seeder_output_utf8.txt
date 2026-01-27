@@ -1,35 +1,4 @@
-<?php
-
-namespace Database\Seeders;
-
-use App\Models\Product;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-
-class ProductionProductSeeder extends Seeder
-{
-    public function run(): void
-    {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-        // 1. Map Category Names to IDs based on ProductionCategorySeeder
-        $catMap = [
-            'Sayuran' => 1,
-            'Kacang-Kacangan' => 2,
-            'Umbi & Akar' => 3,
-            'Jamur' => 4,
-            'Produk Olahan' => 5,
-            'Daging Ayam' => 6,
-            'Buah' => 7,
-            'Jus' => 8,
-            'Makanan Berat' => 9,
-            'Makanan Ringan' => 10,
-        ];
-
-        // 2. Full Product List (Parsed from Text)
-        // IDs 1-168
-        $products = [
-            [1, 'Kol Merah', 'Sayuran', 25000, 35000, 'KG', '621110100001', 10],
+﻿            [1, 'Kol Merah', 'Sayuran', 25000, 0, '35,000', 'KG', 621110100001],
             [2, 'Beet root', 'Umbi & Akar', 31000, 40000, 'KG', '621110300001', 10],
             [3, 'Daun Kucai', 'Sayuran', 12000, 15000, 'IKAT', '621110100002', 35],
             [4, 'Lettuce', 'Sayuran', 35857, 46000, 'KG', '621110100003', 6],
@@ -196,40 +165,3 @@ class ProductionProductSeeder extends Seeder
             [166, 'Buko Pandan', 'Makanan Ringan', 15000, 20000, 'Pcs', '62111100036', 10],
             [167, 'Lapis Legit', 'Makanan Ringan', 11100, 15000, 'Pcs', '62111100037', 10],
             [168, 'Jeruk Raja', 'Buah', 25000, 35000, 'KG', '621110700067', 5],
-        ];
-
-        // Sort by ID
-        usort($products, fn($a, $b) => $a[0] <=> $b[0]);
-
-        DB::table('products')->truncate();
-
-        foreach ($products as $prod) {
-            $catId = $catMap[$prod[2]] ?? 1; // Default to 1 if not found
-
-            try {
-                DB::table('products')->insert([
-                    'id' => $prod[0],
-                    'category_id' => $catId,
-                    'title' => $prod[1],
-                    'buy_price' => $prod[3],
-                    'sell_price' => $prod[4],
-                    'unit' => $prod[5],
-                    'barcode' => $prod[6],
-                    'sku' => $prod[6],
-                    'image' => 'default.png',
-                    'min_stock' => $prod[7],
-                    'product_type' => 'sellable',
-                    'tags' => json_encode(['sellable']),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Exception $e) {
-                echo "FAILED ID {$prod[0]}: " . $e->getMessage() . "\n";
-                // Optionally continue or throw?
-                // throw $e; 
-            }
-        }
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-    }
-}

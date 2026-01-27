@@ -22,6 +22,15 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
+const formatTime = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    }).replace(/\./g, ':');
+};
+
 const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("id-ID", {
@@ -30,7 +39,8 @@ const formatDate = (dateString) => {
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-    });
+        hour12: false,
+    }).replace(/\./g, ':');
 };
 
 const SummaryCard = ({ icon: Icon, label, value, className = "", valueClass = "" }) => (
@@ -75,11 +85,10 @@ const Show = ({ shift, summary }) => {
                             </div>
                             <div className="flex items-center gap-2">
                                 <span
-                                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                        isActive
+                                    className={`px-3 py-1 rounded-full text-sm font-medium ${isActive
                                             ? "bg-green-500 text-white"
                                             : "bg-white/20 text-white"
-                                    }`}
+                                        }`}
                                 >
                                     {isActive ? "Aktif" : "Ditutup"}
                                 </span>
@@ -159,13 +168,12 @@ const Show = ({ shift, summary }) => {
                                     Selisih
                                 </p>
                                 <p
-                                    className={`text-xl font-bold flex items-center justify-center gap-1 ${
-                                        shift.difference === 0
+                                    className={`text-xl font-bold flex items-center justify-center gap-1 ${shift.difference === 0
                                             ? "text-green-600"
                                             : shift.difference > 0
-                                            ? "text-blue-600"
-                                            : "text-red-600"
-                                    }`}
+                                                ? "text-blue-600"
+                                                : "text-red-600"
+                                        }`}
                                 >
                                     {shift.difference === 0 ? (
                                         <IconCheck size={20} />
@@ -211,18 +219,14 @@ const Show = ({ shift, summary }) => {
                                 {shift.cash_flows.map((cf) => (
                                     <tr key={cf.id}>
                                         <Table.Td>
-                                            {new Date(cf.created_at).toLocaleTimeString("id-ID", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
+                                            {formatTime(cf.created_at)}
                                         </Table.Td>
                                         <Table.Td>
                                             <span
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    cf.type === "in"
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${cf.type === "in"
                                                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                                         : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                                }`}
+                                                    }`}
                                             >
                                                 {cf.type === "in" ? "Masuk" : "Keluar"}
                                             </span>
@@ -230,11 +234,10 @@ const Show = ({ shift, summary }) => {
                                         <Table.Td>{cf.category || "-"}</Table.Td>
                                         <Table.Td>{cf.description || "-"}</Table.Td>
                                         <Table.Td
-                                            className={`text-right font-medium ${
-                                                cf.type === "in"
+                                            className={`text-right font-medium ${cf.type === "in"
                                                     ? "text-green-600"
                                                     : "text-red-600"
-                                            }`}
+                                                }`}
                                         >
                                             {cf.type === "in" ? "+" : "-"}
                                             {formatCurrency(cf.amount)}
@@ -275,10 +278,7 @@ const Show = ({ shift, summary }) => {
                                             </Link>
                                         </Table.Td>
                                         <Table.Td>
-                                            {new Date(trx.created_at).toLocaleTimeString("id-ID", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
+                                            {formatTime(trx.created_at)}
                                         </Table.Td>
                                         <Table.Td className="capitalize">
                                             {trx.payment_method}

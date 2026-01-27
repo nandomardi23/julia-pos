@@ -32,7 +32,8 @@ const formatDate = (dateString) => {
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-    });
+        hour12: false,
+    }).replace(/\./g, ':');
 };
 
 const StatusBadge = ({ status }) => {
@@ -274,11 +275,10 @@ const Index = ({ shifts, activeShift, filters, statuses }) => {
                                                 )}
                                                 {shift.status === "closed" && shift.difference !== null && (
                                                     <span
-                                                        className={`p-1.5 rounded-md ${
-                                                            shift.difference === 0
+                                                        className={`p-1.5 rounded-md ${shift.difference === 0
                                                                 ? "text-green-600"
                                                                 : "text-amber-600"
-                                                        }`}
+                                                            }`}
                                                         title={
                                                             shift.difference === 0
                                                                 ? "Kas Sesuai"

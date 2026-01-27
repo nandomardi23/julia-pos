@@ -1,0 +1,167 @@
+1	Kol Merah	Sayuran	 Rp25,000.00 	  Rp        35,000 	KG	621110100001	10	 Rp250,000 
+2	Beet root	Umbi & Akar	 Rp31,000.00 	 Rp40,000.00 	KG	621110300001	10	 Rp310,000 
+3	Daun Kucai	Sayuran	 Rp12,000 	 Rp15,000 	 IKAT	621110100002	35	 Rp420,000 
+4	Lettuce 	Sayuran	 Rp35,857 	 Rp46,000 	KG	621110100003	6	 Rp215,143 
+5	Roman Lettuce	Sayuran	 Rp41,333 	 Rp52,000 	KG	621110100004	3	 Rp124,000 
+6	Brocoli	Sayuran	 Rp41,571 	 Rp50,000 	KG	621110100005	11.4	 Rp473,914 
+7	Bunga Kol	Sayuran	 Rp38,000 	 Rp48,000 	KG	621110100006	24	 Rp912,000 
+8	Bunga Seng	Sayuran	 Rp47,000 	 Rp55,000 	IKAT	621110100007	10	 Rp470,000 
+9	Baby Fatcoy	Sayuran	 Rp58,000 	 Rp68,000 	KG	621110100008	2.6	 Rp150,800 
+10	Sawi Minyak Baby	Sayuran	 Rp55,500 	 Rp65,500 	KG	621110100009	1.8	 Rp99,900 
+11	Kailan HK	Sayuran	 Rp43,000 	 Rp53,000 	KG	621110100010	4.6	 Rp197,800 
+12	Huai shan	Sayuran	 Rp35,000 	 Rp45,000 	KG	621110100011	3.6	 Rp126,000 
+13	Poeling	Sayuran	 Rp55,500 	 Rp65,500 	KG	621110100012	2.1	 Rp116,550 
+14	Jamur Simeji Putih	Jamur	 Rp8,250 	 Rp10,500 	PCS	621110400001	40	 Rp330,000 
+15	Jamur Shitake	Jamur	 Rp13,800 	 Rp16,000 	PCS	621110400002	24	 Rp331,200 
+16	Jamur Oister	Jamur	 Rp9,400 	 Rp12,000 	PCS	621110400003	30	 Rp282,000 
+17	Jamur Snow White	Jamur	 Rp7,250 	 Rp9,750 	PCS	621110400004	42	 Rp304,500 
+18	Jamur Enoki	Jamur	 Rp3,800 	 Rp7,000 	PCS	621110400005	32	 Rp121,600 
+19	Kacang Arcis	Kacang-Kacangan	 Rp8,533.33 	 Rp11,000.00 	PCS	621110200001	25	 Rp213,333 
+20	Kacang Manis	Kacang-Kacangan	 Rp8,533.33 	 Rp11,000.00 	PCS	621110200002	27	 Rp230,400 
+21	Jamur Kuping 	Jamur	 Rp11,000 	 Rp15,000 	PCS	621110400006	23	 Rp253,000 
+22	Bamboo Shoots	Sayuran	 Rp10,500 	 Rp13,500 	PCS	621110100013	38	 Rp399,000 
+23	Wortel	Sayuran	 Rp13,000 	 Rp16,000 	KG	621110100014	97	 Rp1,261,000 
+24	Daun Ketumbar	Sayuran	 Rp80,000 	 Rp95,000 	KG	621110100015	3	 Rp240,000 
+25	Dou Pai	Sayuran	 Rp55,500 	 Rp67,500 	KG	621110100016	2.8	 Rp155,400 
+26	Tahu Kotak 	Produk Olahan	 Rp11,600.00 	 Rp16,000.00 	PCS	621110500001	99	 Rp1,148,400 
+27	Tahu Telur	Produk Olahan	 Rp4,000.00 	 Rp7,000.00 	PCS	621110500002	178	 Rp712,000 
+28	Sosis Ayam Jofran	Produk Olahan	 Rp13,000.00 	 Rp18,000.00 	PCS	621110500003	164	 Rp2,132,000 
+29	Sosis Ayam Madu Jofran	Produk Olahan	 Rp13,000.00 	 Rp18,000.00 	PCS	621110500004	154	 Rp2,002,000 
+30	Ayam S 550-560	Daging Ayam	 Rp34,500 	 Rp45,500 	PCS	621110600001	45	 Rp1,552,500 
+31	Ayam S 650-750	Daging Ayam	 Rp51,000 	 Rp60,000 	PCS	621110600002	30	 Rp1,530,000 
+32	Chicken S 0.9	Daging Ayam	 Rp45,000 	 Rp54,000 	PCS	621110600003	30	 Rp1,350,000 
+33	Chicken CP 1100	Daging Ayam	 Rp43,000 	 Rp55,000 	PCS	621110600004	20	 Rp860,000 
+34	Chicken S 1100	Daging Ayam	 Rp41,000 	 Rp50,000 	PCS	621110600005	19	 Rp779,000 
+35	Chicken S 1200	Daging Ayam	 Rp41,000 	 Rp60,000 	PCS	621110600006	20	 Rp820,000 
+36	Chicken Feet	Daging Ayam	 Rp25,000 	 Rp32,000 	KG	621110600007	26	 Rp650,000 
+37	Chicken Breast Bone	Daging Ayam	 Rp39,000 	 Rp48,000 	PCS	621110600009	10	 Rp390,000 
+38	Chicken Breast Brown	Daging Ayam	 Rp39,000 	 Rp48,000 	KG	621110600012	10	 Rp390,000 
+39	Chicken Breast Kulit	Daging Ayam	 Rp38,000 	 Rp48,000 	KG	621110600013	7.2	 Rp273,600 
+40	Sosis Ayam Doux Pack	Produk Olahan	 Rp19,000.00 	 Rp24,000.00 	PCS	621110500005	108	 Rp2,052,000 
+41	Anggur Black Sedless	Buah	 Rp42,500 	 Rp60,000 	Pack	621110700001	10	 Rp425,000 
+42	Anggur Merah Curah RRC	Buah	 Rp35,000 	 Rp50,000 	KG	621110700002	38.6	 Rp1,351,000 
+43	Anggur Merah Aus BAG	Buah	 Rp100,000 	 Rp150,000 	Pack	621110700003	8	 Rp800,000 
+44	Anggur Hitam Aust	Buah	 Rp114,111 	 Rp150,000 	Pack	621110700004	4	 Rp456,444 
+45	Anggur Hitam Curah a17	Buah	 Rp18,000 	 Rp22,000 	Pack	621110700005	13	 Rp234,000 
+46	Apple Strawberry Pack	Buah	 Rp26,500 	 Rp35,000 	Pack	621110700006	7	 Rp185,500 
+47	Peach Merah Aust	Buah	 Rp15,300 	 Rp25,000 	PCS	621110700007	22	 Rp336,600 
+48	Cherry Chilli Red S	Buah	 Rp30,000 	 Rp35,000 	Pack	621110700008	24	 Rp720,000 
+49	Plam Netarin Merah aust	Buah	 Rp63,000 	 Rp80,000 	KG	621110700009	10	 Rp630,000 
+50	Bluberry peru 125	Buah	 Rp32,167 	 Rp45,000 	Pack	621110700010	12	 Rp386,004 
+51	Kelapa coco thumb 	Buah	 Rp33,833 	 Rp40,000 	PCS	621110700011	10	 Rp338,330 
+52	Kesemek 	Buah	 Rp9,300 	 Rp15,000 	PCS	621110700012	32	 Rp297,600 
+53	Kesemek Vakum	Buah	 Rp10,000 	 Rp15,000 	PCS	621110700013	29	 Rp290,000 
+54	Dragon White 14"	Buah	 Rp24,429 	 Rp30,000 	PCS	621110700014	14	 Rp342,006 
+55	Dragon White 18"	Buah	 Rp19,667 	 Rp25,000 	PCS	621110700015	18	 Rp354,006 
+56	Kiwi Merah RRC	Buah	 Rp31,333 	 Rp45,000 	Pack	621110700016	12	 Rp375,996 
+57	Kiwi Gold RRC	Buah	 Rp25,000 	 Rp35,000 	Pack	621110700017	20	 Rp500,000 
+58	Kiwi Green RRC Curah	Buah	 Rp45,000 	 Rp60,000 	KG	621110700018	8	 Rp360,000 
+59	Kiwi Gold NZ	Buah	 Rp50,000 	 Rp55,000 	Pack	621110700019	11	 Rp550,000 
+60	Pear Merah Packing	Buah	 Rp51,000 	 Rp60,000 	Pack	621110700020	20	 Rp1,020,000 
+61	Pear Nam Sui Lie 30	Buah	 Rp15,000 	 Rp25,000 	Pack	621110700021	30	 Rp450,000 
+62	Pear Nam Sui Lie 8	Buah	 Rp30,000 	 Rp40,000 	PCS	621110700022	8	 Rp240,000 
+63	Pear Merah TC	Buah	 Rp49,000 	 Rp60,000 	Pack	621110700023	12.8	 Rp627,200 
+64	Delima 	Buah	 Rp35,000 	 Rp45,000 	PCS	621110700024	19	 Rp665,000 
+65	Hami Melon	Buah	 Rp59,000 	 Rp80,000 	PCS	621110700025	24	 Rp1,416,000 
+66	Lemon	Buah	 Rp6,000 	 Rp7,000 	PCS	621110700026	75	 Rp450,000 
+67	Anggur Hijau Muscat	Buah	 Rp29,000 	 Rp35,000 	Pack	621110700027	64	 Rp1,856,000 
+68	Anggur R/G India	Buah	 Rp21,000 	 Rp40,000 	Pack	621110700028	3	 Rp63,000 
+69	Plam Queen	Buah	 Rp180,000 	 Rp200,000 	KG	621110700029	4.8	 Rp864,000 
+70	Plam Dandy	Buah	 Rp95,000 	 Rp115,000 	KG	621110700030	9.2	 Rp874,000 
+71	Peach A.C.N 	Buah	 Rp15,000 	 Rp25,000 	PCS	621110700031	24	 Rp360,000 
+72	Avokado Aust	Buah	 Rp21,000 	 Rp25,000 	PCS	621110700032	54	 Rp1,134,000 
+73	Cherry Chilli Red L	Buah	 Rp70,000 	 Rp75,000 	Pack	621110700033	14	 Rp980,000 
+74	Pear Fragrant	Buah	 Rp12,000 	 Rp15,000 	PCS	621110700034	63	 Rp756,000 
+75	Kiwi Gold Itali 	Buah	 Rp37,000 	 Rp50,000 	Pack	621110700035	20	 Rp740,000 
+76	Kiwi Green Itali 	Buah	 Rp10,500 	 Rp15,000 	PCS	621110700036	78	 Rp819,000 
+77	Stawberry Lokal	Buah	 Rp25,000 	 Rp30,000 	Pack	621110700037	13	 Rp325,000 
+78	Kelengkeng	Buah	 Rp38,000 	 Rp48,000 	KG	621110700038	22	 Rp829,540 
+79	Jeruk Bali IPOH	Buah	 Rp95,000 	 Rp120,000 	PCS	621110700039	21.8	 Rp2,071,000 
+80	Pamello	Buah	 Rp46,000 	 Rp60,000 	PCS	621110700040	4	 Rp184,000 
+81	Apple Rossy S	Buah	 Rp35,000 	 Rp40,000 	KG	621110700041	134	 Rp4,690,000 
+82	Apple Rossy L	Buah	 Rp37,000 	 Rp45,000 	KG	621110700042	44	 Rp1,628,000 
+83	Pear Golden	Buah	 Rp35,000 	 Rp45,000 	KG	621110700043	13	 Rp455,000 
+84	Pear Naci	Buah	 Rp23,000 	 Rp30,000 	KG	621110700044	117.5	 Rp2,702,500 
+85	Apple Mini (Anna)	Buah	 Rp21,000 	 Rp30,000 	KG	621110700045	17	 Rp357,000 
+86	Apple Sunpeng	Buah	 Rp22,000 	 Rp30,000 	KG	621110700046	14.6	 Rp321,200 
+87	Orange Palensia	Buah	 Rp26,000 	 Rp30,000 	KG	621110700047	17.4	 Rp452,400 
+88	Apple Hijau	Buah	 Rp38,000 	 Rp45,000 	KG	621110700048	45.3	 Rp1,721,400 
+89	Pear Hijau	Buah	 Rp31,000 	 Rp40,000 	KG	621110700049	9.6	 Rp297,600 
+90	Pear Yali	Buah	 Rp20,000 	 Rp25,000 	KG	621110700050	68	 Rp1,360,000 
+91	Apple Galla	Buah	 Rp30,000 	 Rp40,000 	KG	621110700051	7	 Rp210,000 
+92	Apple Rossi 64	Buah	 Rp9,500 	 Rp15,000 	PCS	621110700052	128	 Rp1,216,000 
+93	Apple Rossi 56	Buah	 Rp9,500 	 Rp15,000 	PCS	621110700053	112	 Rp1,064,000 
+94	Apple Fuji Boss	Buah	 Rp23,000 	 Rp30,000 	KG	621110700054	34	 Rp782,000 
+95	Jeruk BAG Barongsai	Buah	 Rp88,000 	 Rp100,000 	PCS	621110700055	20	 Rp1,760,000 
+96	Jeruk IMLEK KTK XL 38'	Buah	 Rp269,000 	 Rp300,000 	BOX	621110700056	5	 Rp1,345,000 
+97	Jeruk IMLEK KTK L 34'	Buah	 Rp234,000 	 Rp270,000 	BOX	621110700057	5	 Rp1,170,000 
+98	Jeruk IMLEK KTK M 52-54'	Buah	 Rp204,000 	 Rp250,000 	BOX	621110700058	5	 Rp1,020,000 
+99	Pear Nam Sui Lie 36	Buah	 Rp12,000 	 Rp20,000 	PCS	621110700059	36	 Rp432,000 
+100	Jeruk IMLEK KCL M 4Kg	Buah	 Rp112,000 	 Rp160,000 	BOX	621110700060	5	 Rp560,000 
+101	Jeruk IMLEK KCL L 4Kg	Buah	 Rp127,000 	 Rp170,000 	BOX	621110700061	5	 Rp635,000 
+102	Paprica Merah	Sayuran	 Rp71,000 	 Rp85,000 	KG	621110100017	10	 Rp710,000 
+103	Mangga Thailand	Buah	 Rp30,000 	 Rp45,000 	KG	621110700062	16	 Rp480,000 
+104	Bawang Jawa	Umbi & Akar	 Rp35,000.00 	 Rp40,000.00 	KG	621110300002	50	 Rp1,750,000 
+105	Citrus Wogan	Buah	 Rp25,000 	 Rp30,000 	Pack	621110700063	4	 Rp100,000 
+106	Anggur Red Crimson AUS	Buah	 Rp70,000 	 Rp80,000 	Pack	621110700064	17	 Rp1,190,000 
+107	Plam Mini	Buah	 Rp65,000 	 Rp75,000 	KG	621110700065	6.5	 Rp422,500 
+108	Anggur Merah Afrika	Buah	 Rp35,000 	 Rp40,000 	Pack	621110700066	2	 Rp70,000 
+109	Bihun Segitiga 1/2 KG	Produk Olahan	 Rp13,500.00 	 Rp16,000.00 	Pack	621110500006	6	 Rp81,000 
+110	Bihun Segitiga 1/4 KG	Produk Olahan	 Rp7,000.00 	 Rp8,000.00 	Pack	621110500007	5	 Rp35,000 
+111	Pulut putih 1 KG	Produk Olahan	 Rp22,000.00 	 Rp32,000.00 	Pack	621110500008	21	 Rp462,000 
+112	Pulut putih 1/2 KG	Produk Olahan	 Rp11,000.00 	 Rp16,000.00 	Pack	621110500009	9	 Rp99,000 
+113	Wijen Putih 100Gram	Produk Olahan	 Rp4,200.00 	 Rp5,300.00 	Pack	621110500010	34	 Rp142,800 
+114	Wijen Putih 200Gram	Produk Olahan	 Rp8,400.00 	 Rp10,350.00 	Pack	621110500011	34	 Rp285,600 
+115	emping 1kg	Produk Olahan	 Rp80,000.00 	 Rp90,000.00 	Pack	621110500012	12	 Rp960,000 
+116	Bawang Merah 1/2 Kg	Umbi & Akar	 Rp17,500.00 	 Rp20,000.00 	Pack	621110300003	9	 Rp157,500 
+117	Bawang Merah 1/4 Kg	Umbi & Akar	 Rp8,750.00 	 Rp10,000.00 	Pack	621110300004	15	 Rp131,250 
+118	Bunga Lawang 1Kg	Umbi & Akar	 Rp77,000.00 	 Rp95,000.00 	PCS	621110300005	9	 Rp693,000 
+119	Bunga Lawang 25 gram	Umbi & Akar	 Rp1,925.00 	 Rp3,800.00 	PCS	621110300006	40	 Rp77,000 
+121	Chicken Wing 1 Kg	Daging Ayam	 Rp39,000 	 Rp48,000 	PCS	621110600014	2	 Rp78,000 
+122	Chicken Midle Wing	Daging Ayam	 Rp41,000 	 Rp48,000 	KG	621110600015	18	 Rp738,000 
+123	Paha Tulang Besar 650 Gram	Daging Ayam	 Rp38,000 	 Rp50,000 	KG	621110600016	10	 Rp380,000 
+124	Ayam Dada Filet 1KG	Daging Ayam	 Rp39,000 	 Rp45,000 	PCS	621110600017	65	 Rp2,535,000 
+125	Chicken Drum Stick Jumbo	Daging Ayam	 Rp36,000 	 Rp50,000 	KG	621110600018	10	 Rp360,000 
+126	Paha Fillet 	Daging Ayam	 Rp51,000 	 Rp62,500 	KG	621110600029	12	 Rp612,000 
+127	Paprica Hijau	Sayuran	 Rp56,000 	 Rp67,800 	KG	621110100018	10	 Rp560,000 
+128	Paprica Kuning	Sayuran	 Rp64,000 	 Rp75,800 	KG	621110100019	10	 Rp640,000 
+129	Ketan Hitam 1Kg	Produk Olahan	 Rp24,600.00 	 Rp36,200.00 	PCS	621110500013	14	 Rp344,400 
+130	Ketan Hitam 1/2 Kg	Produk Olahan	 Rp13,600.00 	 Rp18,100.00 	PCS	621110500014	22	 Rp299,200 
+131	Gobanco Ring Milo	Makanan Ringan	 Rp21,900.00 	 Rp27,000.00 	Pcs	62111100001	5	 Rp109,500 
+132	Gobanco Chip Milo	Makanan Ringan	 Rp21,900.00 	 Rp27,000.00 	Pcs	62111100002	3	 Rp65,700 
+133	Gobanco Soes Milo	Makanan Ringan	 Rp21,900.00 	 Rp27,000.00 	Pcs	62111100003	4	 Rp87,600 
+134	Ladang Lima Blackthins	Makanan Ringan	 Rp18,700.00 	 Rp23,000.00 	Pcs	62111100004	2	 Rp37,400 
+135	Ladang Lima Blackmond	Makanan Ringan	 Rp18,700.00 	 Rp23,000.00 	Pcs	62111100005	2	 Rp37,400 
+136	Ladang Lima Pumpberry	Makanan Ringan	 Rp18,700.00 	 Rp23,000.00 	Pcs	62111100006	2	 Rp37,400 
+137	TYL Almond Mic Chocolate	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100007	1	 Rp15,000 
+138	TYL Almond Dark Chocolate	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100008	1	 Rp15,000 
+139	Alisha Strawberry Coklat	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100009	1	 Rp15,000 
+140	Alisha Cookie Coated Chocolate	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100010	2	 Rp30,000 
+141	Alisha Milk Coklat	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100011	1	 Rp15,000 
+142	Alisha Cookie Coated Coklat Singapore	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100012	3	 Rp45,000 
+143	Alisha Smilk Coklat Singapore	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100013	1	 Rp15,000 
+144	Alisha Strawberry Coklat Singapore	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100014	4	 Rp60,000 
+145	Truffle Huzelnut	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100015	2	 Rp30,000 
+146	Truffle Caramel	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100016	2	 Rp30,000 
+147	Truffle Strawberry	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100017	2	 Rp30,000 
+148	Truffle Milk	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100018	2	 Rp30,000 
+149	Truffle Tiramisu	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100019	1	 Rp15,000 
+150	Choco Twist	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100020	5	 Rp75,000 
+151	Mr. Sif Melisha	Makanan Ringan	 Rp15,000.00 	 Rp15,000.00 	Pcs	62111100021	5	 Rp75,000 
+152	Kyla Food Basreng	Makanan Ringan	 Rp16,200.00 	 Rp21,500.00 	Pcs	62111100022	4	 Rp64,800 
+153	Kyla Food Makaroni Spicy	Makanan Ringan	 Rp16,500.00 	 Rp21,500.00 	Pcs	62111100023	3	 Rp49,500 
+154	Kyla Food Batagor Kuah	Makanan Ringan	 Rp15,500.00 	 Rp23,000.00 	Pcs	62111100024	3	 Rp46,500 
+155	Kyla Food Seblak	Makanan Ringan	 Rp15,000.00 	 Rp23,000.00 	Pcs	62111100025	2	 Rp30,000 
+156	Basreng Stick Daun Jeruk	Makanan Ringan	 Rp15,800.00 	 Rp20,000.00 	Pcs	62111100026	1	 Rp15,800 
+157	Basreng Stick Original Daun Jeruk	Makanan Ringan	 Rp15,800.00 	 Rp20,000.00 	Pcs	62111100027	1	 Rp15,800 
+158	Popocorn Caramel	Makanan Ringan	 Rp18,500.00 	 Rp22,500.00 	Pcs	62111100028	13	 Rp240,500 
+159	Popocorn Keju	Makanan Ringan	 Rp18,500.00 	 Rp22,500.00 	Pcs	62111100029	4	 Rp74,000 
+160	Kaula Keripik Cireng Original	Makanan Ringan	 Rp18,000.00 	 Rp22,400.00 	Pcs	62111100030	3	 Rp54,000 
+161	Kaula Keripik Cireng BBQ	Makanan Ringan	 Rp18,000.00 	 Rp22,400.00 	Pcs	62111100031	3	 Rp54,000 
+162	Kacang Mente	Makanan Ringan	 Rp15,000.00 	 Rp17,000.00 	Pcs	62111100032	10	 Rp150,000 
+163	Puding Dark Cokelat	Makanan Ringan	 Rp15,000.00 	 Rp10,000.00 	Pcs	62111100033	22	 Rp330,000 
+164	Sald Buah	Makanan Ringan	 Rp15,000.00 	 Rp20,000.00 	Pcs	62111100034	11	 Rp165,000 
+165	Cremy Cofee Jelly	Makanan Ringan	 Rp15,000.00 	 Rp20,000.00 	Pcs	62111100035	19	 Rp285,000 
+166	Buko Pandan	Makanan Ringan	 Rp15,000.00 	 Rp20,000.00 	Pcs	62111100036	10	 Rp150,000 
+167	Lapis Legit	Makanan Ringan	 Rp11,100.00 	 Rp15,000.00 	Pcs	62111100037	10	 Rp111,000 
+168	Jeruk Raja	Buah	 Rp25,000.00 	 Rp35,000.00 	KG	621110700067	5	 Rp125,000 

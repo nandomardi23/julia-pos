@@ -29,6 +29,18 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
+const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    }).replace(/\./g, ':');
+};
+
 const History = ({ transactions, filters }) => {
     const [filterData, setFilterData] = useState({
         invoice: filters?.invoice ?? "",
@@ -92,7 +104,7 @@ const History = ({ transactions, filters }) => {
         <>
             <Head title="Riwayat Transaksi" />
             <div className="space-y-6">
-                <Table.Card 
+                <Table.Card
                     title="Riwayat Transaksi"
                     links={links}
                     meta={{
@@ -176,7 +188,7 @@ const History = ({ transactions, filters }) => {
                                         <Table.Td className="font-semibold text-gray-900 dark:text-gray-100">
                                             {transaction.invoice}
                                         </Table.Td>
-                                        <Table.Td>{transaction.created_at}</Table.Td>
+                                        <Table.Td>{formatDate(transaction.created_at)}</Table.Td>
                                         <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
                                             {transaction.total_items ?? 0}

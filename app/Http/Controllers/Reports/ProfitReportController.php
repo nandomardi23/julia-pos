@@ -32,7 +32,7 @@ class ProfitReportController extends Controller
         )->orderByDesc('created_at');
 
         $transactions = (clone $baseQuery)
-            ->paginate(10)
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         $transactionIds = (clone $baseQuery)->pluck('id');
@@ -73,10 +73,10 @@ class ProfitReportController extends Controller
     protected function applyFilters($query, array $filters)
     {
         return $query
-            ->when($filters['invoice'] ?? null, fn ($q, $invoice) => $q->where('invoice', 'like', '%' . $invoice . '%'))
-            ->when($filters['cashier_id'] ?? null, fn ($q, $cashier) => $q->where('cashier_id', $cashier))
-            ->when($filters['start_date'] ?? null, fn ($q, $start) => $q->whereDate('created_at', '>=', $start))
-            ->when($filters['end_date'] ?? null, fn ($q, $end) => $q->whereDate('created_at', '<=', $end));
+            ->when($filters['invoice'] ?? null, fn($q, $invoice) => $q->where('invoice', 'like', '%' . $invoice . '%'))
+            ->when($filters['cashier_id'] ?? null, fn($q, $cashier) => $q->where('cashier_id', $cashier))
+            ->when($filters['start_date'] ?? null, fn($q, $start) => $q->whereDate('created_at', '>=', $start))
+            ->when($filters['end_date'] ?? null, fn($q, $end) => $q->whereDate('created_at', '<=', $end));
     }
 
     /**

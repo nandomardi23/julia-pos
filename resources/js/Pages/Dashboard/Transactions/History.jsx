@@ -38,7 +38,13 @@ const formatDate = (dateString) => {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
+        hour12: false,
     }).replace(/\./g, ':');
+};
+
+const formatQty = (qty) => {
+    // Format quantity: remove trailing zeros, max 3 decimals
+    return parseFloat(Number(qty).toFixed(3)).toString();
 };
 
 const History = ({ transactions, filters }) => {
@@ -191,7 +197,7 @@ const History = ({ transactions, filters }) => {
                                         <Table.Td>{formatDate(transaction.created_at)}</Table.Td>
                                         <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
-                                            {transaction.total_items ?? 0}
+                                            {formatQty(transaction.total_items ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right">
                                             {formatCurrency(transaction.discount ?? 0)}

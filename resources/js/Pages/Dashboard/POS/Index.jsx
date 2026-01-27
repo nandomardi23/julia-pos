@@ -1618,6 +1618,9 @@ export default function Index({
                                     {(lastTransaction.details || []).map((item, index) => {
                                         const qty = Number(item.qty) || 1;
                                         const price = Number(item.price) || 0;
+                                        // Format quantity: use Indonesian locale (comma for decimal), max 3 decimals
+                                        const formattedQty = qty.toLocaleString('id-ID', { maximumFractionDigits: 3 });
+
                                         return (
                                             <div key={item.id || index}>
                                                 <div className="font-semibold text-xs">
@@ -1625,7 +1628,7 @@ export default function Index({
                                                     {item.variant_name && <span className="font-normal"> ({item.variant_name})</span>}
                                                 </div>
                                                 <div className="flex justify-between text-xs pl-3">
-                                                    <span>{qty} x {formatPrice(price)}</span>
+                                                    <span>{formattedQty} x {formatPrice(price)}</span>
                                                     <span>{formatPrice(qty * price)}</span>
                                                 </div>
                                             </div>
@@ -1635,38 +1638,60 @@ export default function Index({
 
                                 <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
 
-                                {/* Totals */}
-                                <div className="space-y-1 text-xs">
-                                    {Number(lastTransaction.discount) > 0 && (
-                                        <div className="flex justify-between text-gray-500">
-                                            <span>Diskon</span>
-                                            <span>-{formatPrice(lastTransaction.discount)}</span>
-                                        </div>
-                                    )}
-                                    {Number(lastTransaction.tax) > 0 && (
-                                        <div className="flex justify-between text-gray-500">
-                                            <span>PPN ({Number(lastTransaction.ppn) || 0}%)</span>
-                                            <span>{formatPrice(lastTransaction.tax)}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between font-bold text-sm">
-                                        <span>Total</span>
-                                        <span>{formatPrice(lastTransaction.grand_total)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Bayar</span>
-                                        <span>{formatPrice(lastTransaction.cash)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Kembali</span>
-                                        <span>{formatPrice(lastTransaction.change)}</span>
-                                    </div>
-                                </div>
+                                {/* Total QTY & Subtotal Calculation */}
+                                {(() => {
+                                    const totalQty = (lastTransaction.details || []).reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+                                    const subTotal = (lastTransaction.details || []).reduce((sum, item) => sum + ((Number(item.qty) || 0) * (Number(item.price) || 0)), 0);
+                                    // Format total qty with comma decimal
+                                    const formattedTotalQty = totalQty.toLocaleString('id-ID', { maximumFractionDigits: 3 });
 
-                                <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+                                    return (
+                                        <>
+                                            <div className="flex justify-between text-xs mb-2 font-mono">
+                                                <span>Total QTY : {formattedTotalQty}</span>
+                                            </div>
 
-                                <p className="text-center text-xs text-gray-500">Terimakasih Telah Berbelanja</p>
-                            </div>
+                                            <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                            {/* Totals */}
+                                            <div className="space-y-1 text-xs">
+                                                <div className="flex justify-between">
+                                                    <span>Sub Total</span>
+                                                    <span>{formatPrice(subTotal)}</span>
+                                                </div>
+                                                {Number(lastTransaction.discount) > 0 && (
+                                                    <div className="flex justify-between text-gray-500">
+                                                        <span>Diskon</span>
+                                                        <span>-{formatPrice(lastTransaction.discount)}</span>
+                                                    </div>
+                                                )}
+                                                {Number(lastTransaction.tax) > 0 && (
+                                                    <div className="flex justify-between text-gray-500">
+                                                        <span>PPN ({Number(lastTransaction.ppn) || 0}%)</span>
+                                                        <span>{formatPrice(lastTransaction.tax)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between font-bold text-sm">
+                                                    <span>Total</span>
+                                                    <span>{formatPrice(lastTransaction.grand_total)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Bayar</span>
+                                                    <span>{formatPrice(lastTransaction.cash)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Kembali</span>
+                                                    <span>{formatPrice(lastTransaction.change)}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2"></div>
+
+                                            <p className="text-center text-xs text-gray-500">Terimakasih Telah Berbelanja</p>
+                                        </>
+                                    );
+                                })()}
+                            </div >
                         </div>
 
                         {/* Print Controls */}

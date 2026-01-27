@@ -51,21 +51,21 @@ class TransactionController extends Controller
             // But wait, createTransaction in Service handles the external gateway call too.
             // If it throws, transaction might be created or not?
             // In Service I put it AFTER the DB transaction.
-            
+
             // If exception has a transaction attached? Service doesn't pass it back on error easily.
             // But logically, if payment fails, maybe we redirect to print/retry?
             // The service code threw PaymentGatewayException.
-            
+
             // Re-throw or handle?
             // "return redirect()->route('transactions.print', $transaction->invoice)..."
             // We need the transaction object to redirect.
             // The service creates transaction first.
-            
+
             // Maybe TransactionService should RETURN even if payment fails?
             // Or catch internally?
-            
+
             return redirect()->back()->with('error', $exception->getMessage());
-            
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -106,7 +106,7 @@ class TransactionController extends Controller
             'end_date' => $request->input('end_date'),
         ];
 
-        $query = Transaction::query() 
+        $query = Transaction::query()
             ->with(['cashier:id,name'])
             ->withSum('details as total_items', 'qty')
             ->withSum('profits as total_profit', 'total')
@@ -127,7 +127,7 @@ class TransactionController extends Controller
                 $builder->whereDate('created_at', '<=', $date);
             });
 
-        $transactions = $query->paginate(10)->withQueryString();
+        $transactions = $query->paginate($request->input('per_page', 10))->withQueryString();
 
         return Inertia::render('Dashboard/Transactions/History', [
             'transactions' => $transactions,
@@ -147,7 +147,7 @@ class TransactionController extends Controller
         $hasProcessedReturns = ProductReturn::where('transaction_id', $transaction->id)
             ->whereIn('status', [ProductReturn::STATUS_APPROVED, ProductReturn::STATUS_COMPLETED])
             ->exists();
-        
+
         if ($hasProcessedReturns) {
             return redirect()->route('transactions.history')
                 ->with('error', 'Transaksi tidak dapat dihapus karena sudah memiliki return yang diproses. Menghapus transaksi ini akan menyebabkan stok terhitung ganda.');

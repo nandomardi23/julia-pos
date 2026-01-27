@@ -31,6 +31,11 @@ const formatCurrency = (value = 0) =>
         minimumFractionDigits: 0,
     }).format(value);
 
+const formatQty = (qty) => {
+    // Format quantity: remove trailing zeros, max 3 decimals
+    return parseFloat(Number(qty).toFixed(3)).toString();
+};
+
 const SummaryStat = ({ title, value, description, icon, accent }) => (
     <div className="rounded-lg border bg-white p-4 dark:border-gray-900 dark:bg-gray-950">
         <div className="flex items-center justify-between">
@@ -78,7 +83,7 @@ const ProfitReport = ({
         });
         setSelectedCashier(
             (cashiers ?? []).find((item) => String(item.id) === filters?.cashier_id) ||
-                null
+            null
         );
     }, [filters, cashiers]);
 
@@ -161,7 +166,7 @@ const ProfitReport = ({
                     />
                 </div>
 
-                <Table.Card 
+                <Table.Card
                     title="Detail Keuntungan"
                     links={links}
                     meta={{
@@ -281,7 +286,7 @@ const ProfitReport = ({
                                             {transaction.cashier?.name ?? "-"}
                                         </Table.Td>
                                         <Table.Td className="text-center">
-                                            {transaction.total_items ?? 0}
+                                            {formatQty(transaction.total_items ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right">
                                             {formatCurrency(

@@ -97,6 +97,20 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                     t === 'ingredient' ? 'Bahan Baku' : t}
                         </Link>
                     ))}
+                    <span className='mx-2 text-gray-300 dark:text-gray-600'>|</span>
+                    {['', 'active', 'inactive'].map((s) => (
+                        <Link
+                            key={s}
+                            href={route('products.index', { type: currentType, status: s || undefined })}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                                (new URLSearchParams(window.location.search).get('status') || '') === s
+                                    ? 'bg-gray-700 text-white border-gray-700 dark:bg-gray-600'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
+                            }`}
+                        >
+                            {s === '' ? 'Semua Status' : s === 'active' ? '✓ Aktif' : '✗ Tidak Aktif'}
+                        </Link>
+                    ))}
                 </div>
 
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
@@ -145,13 +159,14 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                             <Table.Th className='text-center'>Satuan</Table.Th>
                             <Table.Th className='text-right'>Harga Beli</Table.Th>
                             <Table.Th className='text-right'>Harga Jual</Table.Th>
+                            <Table.Th className='text-center'>Status</Table.Th>
                             <Table.Th className='w-24 text-center'>Aksi</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
                         {products.data.length ?
                             products.data.map((product, i) => (
-                                <tr className='hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors' key={product.id}>
+                                <tr className={`hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${!product.is_active ? 'opacity-60' : ''}`} key={product.id}>
                                     <Table.Td className='text-center font-medium'>
                                         {++i + (products.current_page - 1) * products.per_page}
                                     </Table.Td>
@@ -207,6 +222,15 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                     </Table.Td>
                                     <Table.Td className='text-right font-semibold text-gray-900 dark:text-white'>
                                         {formatCurrency(product.sell_price)}
+                                    </Table.Td>
+                                    <Table.Td className='text-center'>
+                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                            product.is_active 
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                        }`}>
+                                            {product.is_active ? 'Aktif' : 'Tidak Aktif'}
+                                        </span>
                                     </Table.Td>
                                     <Table.Td>
                                         <div className='flex justify-center gap-1'>

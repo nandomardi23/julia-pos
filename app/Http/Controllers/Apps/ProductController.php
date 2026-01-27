@@ -57,6 +57,14 @@ class ProductController extends Controller
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', '%' . $search . '%');
             })
+            // Active filter
+            ->when($request->has('status'), function ($query) use ($request) {
+                if ($request->status === 'active') {
+                    $query->where('is_active', true);
+                } elseif ($request->status === 'inactive') {
+                    $query->where('is_active', false);
+                }
+            })
             ->with('category')
             ->latest()
             ->paginate($request->input('per_page', 10))
@@ -365,6 +373,7 @@ class ProductController extends Controller
             'min_stock' => $request->min_stock ?? 0,
             'product_type' => $primaryType,
             'tags' => $tags,
+            'is_active' => $request->boolean('is_active', true),
         ];
 
         //check image update

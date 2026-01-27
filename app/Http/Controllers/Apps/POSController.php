@@ -39,6 +39,7 @@ class POSController extends Controller
 
         // Base query for products
         $productsQuery = Product::query()
+            ->where('is_active', true) // Only active products in POS
             ->where(function ($q) {
                 // Get sellable products OR recipe products with sell_price > 0
                 $q->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
@@ -156,6 +157,7 @@ class POSController extends Controller
         $product = Product::where(function ($q) use ($barcode) {
                 $q->whereRaw('LOWER(barcode) = ?', [strtolower($barcode)]);
             })
+            ->where('is_active', true) // Only active products
             ->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
             ->where('sell_price', '>', 0)
             ->with(['category', 'variants.ingredients'])

@@ -50,6 +50,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
         tags: product.tags || [product.product_type || 'sellable'],
+        is_active: product.is_active ?? true,
     }), [product.id])
 
 
@@ -66,6 +67,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         min_stock: parseDecimalInput(product.min_stock),
         unit: product.unit || 'pcs',
         tags: product.tags || [product.product_type || 'sellable'],
+        is_active: product.is_active ?? true,
         _method: 'PUT'
     })
 
@@ -83,6 +85,7 @@ export default function Edit({ categories, product, availableIngredients }) {
         if (parseFloat(data.min_stock || 0) !== parseFloat(originalData.min_stock || 0)) return true
         if (data.unit !== originalData.unit) return true
         if (JSON.stringify(data.tags.sort()) !== JSON.stringify(originalData.tags.sort())) return true
+        if (data.is_active !== originalData.is_active) return true
         return false
     }
 
@@ -348,6 +351,35 @@ export default function Edit({ categories, product, availableIngredients }) {
                                 ))}
                             </div>
                             {errors.tags && <div className='text-sm text-red-500'>{errors.tags}</div>}
+                        </div>
+                    </div>
+
+                    <div className='col-span-12'>
+                        <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700'>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    Status Produk
+                                </label>
+                                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                    Produk tidak aktif tidak akan muncul di POS
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setData('is_active', !data.is_active)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    data.is_active ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                        data.is_active ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                            <span className={`ml-3 text-sm font-medium ${data.is_active ? 'text-green-600' : 'text-gray-500'}`}>
+                                {data.is_active ? 'Aktif' : 'Tidak Aktif'}
+                            </span>
                         </div>
                     </div>
                 </div>

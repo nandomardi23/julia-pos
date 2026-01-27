@@ -42,7 +42,7 @@ class StockOpnameController extends Controller
             ->when($filters['start_date'], fn($q, $date) => $q->whereDate('created_at', '>=', $date))
             ->when($filters['end_date'], fn($q, $date) => $q->whereDate('created_at', '<=', $date))
             ->latest()
-            ->paginate(10)
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         // Transform to add location_name and total_items
@@ -72,7 +72,7 @@ class StockOpnameController extends Controller
 
         $products = [];
         $totalProducts = 0;
-        
+
         if ($locationId) {
             if ($locationType === 'warehouse') {
                 $stocksQuery = WarehouseStock::where('warehouse_id', $locationId)
@@ -83,7 +83,7 @@ class StockOpnameController extends Controller
                     ->where('quantity', '>', 0)
                     ->with('product:id,title,sku,barcode');
             }
-            
+
             $totalProducts = $stocksQuery->count();
             $stocks = $stocksQuery->get();
 
@@ -134,7 +134,7 @@ class StockOpnameController extends Controller
 
             foreach ($validated['items'] as $item) {
                 $difference = $item['physical_qty'] - $item['system_qty'];
-                
+
                 // Calculate loss if deficit
                 $lossAmount = null;
                 if ($difference < 0) {
@@ -188,10 +188,11 @@ class StockOpnameController extends Controller
 
         DB::transaction(function () use ($opname) {
             foreach ($opname->items as $item) {
-                if ($item->difference == 0) continue;
+                if ($item->difference == 0)
+                    continue;
 
                 $product = $item->product;
-                
+
                 if ($opname->location_type === StockOpname::LOCATION_WAREHOUSE) {
                     $stock = WarehouseStock::where('warehouse_id', $opname->location_id)
                         ->where('product_id', $item->product_id)
@@ -204,12 +205,13 @@ class StockOpnameController extends Controller
                     $fromType = StockMovement::TYPE_DISPLAY;
                 }
 
-                if (!$stock) continue;
+                if (!$stock)
+                    continue;
 
                 if ($item->difference < 0) {
                     // Deficit: stock out
                     $stock->decrement('quantity', abs($item->difference));
-                    
+
                     StockMovement::create([
                         'product_id' => $item->product_id,
                         'from_type' => $fromType,
@@ -224,7 +226,7 @@ class StockOpnameController extends Controller
                 } else {
                     // Surplus: stock in (adjustment)
                     $stock->increment('quantity', $item->difference);
-                    
+
                     StockMovement::create([
                         'product_id' => $item->product_id,
                         'from_type' => StockMovement::TYPE_ADJUSTMENT,

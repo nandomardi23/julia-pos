@@ -93,13 +93,13 @@ class CategoryController extends Controller
      * @param  Category $category
      * @return \Illuminate\Http\Response
      */
-    public function show(Category $category)
+    public function show(Request $request, Category $category)
     {
         //get products by category
         $products = $category->products()
             ->with(['warehouseStocks', 'displayStocks'])
             ->latest()
-            ->paginate(10);
+            ->paginate($request->input('per_page', 10));
 
         return Inertia::render('Dashboard/Categories/Show', [
             'category' => $category,

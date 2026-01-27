@@ -17,10 +17,10 @@ class ExpenseCategoryController extends Controller
         $categories = ExpenseCategory::when($request->search, function ($query, $search) {
             $query->where('name', 'like', "%{$search}%");
         })
-        ->withCount('expenses')
-        ->orderBy('name')
-        ->paginate(10)
-        ->withQueryString();
+            ->withCount('expenses')
+            ->orderBy('name')
+            ->paginate($request->input('per_page', 10))
+            ->withQueryString();
 
         return Inertia::render('Dashboard/ExpenseCategories/Index', [
             'categories' => $categories,

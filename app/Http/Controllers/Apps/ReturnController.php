@@ -43,7 +43,7 @@ class ReturnController extends Controller
 
         $query->orderBy('created_at', 'desc');
 
-        $returns = $query->paginate(15)->withQueryString();
+        $returns = $query->paginate($request->input('per_page', 15))->withQueryString();
 
         return Inertia::render('Dashboard/Returns/Index', [
             'returns' => $returns,
@@ -58,7 +58,7 @@ class ReturnController extends Controller
     public function create(Request $request)
     {
         $transaction = null;
-        
+
         if ($request->filled('invoice')) {
             $transaction = Transaction::with(['details.product', 'cashier'])
                 ->where('invoice', $request->invoice)

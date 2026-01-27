@@ -53,7 +53,7 @@ class PurchaseOrderController extends Controller
         $sortDir = $request->get('dir', 'desc');
         $query->orderBy($sortField, $sortDir);
 
-        $purchaseOrders = $query->paginate(15)->withQueryString();
+        $purchaseOrders = $query->paginate($request->input('per_page', 15))->withQueryString();
 
         return Inertia::render('Dashboard/PurchaseOrders/Index', [
             'purchaseOrders' => $purchaseOrders,
@@ -324,13 +324,13 @@ class PurchaseOrderController extends Controller
 
             foreach ($request->items as $itemData) {
                 $item = PurchaseOrderItem::find($itemData['id']);
-                
+
                 if (!$item || $item->purchase_order_id !== $purchaseOrder->id) {
                     continue;
                 }
 
                 $qtyToReceive = floatval($itemData['quantity_received']);
-                
+
                 if ($qtyToReceive <= 0) {
                     continue;
                 }
@@ -387,7 +387,7 @@ class PurchaseOrderController extends Controller
                     $currentAvgCost = $product->average_cost ?? 0;
                     $newTotalValue = ($currentStock * $currentAvgCost) + ($qtyToReceive * $item->unit_price);
                     $newTotalQty = $currentStock + $qtyToReceive;
-                    
+
                     if ($newTotalQty > 0) {
                         $product->average_cost = $newTotalValue / $newTotalQty;
                         $product->save();
@@ -403,7 +403,7 @@ class PurchaseOrderController extends Controller
             // Update PO status
             $purchaseOrder->refresh();
             $allReceived = $purchaseOrder->items->every(fn($item) => $item->is_fully_received);
-            
+
             if ($allReceived) {
                 $purchaseOrder->status = PurchaseOrder::STATUS_RECEIVED;
                 $purchaseOrder->received_date = now();
@@ -489,7 +489,7 @@ class PurchaseOrderController extends Controller
         // Fallback to stock movements
         $movement = StockMovement::where('product_id', $request->product_id)
             ->where('from_type', StockMovement::TYPE_SUPPLIER);
-        
+
         if ($request->filled('supplier_id')) {
             $movement->where('supplier_id', $request->supplier_id);
         }
@@ -540,7 +540,7 @@ class PurchaseOrderController extends Controller
             $pdf->setPaper('a4', 'portrait');
 
             $filename = 'PO-' . $po->po_number . '.pdf';
-            
+
             // Return with explicit headers
             return response($pdf->output(), 200)
                 ->header('Content-Type', 'application/pdf')
@@ -548,7 +548,7 @@ class PurchaseOrderController extends Controller
                 ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 ->header('Pragma', 'no-cache')
                 ->header('Expires', '0');
-                
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Gagal generate PDF: ' . $e->getMessage()

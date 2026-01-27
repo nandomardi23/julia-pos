@@ -33,15 +33,15 @@ class ExpenseController extends Controller
                 $query->whereDate('expense_date', '<=', $date);
             })
             ->orderBy('expense_date', 'desc')
-            ->paginate(15)
+            ->paginate($request->input('per_page', 15))
             ->withQueryString();
 
         $categories = ExpenseCategory::orderBy('name')->get();
 
         // Calculate totals for current filter
         $totalExpenses = Expense::when($request->category, function ($query, $category) {
-                $query->where('expense_category_id', $category);
-            })
+            $query->where('expense_category_id', $category);
+        })
             ->when($request->start_date, function ($query, $date) {
                 $query->whereDate('expense_date', '>=', $date);
             })
@@ -133,7 +133,7 @@ class ExpenseController extends Controller
             if ($expense->proof_image) {
                 Storage::delete('public/expenses/' . $expense->proof_image);
             }
-            
+
             $image = $request->file('proof_image');
             $imageName = time() . '_' . $image->getClientOriginalName();
             $image->storeAs('public/expenses', $imageName);

@@ -45,7 +45,7 @@ class ShiftController extends Controller
 
         $query->orderBy('started_at', 'desc');
 
-        $shifts = $query->paginate(15)->withQueryString();
+        $shifts = $query->paginate($request->input('per_page', 15))->withQueryString();
 
         // Get current active shift for the user
         $activeShift = Shift::getActiveShift();
@@ -195,7 +195,7 @@ class ShiftController extends Controller
 
         $difference = (float) $shift->difference;
         $message = 'Shift berhasil ditutup.';
-        
+
         if ($difference > 0) {
             $message .= ' Selisih lebih: Rp ' . number_format($difference, 0, ',', '.');
         } elseif ($difference < 0) {
@@ -236,7 +236,7 @@ class ShiftController extends Controller
         ]);
 
         $typeLabel = $request->type === 'in' ? 'Kas Masuk' : 'Kas Keluar';
-        
+
         return back()->with('success', $typeLabel . ' berhasil dicatat: Rp ' . number_format($request->amount, 0, ',', '.'));
     }
 

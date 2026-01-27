@@ -511,7 +511,8 @@ export default function Index({
     const formatQty = (qty, unit) => {
         const numQty = parseFloat(qty);
         if (isWeightBasedUnit(unit)) {
-            return numQty % 1 === 0 ? numQty.toString() : numQty.toFixed(2);
+            // Allow decimals but strip unnecessary trailing zeros, max 3 places
+            return parseFloat(numQty.toFixed(3)).toString();
         }
         return Math.floor(numQty).toString();
     };

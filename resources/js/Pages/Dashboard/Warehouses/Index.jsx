@@ -7,6 +7,21 @@ import Search from '@/Components/Common/Search'
 import Table from '@/Components/Common/Table'
 
 export default function Index({ warehouses, filters }) {
+    // Helper for formatting quantity
+    const isWeightBasedUnit = (unit) => {
+        const weightUnits = ["kg", "gram", "g", "liter", "l", "ml", "ons", "ton"];
+        return weightUnits.includes(unit?.toLowerCase());
+    };
+
+    const formatQty = (qty, unit) => {
+        const numQty = parseFloat(qty);
+        if (isWeightBasedUnit(unit) || (numQty % 1 !== 0)) {
+            // Allow decimals but strip unnecessary trailing zeros, max 3 places
+            return parseFloat(numQty.toFixed(3)).toString();
+        }
+        return Math.floor(numQty).toString();
+    };
+
     return (
         <>
             <Head title='Gudang' />
@@ -71,13 +86,13 @@ export default function Index({ warehouses, filters }) {
                                     </Table.Td>
                                     <Table.Td className='text-center'>
                                         <span className='bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-green-900 dark:text-green-300'>
-                                            {warehouse.stocks_sum_quantity || 0}
+                                            {formatQty(warehouse.stocks_sum_quantity || 0, 'kg')}
                                         </span>
                                     </Table.Td>
                                     <Table.Td className='text-center'>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${warehouse.is_active
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                                             }`}>
                                             {warehouse.is_active ? 'Aktif' : 'Nonaktif'}
                                         </span>

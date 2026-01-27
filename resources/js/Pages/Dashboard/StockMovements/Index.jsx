@@ -327,6 +327,21 @@ export default function Index({ movements, filters, warehouses, displays, transf
     const stockOutLocations = stockOutForm.data.location_type === 'warehouse' ? warehouses : displays
 
     // ==================== OTHER FUNCTIONS ====================
+    // Helper for formatting quantity
+    const isWeightBasedUnit = (unit) => {
+        const weightUnits = ["kg", "gram", "g", "liter", "l", "ml", "ons", "ton"];
+        return weightUnits.includes(unit?.toLowerCase());
+    };
+
+    const formatQty = (qty, unit) => {
+        const numQty = parseFloat(qty);
+        if (isWeightBasedUnit(unit) || (numQty % 1 !== 0)) {
+            // Allow decimals but strip unnecessary trailing zeros, max 3 places
+            return parseFloat(numQty.toFixed(3)).toString();
+        }
+        return Math.floor(numQty).toString();
+    };
+
     const handleExport = () => {
         const params = new URLSearchParams(filterData).toString();
         window.open(route("stock-movements.export") + "?" + params, "_blank");
@@ -544,7 +559,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                                         </Table.Td>
                                         <Table.Td className='text-center'>
                                             <span className='bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-gray-800 dark:text-gray-300'>
-                                                {movement.quantity}
+                                                {formatQty(movement.quantity, movement.product?.unit)}
                                             </span>
                                         </Table.Td>
                                         <Table.Td className='text-sm text-right'>
@@ -649,7 +664,12 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             <div className='col-span-12'>
                                 <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
                                     <p className='text-sm text-blue-700 dark:text-blue-300'>
-                                        Stok tersedia di gudang: <strong>{transferAvailableStock}</strong>
+                                        Stok tersedia di gudang: <strong>
+                                            {(() => {
+                                                const product = transferProducts.find(p => p.id == transferForm.data.product_id);
+                                                return formatQty(transferAvailableStock, product?.unit);
+                                            })()}
+                                        </strong>
                                     </p>
                                 </div>
                             </div>
@@ -956,7 +976,12 @@ export default function Index({ movements, filters, warehouses, displays, transf
                             <div className='col-span-12'>
                                 <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
                                     <p className='text-sm text-blue-700 dark:text-blue-300'>
-                                        Stok tersedia: <strong>{stockOutAvailableStock}</strong>
+                                        Stok tersedia: <strong>
+                                            {(() => {
+                                                const product = (allProducts || []).find(p => p.id == stockOutForm.data.product_id);
+                                                return formatQty(stockOutAvailableStock, product?.unit);
+                                            })()}
+                                        </strong>
                                     </p>
                                 </div>
                             </div>

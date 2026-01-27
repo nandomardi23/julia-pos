@@ -8,6 +8,21 @@ import Button from '@/Components/Common/Button'
 import Search from '@/Components/Common/Search'
 
 export default function Show({ display, stocks, filters }) {
+    // Helper for formatting quantity
+    const isWeightBasedUnit = (unit) => {
+        const weightUnits = ["kg", "gram", "g", "liter", "l", "ml", "ons", "ton"];
+        return weightUnits.includes(unit?.toLowerCase());
+    };
+
+    const formatQty = (qty, unit) => {
+        const numQty = parseFloat(qty);
+        if (isWeightBasedUnit(unit) || (numQty % 1 !== 0)) {
+            // Allow decimals but strip unnecessary trailing zeros, max 3 places
+            return parseFloat(numQty.toFixed(3)).toString();
+        }
+        return Math.floor(numQty).toString();
+    };
+
     return (
         <>
             <Head title={`Display: ${display.name}`} />
@@ -46,8 +61,8 @@ export default function Show({ display, stocks, filters }) {
                                 <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
                                 <p>
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${display.is_active
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                        : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                                         }`}>
                                         {display.is_active ? 'Aktif' : 'Nonaktif'}
                                     </span>
@@ -112,12 +127,12 @@ export default function Show({ display, stocks, filters }) {
                                             <Table.Td>Rp {parseInt(stock.product?.sell_price || 0).toLocaleString('id-ID')}</Table.Td>
                                             <Table.Td className='text-center'>
                                                 <span className='bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-gray-800 dark:text-gray-300'>
-                                                    {stock.product?.warehouse_stocks_sum_quantity || 0}
+                                                    {formatQty(stock.product?.warehouse_stocks_sum_quantity || 0, stock.product?.unit)}
                                                 </span>
                                             </Table.Td>
                                             <Table.Td className='text-center'>
                                                 <span className='bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-green-900 dark:text-green-300'>
-                                                    {stock.quantity}
+                                                    {formatQty(stock.quantity, stock.product?.unit)}
                                                 </span>
                                             </Table.Td>
                                         </tr>

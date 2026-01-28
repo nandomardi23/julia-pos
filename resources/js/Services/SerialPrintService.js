@@ -271,7 +271,9 @@ class SerialPrintService {
             add(ESC, 0x45, 0x00);
 
             // Qty x Price = Subtotal
-            const qtyPrice = `   ${qty} x ${this.formatNumber(price)}`;
+            // Format qty with proper decimal (period) for thermal printer ASCII compatibility
+            const qtyStr = Number.isInteger(qty) ? qty.toString() : qty.toFixed(3).replace(/\.?0+$/, '');
+            const qtyPrice = `   ${qtyStr} x ${this.formatNumber(price)}`;
             const subtotalStr = 'Rp ' + this.formatNumber(subtotal);
             const spaces = Math.max(1, WIDTH - qtyPrice.length - subtotalStr.length);
             addText(qtyPrice + ' '.repeat(spaces) + subtotalStr + '\n\n');

@@ -410,7 +410,13 @@ function printItems($printer, $details)
         $subtotal = $qty * $price;
 
         // Format qty - show decimals only if needed
-        $qtyFormatted = ($qty == floor($qty)) ? number_format($qty, 0) : rtrim(rtrim(number_format($qty, 3, ',', '.'), '0'), ',');
+        // Use period as decimal separator for thermal printer ASCII compatibility
+        if ($qty == floor($qty)) {
+            $qtyFormatted = number_format($qty, 0);
+        } else {
+            // Format with period as decimal separator (ASCII compatible)
+            $qtyFormatted = rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
+        }
 
         // Item name
         $printer->setEmphasis(true);

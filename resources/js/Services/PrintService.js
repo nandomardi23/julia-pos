@@ -253,7 +253,9 @@ class PrintService {
             receipt += ESC + 'E' + '\x00';
 
             // Qty x Price aligned with Rp Subtotal
-            const qtyPrice = `   ${qty} x ${this.formatNumber(price)}`;
+            // Format qty with proper decimal (period) for thermal printer ASCII compatibility
+            const qtyStr = Number.isInteger(qty) ? qty.toString() : qty.toFixed(3).replace(/\.?0+$/, '');
+            const qtyPrice = `   ${qtyStr} x ${this.formatNumber(price)}`;
             const subtotalStr = 'Rp ' + this.formatNumber(subtotal);
             const spaces = Math.max(1, WIDTH - qtyPrice.length - subtotalStr.length);
             receipt += qtyPrice + ' '.repeat(spaces) + subtotalStr + LF + LF;

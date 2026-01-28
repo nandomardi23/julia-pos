@@ -130,9 +130,27 @@ class TransactionController extends Controller
 
         $transactions = $query->paginate($request->input('per_page', 10))->withQueryString();
 
+        // Get settings for receipt modal
+        $settings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+
         return Inertia::render('Dashboard/Transactions/History', [
             'transactions' => $transactions,
             'filters' => $filters,
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Get transaction details as JSON for API/modal usage.
+     */
+    public function showJson($invoice)
+    {
+        $transaction = Transaction::with(['details.product', 'cashier'])
+            ->where('invoice', $invoice)
+            ->firstOrFail();
+
+        return response()->json([
+            'transaction' => $transaction
         ]);
     }
 

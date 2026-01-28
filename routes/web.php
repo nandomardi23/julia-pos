@@ -244,6 +244,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::get('/transactions/history', [TransactionController::class, 'history'])->middleware('permission:transactions-access')->name('transactions.history');
     Route::get('/transactions/{invoice}', [TransactionController::class, 'show'])->middleware('permission:transactions-access')->name('transactions.show');
     Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->middleware('permission:transactions-access')->name('transactions.print');
+    Route::get('/transactions/{invoice}/json', [TransactionController::class, 'showJson'])->middleware('permission:transactions-access')->name('api.transactions.show');
     Route::delete('/transactions/{invoice}', [TransactionController::class, 'destroy'])->middleware('permission:transactions-access')->name('transactions.destroy');
 
     // Return/Refund Routes

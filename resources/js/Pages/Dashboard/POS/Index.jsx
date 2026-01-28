@@ -1628,7 +1628,7 @@ export default function Index({
                                                     {item.variant_name && <span className="font-normal"> ({item.variant_name})</span>}
                                                 </div>
                                                 <div className="flex justify-between text-xs pl-3">
-                                                    <span>{formattedQty} x {formatPrice(price)}</span>
+                                                    <span>{formattedQty} x {price.toLocaleString('id-ID')}</span>
                                                     <span>{formatPrice(qty * price)}</span>
                                                 </div>
                                             </div>

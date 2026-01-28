@@ -108,7 +108,8 @@ class TransactionController extends Controller
 
         $query = Transaction::query()
             ->with(['cashier:id,name'])
-            ->withSum('details as total_items', 'qty')
+            ->withCount('details as details_count') // Count of line items (number of different products)
+            ->withSum('details as total_items', 'qty') // Keep for backwards compatibility
             ->withSum('profits as total_profit', 'total')
             ->orderByDesc('created_at');
 

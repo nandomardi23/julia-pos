@@ -173,7 +173,7 @@ const History = ({ transactions, filters }) => {
                                 <Table.Th>No. Resi</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th className="text-center">Item</Table.Th>
+                                <Table.Th className="text-center">Jml Item</Table.Th>
                                 <Table.Th className="text-right">Diskon</Table.Th>
                                 <Table.Th className="text-right">Total</Table.Th>
                                 <Table.Th className="text-right">Profit</Table.Th>
@@ -196,7 +196,7 @@ const History = ({ transactions, filters }) => {
                                         <Table.Td>{formatDate(transaction.created_at)}</Table.Td>
                                         <Table.Td>{transaction.cashier?.name ?? "-"}</Table.Td>
                                         <Table.Td className="text-center">
-                                            {formatQty(transaction.total_items ?? 0)}
+                                            {transaction.details_count ?? transaction.details?.length ?? 0}
                                         </Table.Td>
                                         <Table.Td className="text-right">
                                             {formatCurrency(transaction.discount ?? 0)}

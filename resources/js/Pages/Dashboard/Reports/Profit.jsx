@@ -257,7 +257,7 @@ const ProfitReport = ({
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
                                 <Table.Th className="text-center">
-                                    Item
+                                    Jml Item
                                 </Table.Th>
                                 <Table.Th className="text-right">
                                     Penjualan
@@ -286,7 +286,7 @@ const ProfitReport = ({
                                             {transaction.cashier?.name ?? "-"}
                                         </Table.Td>
                                         <Table.Td className="text-center">
-                                            {formatQty(transaction.total_items ?? 0)}
+                                            {Number(transaction.total_items ?? 0)}
                                         </Table.Td>
                                         <Table.Td className="text-right">
                                             {formatCurrency(

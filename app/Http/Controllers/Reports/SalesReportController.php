@@ -29,7 +29,7 @@ class SalesReportController extends Controller
         $baseListQuery = $this->applyFilters(
             Transaction::query()
                 ->with(['cashier:id,name'])
-                ->withSum('details as total_items', 'qty')
+                ->withCount('details as total_items')
                 ->withSum('profits as total_profit', 'total'),
             $filters
         )->orderByDesc('created_at');
@@ -95,7 +95,7 @@ class SalesReportController extends Controller
         $transactions = $this->applyFilters(
             Transaction::query()
                 ->with(['cashier:id,name'])
-                ->withSum('details as total_items', 'qty')
+                ->withCount('details as total_items')
                 ->withSum('profits as total_profit', 'total'),
             $filters
         )->orderByDesc('created_at')->get();

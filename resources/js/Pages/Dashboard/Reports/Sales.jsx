@@ -266,7 +266,7 @@ const Sales = ({ transactions, summary, filters, cashiers }) => {
                                 <Table.Th className="w-12 text-center">No</Table.Th>
                                 <Table.Th>Tanggal</Table.Th>
                                 <Table.Th>Kasir</Table.Th>
-                                <Table.Th className="text-center">Item</Table.Th>
+                                <Table.Th className="text-center">Jml Item</Table.Th>
                                 <Table.Th>Diskon</Table.Th>
                                 <Table.Th className="text-right">Subtotal</Table.Th>
                                 <Table.Th className="text-right">Pajak</Table.Th>

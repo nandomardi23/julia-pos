@@ -27,7 +27,7 @@ class ProfitReportController extends Controller
             Transaction::query()
                 ->with(['cashier:id,name'])
                 ->withSum('profits as total_profit', 'total')
-                ->withSum('details as total_items', 'qty'),
+                ->withCount('details as total_items'),
             $filters
         )->orderByDesc('created_at');
 
@@ -95,7 +95,7 @@ class ProfitReportController extends Controller
             Transaction::query()
                 ->with(['cashier:id,name'])
                 ->withSum('profits as total_profit', 'total')
-                ->withSum('details as total_items', 'qty'),
+                ->withCount('details as total_items'),
             $filters
         )->orderByDesc('created_at')->get();
 

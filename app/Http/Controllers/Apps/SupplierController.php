@@ -65,8 +65,13 @@ class SupplierController extends Controller
      */
     public function show(Request $request, Supplier $supplier)
     {
-        // Get unique products that belong to this supplier (via stock movements) - paginated
-        $products = $supplier->products()
+        // Get unique product IDs from stock movements for this supplier
+        $productIds = \App\Models\StockMovement::where('supplier_id', $supplier->id)
+            ->distinct()
+            ->pluck('product_id');
+
+        // Get unique products that belong to this supplier - paginated
+        $products = \App\Models\Product::whereIn('id', $productIds)
             ->with('category:id,name')
             ->paginate(10, ['*'], 'products_page')
             ->withQueryString();
@@ -91,7 +96,7 @@ class SupplierController extends Controller
                 'total_purchases' => $totalPurchases,
                 'total_spent' => $totalSpent,
                 'total_items' => $totalItems,
-                'total_products' => $supplier->products()->count(),
+                'total_products' => $productIds->count(),
             ],
         ]);
     }

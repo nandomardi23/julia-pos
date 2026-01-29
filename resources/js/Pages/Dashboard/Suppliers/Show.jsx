@@ -20,6 +20,10 @@ export default function Show({ supplier, purchases, stats, products }) {
         return new Intl.NumberFormat('id-ID').format(amount || 0)
     }
 
+    // Get paginated data
+    const purchaseRows = purchases?.data ?? []
+    const productRows = products?.data ?? []
+
     return (
         <>
             <Head title={`Supplier: ${supplier.name}`} />
@@ -122,7 +126,17 @@ export default function Show({ supplier, purchases, stats, products }) {
                 {/* Right Column */}
                 <div className='col-span-12 md:col-span-8 space-y-4'>
                     {/* Purchase History */}
-                    <Table.Card title={'Riwayat Pembelian dari Supplier'}>
+                    <Table.Card 
+                        title={'Riwayat Pembelian dari Supplier'}
+                        links={purchases?.links}
+                        meta={{
+                            from: purchases?.from,
+                            to: purchases?.to,
+                            total: purchases?.total,
+                            per_page: purchases?.per_page
+                        }}
+                        url={route('suppliers.show', supplier.id)}
+                    >
                         <Table>
                             <Table.Thead>
                                 <tr>
@@ -134,8 +148,8 @@ export default function Show({ supplier, purchases, stats, products }) {
                                 </tr>
                             </Table.Thead>
                             <Table.Tbody>
-                                {purchases && purchases.length > 0 ? (
-                                    purchases.map((purchase, i) => (
+                                {purchaseRows.length > 0 ? (
+                                    purchaseRows.map((purchase, i) => (
                                         <tr className='hover:bg-gray-100 dark:hover:bg-gray-900' key={i}>
                                             <Table.Td className='text-sm'>
                                                 {formatDate(purchase.created_at)}
@@ -168,7 +182,17 @@ export default function Show({ supplier, purchases, stats, products }) {
                     </Table.Card>
 
                     {/* Products from this supplier */}
-                    <Table.Card title={'Produk dari Supplier Ini'}>
+                    <Table.Card 
+                        title={'Produk dari Supplier Ini'}
+                        links={products?.links}
+                        meta={{
+                            from: products?.from,
+                            to: products?.to,
+                            total: products?.total,
+                            per_page: products?.per_page
+                        }}
+                        url={route('suppliers.show', supplier.id)}
+                    >
                         <Table>
                             <Table.Thead>
                                 <tr>
@@ -179,8 +203,8 @@ export default function Show({ supplier, purchases, stats, products }) {
                                 </tr>
                             </Table.Thead>
                             <Table.Tbody>
-                                {products && products.length > 0 ? (
-                                    products.map((product, i) => (
+                                {productRows.length > 0 ? (
+                                    productRows.map((product, i) => (
                                         <tr className='hover:bg-gray-100 dark:hover:bg-gray-900' key={i}>
                                             <Table.Td>
                                                 <div className='flex items-center gap-2'>
@@ -206,3 +230,4 @@ export default function Show({ supplier, purchases, stats, products }) {
 }
 
 Show.layout = page => <DashboardLayout children={page} />
+

@@ -4,8 +4,9 @@
     "type": "project",
     "require": {
         "php": ">=7.4",
-        "workerman/workerman": "^4.1",
-        "mike42/escpos-php": "^3.0"
+        "mike42/escpos-php": "^3.0",
+        "mike42/gfx-php": "^0.6.0",
+        "workerman/workerman": "^4.1"
     },
     "autoload": {
         "psr-4": {

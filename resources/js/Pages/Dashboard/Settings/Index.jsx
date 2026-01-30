@@ -145,8 +145,8 @@ export default function Index({ settings }) {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${isActive
-                                            ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                        ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                         }`}
                                 >
                                     <Icon size={18} />
@@ -312,8 +312,8 @@ export default function Index({ settings }) {
 
                                     {connectionStatus && (
                                         <div className={`mt-3 p-3 rounded-lg text-sm ${connectionStatus.connected
-                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30'
-                                                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/30'
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30'
+                                            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/30'
                                             }`}>
                                             <strong>{connectionStatus.connected ? '✓ Terhubung' : '✗ Tidak Terhubung'}</strong>
                                             <p className="mt-1">{connectionStatus.message}</p>

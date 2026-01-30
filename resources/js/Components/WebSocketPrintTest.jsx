@@ -40,7 +40,7 @@ export default function WebSocketPrintTest() {
     return (
         <div className="p-6 bg-white rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">WebSocket Print Server Test</h3>
-            
+
             <div className="mb-4">
                 <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${status.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -61,7 +61,7 @@ export default function WebSocketPrintTest() {
                 >
                     Check Status
                 </button>
-                
+
                 <button
                     onClick={handleTestPrint}
                     disabled={!status.connected}
@@ -69,7 +69,7 @@ export default function WebSocketPrintTest() {
                 >
                     Test Print
                 </button>
-                
+
                 <button
                     onClick={handleOpenDrawer}
                     disabled={!status.connected}

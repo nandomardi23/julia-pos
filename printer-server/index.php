@@ -338,6 +338,78 @@ function createPrinterConnector($printerName)
 }
 
 /**
+ * Resize logo image for thermal printer
+ * Thermal printers typically support max 384 pixels width
+ * Converts to grayscale with white background for ESC/POS compatibility
+ */
+function resizeLogoForPrinter($imagePath, $maxWidth = 384)
+{
+    try {
+        $imageInfo = getimagesize($imagePath);
+        if (!$imageInfo) {
+            echo "  → Cannot read image info\n";
+            return null;
+        }
+
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+        $type = $imageInfo[2];
+
+        // Calculate new dimensions (always resize for consistency)
+        $ratio = $maxWidth / $width;
+        $newWidth = min($maxWidth, $width);
+        $newHeight = intval($height * ($newWidth / $width));
+
+        // Create source image based on type
+        switch ($type) {
+            case IMAGETYPE_PNG:
+                $srcImage = imagecreatefrompng($imagePath);
+                break;
+            case IMAGETYPE_JPEG:
+                $srcImage = imagecreatefromjpeg($imagePath);
+                break;
+            case IMAGETYPE_GIF:
+                $srcImage = imagecreatefromgif($imagePath);
+                break;
+            default:
+                echo "  → Unsupported image type\n";
+                return null;
+        }
+
+        if (!$srcImage) {
+            echo "  → Failed to create source image\n";
+            return null;
+        }
+
+        // Create destination image with WHITE background (no transparency)
+        $dstImage = imagecreatetruecolor($newWidth, $newHeight);
+        $white = imagecolorallocate($dstImage, 255, 255, 255);
+        imagefill($dstImage, 0, 0, $white);
+
+        // Enable alpha blending for source to handle transparent PNGs
+        imagealphablending($dstImage, true);
+
+        // Resize
+        imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        // Save as PNG (no transparency, white background)
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pos_logo_' . uniqid() . '.png';
+        imagepng($dstImage, $tempPath, 0); // 0 = no compression for cleaner output
+
+        // Cleanup
+        imagedestroy($srcImage);
+        imagedestroy($dstImage);
+
+        echo "  → Resized logo from {$width}x{$height} to {$newWidth}x{$newHeight}\n";
+
+        return $tempPath;
+    } catch (Exception $e) {
+        echo "  → Resize error: " . $e->getMessage() . "\n";
+        return null;
+    }
+}
+
+/**
  * Print header section
  */
 function printHeader($printer, $settings)
@@ -368,9 +440,26 @@ function printHeader($printer, $settings)
 
             if (file_exists($logoPath)) {
                 echo "  → Loading logo from: $logoPath\n";
-                $image = EscposImage::load($logoPath, false);
-                $printer->bitImage($image, Printer::IMG_DEFAULT);
-                $printer->feed(1);
+
+                // Resize image if too large for thermal printer (max 384px width)
+                $resizedPath = resizeLogoForPrinter($logoPath, 300); // Use smaller width for better compatibility
+                if ($resizedPath && file_exists($resizedPath)) {
+                    try {
+                        // Try loading with GD capability check
+                        $image = EscposImage::load($resizedPath, false);
+                        $printer->bitImage($image, Printer::IMG_DEFAULT);
+                        $printer->feed(1);
+                        echo "  → Logo printed successfully\n";
+                    } catch (Exception $imgEx) {
+                        echo "  → Logo print error: " . $imgEx->getMessage() . "\n";
+                    }
+                    // Clean up temp file
+                    if ($resizedPath !== $logoPath) {
+                        @unlink($resizedPath);
+                    }
+                } else {
+                    echo "  → Logo resize failed\n";
+                }
             } else {
                 echo "  → Logo not found: {$settings['store_logo']}\n";
             }

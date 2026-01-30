@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -11,6 +12,7 @@ class ProductionStockMovementSeeder extends Seeder
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('stock_movements')->truncate();
+        DB::table('display_stock')->truncate();
 
         // Ensure Display 1 exists
         $display = DB::table('displays')->find(1);
@@ -25,368 +27,32 @@ class ProductionStockMovementSeeder extends Seeder
             ]);
         }
 
-        // [id, receipt_id, po_id, product_id, from_type, from_id, supplier_id, invoice_number, batch_number, expiry_date, to_type, to_id, quantity, purchase_price, loss_amount, note, user_id, created_at, updated_at]
-        $movements = [
-            [1, NULL, NULL, 1, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [2, NULL, NULL, 1, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [3, NULL, NULL, 2, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 31000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [4, NULL, NULL, 2, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 31000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [5, NULL, NULL, 3, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 35, 12000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [6, NULL, NULL, 3, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 35, 12000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [7, NULL, NULL, 4, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 6, 35857.14, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [8, NULL, NULL, 4, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 6, 35857.14, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [9, NULL, NULL, 5, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 41333.33, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [10, NULL, NULL, 5, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 41333.33, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [11, NULL, NULL, 6, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 11, 41571.43, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [12, NULL, NULL, 6, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 11, 41571.43, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [13, NULL, NULL, 7, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 24, 38000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [14, NULL, NULL, 7, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 24, 38000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [15, NULL, NULL, 8, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 47000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [16, NULL, NULL, 8, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 47000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [17, NULL, NULL, 9, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 58000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [18, NULL, NULL, 9, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 58000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [19, NULL, NULL, 10, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 2, 55500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [20, NULL, NULL, 10, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 2, 55500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [21, NULL, NULL, 11, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 43000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [22, NULL, NULL, 11, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 43000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [23, NULL, NULL, 12, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 4, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [24, NULL, NULL, 12, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 4, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [25, NULL, NULL, 13, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 2, 55500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [26, NULL, NULL, 13, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 2, 55500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [27, NULL, NULL, 14, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 8250.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [28, NULL, NULL, 14, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 8250.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [29, NULL, NULL, 15, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 24, 13800.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [30, NULL, NULL, 15, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 24, 13800.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [31, NULL, NULL, 16, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 30, 9400.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [32, NULL, NULL, 16, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 30, 9400.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [33, NULL, NULL, 17, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 42, 7250.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [34, NULL, NULL, 17, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 42, 7250.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [35, NULL, NULL, 18, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 32, 3800.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [36, NULL, NULL, 18, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 32, 3800.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [37, NULL, NULL, 19, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 25, 8533.33, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [38, NULL, NULL, 19, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 25, 8533.33, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [39, NULL, NULL, 20, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 27, 8533.33, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [40, NULL, NULL, 20, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 27, 8533.33, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [41, NULL, NULL, 21, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 23, 11000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [42, NULL, NULL, 21, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 23, 11000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [43, NULL, NULL, 22, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 38, 10500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [44, NULL, NULL, 22, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 38, 10500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [45, NULL, NULL, 23, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 97, 13000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [46, NULL, NULL, 23, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 97, 13000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [47, NULL, NULL, 24, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 80000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [48, NULL, NULL, 24, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 80000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [49, NULL, NULL, 25, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 55500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [50, NULL, NULL, 25, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 55500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [51, NULL, NULL, 26, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 99, 11600.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:26'],
-            [52, NULL, NULL, 26, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 99, 11600.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:26'],
-            [53, NULL, NULL, 27, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 178, 4000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:26', '2026-01-25 22:04:27'],
-            [54, NULL, NULL, 27, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 178, 4000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [55, NULL, NULL, 28, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 164, 13000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [56, NULL, NULL, 28, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 164, 13000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [57, NULL, NULL, 29, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 154, 13000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [58, NULL, NULL, 29, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 154, 13000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [59, NULL, NULL, 30, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 45, 33000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [60, NULL, NULL, 30, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 45, 33000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [61, NULL, NULL, 31, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 30, 51000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [62, NULL, NULL, 31, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 30, 51000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [63, NULL, NULL, 32, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 30, 45000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [64, NULL, NULL, 32, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 30, 45000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [65, NULL, NULL, 33, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 43000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [66, NULL, NULL, 33, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 43000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [67, NULL, NULL, 34, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 19, 41000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [68, NULL, NULL, 34, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 19, 41000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [69, NULL, NULL, 35, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 41000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [70, NULL, NULL, 35, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 41000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [71, NULL, NULL, 36, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 26, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [72, NULL, NULL, 36, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 26, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [73, NULL, NULL, 37, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 39000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [74, NULL, NULL, 37, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 39000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [75, NULL, NULL, 38, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 39000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [76, NULL, NULL, 38, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 39000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [77, NULL, NULL, 39, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 7, 115000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [78, NULL, NULL, 39, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 7, 115000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [79, NULL, NULL, 40, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 108, 19000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [80, NULL, NULL, 40, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 108, 19000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [81, NULL, NULL, 41, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 42500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [82, NULL, NULL, 41, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 42500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [83, NULL, NULL, 42, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 39, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [84, NULL, NULL, 42, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 39, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [85, NULL, NULL, 43, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 8, 100000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [86, NULL, NULL, 43, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 8, 100000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [87, NULL, NULL, 44, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 4, 114111.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [88, NULL, NULL, 44, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 4, 114111.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [89, NULL, NULL, 45, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 13, 18000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [90, NULL, NULL, 45, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 13, 18000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [91, NULL, NULL, 46, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 7, 26500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [92, NULL, NULL, 46, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 7, 26500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [93, NULL, NULL, 47, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 22, 15300.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [94, NULL, NULL, 47, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 22, 15300.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [95, NULL, NULL, 48, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 24, 30000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [96, NULL, NULL, 48, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 24, 30000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [97, NULL, NULL, 49, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 63000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [98, NULL, NULL, 49, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 63000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [99, NULL, NULL, 50, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 12, 32167.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [100, NULL, NULL, 50, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 12, 32167.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [101, NULL, NULL, 51, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 33833.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [102, NULL, NULL, 51, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 33833.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [103, NULL, NULL, 52, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 32, 9300.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [104, NULL, NULL, 52, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 32, 9300.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [105, NULL, NULL, 53, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 29, 10000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [106, NULL, NULL, 53, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 29, 10000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [107, NULL, NULL, 54, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 14, 24429.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [108, NULL, NULL, 54, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 14, 24429.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [109, NULL, NULL, 55, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 18, 19667.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [110, NULL, NULL, 55, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 18, 19667.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [111, NULL, NULL, 56, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 12, 31333.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [112, NULL, NULL, 56, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 12, 31333.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [113, NULL, NULL, 57, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [114, NULL, NULL, 57, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [115, NULL, NULL, 58, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 8, 45000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [116, NULL, NULL, 58, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 8, 45000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [117, NULL, NULL, 59, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 11, 50000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [118, NULL, NULL, 59, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 11, 50000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [119, NULL, NULL, 60, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 51000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [120, NULL, NULL, 60, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 51000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [121, NULL, NULL, 61, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 30, 15000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [122, NULL, NULL, 61, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 30, 15000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [123, NULL, NULL, 62, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 8, 30000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [124, NULL, NULL, 62, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 8, 30000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [125, NULL, NULL, 63, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 13, 49000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [126, NULL, NULL, 63, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 13, 49000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [127, NULL, NULL, 64, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 19, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [128, NULL, NULL, 64, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 19, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [129, NULL, NULL, 65, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 24, 59000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [130, NULL, NULL, 65, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 24, 59000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [131, NULL, NULL, 66, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 75, 6000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [132, NULL, NULL, 66, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 75, 6000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [133, NULL, NULL, 67, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 64, 29000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [134, NULL, NULL, 67, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 64, 29000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [135, NULL, NULL, 68, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 21000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [136, NULL, NULL, 68, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 21000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [137, NULL, NULL, 69, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 180000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [138, NULL, NULL, 69, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 180000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [139, NULL, NULL, 70, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 95000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [140, NULL, NULL, 70, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 95000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [141, NULL, NULL, 71, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 24, 15000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [142, NULL, NULL, 71, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 24, 15000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [143, NULL, NULL, 72, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 54, 21000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [144, NULL, NULL, 72, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 54, 21000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [145, NULL, NULL, 73, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 14, 70000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [146, NULL, NULL, 73, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 14, 70000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [147, NULL, NULL, 74, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 63, 12000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [148, NULL, NULL, 74, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 63, 12000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [149, NULL, NULL, 75, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 37000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [150, NULL, NULL, 75, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 37000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [151, NULL, NULL, 76, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 78, 10500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [152, NULL, NULL, 76, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 78, 10500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [153, NULL, NULL, 77, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 13, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [154, NULL, NULL, 77, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 13, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [155, NULL, NULL, 78, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 22, 38000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [156, NULL, NULL, 78, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 22, 38000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [157, NULL, NULL, 79, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 22, 95000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [158, NULL, NULL, 79, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 22, 95000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [159, NULL, NULL, 80, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 4, 46000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [160, NULL, NULL, 80, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 4, 46000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [161, NULL, NULL, 81, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 134, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [162, NULL, NULL, 81, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 134, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [163, NULL, NULL, 82, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 44, 37000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [164, NULL, NULL, 82, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 44, 37000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [165, NULL, NULL, 83, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 13, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [166, NULL, NULL, 83, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 13, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [167, NULL, NULL, 84, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 118, 23000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [168, NULL, NULL, 84, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 118, 23000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [169, NULL, NULL, 85, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 17, 21000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [170, NULL, NULL, 85, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 17, 21000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [171, NULL, NULL, 86, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 15, 22000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [172, NULL, NULL, 86, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 15, 22000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [173, NULL, NULL, 87, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 17, 26000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [174, NULL, NULL, 87, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 17, 26000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [175, NULL, NULL, 88, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 45, 38000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [176, NULL, NULL, 88, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 45, 38000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [177, NULL, NULL, 89, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 31000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [178, NULL, NULL, 89, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 31000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [179, NULL, NULL, 90, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 68, 20000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [180, NULL, NULL, 90, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 68, 20000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [181, NULL, NULL, 91, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 7, 30000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [182, NULL, NULL, 91, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 7, 30000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [183, NULL, NULL, 92, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 128, 9500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [184, NULL, NULL, 92, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 128, 9500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [185, NULL, NULL, 93, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 112, 9500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [186, NULL, NULL, 93, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 112, 9500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [187, NULL, NULL, 94, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 34, 23000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [188, NULL, NULL, 94, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 34, 23000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [189, NULL, NULL, 95, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 88000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [190, NULL, NULL, 95, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 88000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [191, NULL, NULL, 96, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 269000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [192, NULL, NULL, 96, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 269000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [193, NULL, NULL, 97, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 234000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [194, NULL, NULL, 97, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 234000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [195, NULL, NULL, 98, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 204000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [196, NULL, NULL, 98, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 204000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [197, NULL, NULL, 99, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 36, 12000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [198, NULL, NULL, 99, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 36, 12000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [199, NULL, NULL, 100, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 112000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [200, NULL, NULL, 100, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 112000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [201, NULL, NULL, 101, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 127000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [202, NULL, NULL, 101, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 127000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [203, NULL, NULL, 102, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 71000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [204, NULL, NULL, 102, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 71000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [205, NULL, NULL, 103, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 16, 30000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [206, NULL, NULL, 103, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 16, 30000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [207, NULL, NULL, 104, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 50, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [208, NULL, NULL, 104, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 50, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [209, NULL, NULL, 105, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 4, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [210, NULL, NULL, 105, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 4, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [211, NULL, NULL, 106, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 17, 70000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [212, NULL, NULL, 106, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 17, 70000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [213, NULL, NULL, 107, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 7, 65000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [214, NULL, NULL, 107, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 7, 65000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [215, NULL, NULL, 108, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 2, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [216, NULL, NULL, 108, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 2, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [217, NULL, NULL, 109, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 6, 13500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [218, NULL, NULL, 109, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 6, 13500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [219, NULL, NULL, 110, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 5, 7000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [220, NULL, NULL, 110, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 5, 7000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [221, NULL, NULL, 111, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 21, 22000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [222, NULL, NULL, 111, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 21, 22000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [223, NULL, NULL, 112, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 11000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [224, NULL, NULL, 112, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 11000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [225, NULL, NULL, 115, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 12, 80000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [226, NULL, NULL, 115, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 12, 80000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [227, NULL, NULL, 116, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 17500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [228, NULL, NULL, 116, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 17500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [229, NULL, NULL, 117, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 15, 8750.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [230, NULL, NULL, 117, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 15, 8750.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [231, NULL, NULL, 118, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 77000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [232, NULL, NULL, 118, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 77000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [233, NULL, NULL, 119, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 1925.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [234, NULL, NULL, 119, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 1925.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [235, NULL, NULL, 120, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 20, 19500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [236, NULL, NULL, 120, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 19500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [237, NULL, NULL, 121, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 2, 39000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [238, NULL, NULL, 121, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 2, 39000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [239, NULL, NULL, 122, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 18, 20500.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [240, NULL, NULL, 122, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 18, 20500.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [241, NULL, NULL, 123, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 30, 71600.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [242, NULL, NULL, 123, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 30, 71600.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [243, NULL, NULL, 124, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 6, 39000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [244, NULL, NULL, 124, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 6, 39000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [245, NULL, NULL, 125, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 3, 50000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [246, NULL, NULL, 125, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 3, 50000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [247, NULL, NULL, 126, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 48000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [248, NULL, NULL, 126, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 48000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [249, NULL, NULL, 127, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 19, 25000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [250, NULL, NULL, 127, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 19, 25000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [251, NULL, NULL, 128, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 30000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [252, NULL, NULL, 128, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 30000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [253, NULL, NULL, 129, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 31000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [254, NULL, NULL, 129, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 31000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [255, NULL, NULL, 130, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 24000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [256, NULL, NULL, 130, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 24000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [257, NULL, NULL, 131, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 10, 36000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [258, NULL, NULL, 131, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 10, 36000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [259, NULL, NULL, 132, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 38, 175000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [260, NULL, NULL, 132, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 38, 175000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [261, NULL, NULL, 133, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 9, 220000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [262, NULL, NULL, 133, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 9, 220000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [263, NULL, NULL, 134, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 7, 35000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [264, NULL, NULL, 134, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 7, 35000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [265, NULL, NULL, 135, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 6, 22000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [266, NULL, NULL, 135, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 6, 22000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [267, NULL, NULL, 136, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 64000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [268, NULL, NULL, 136, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 64000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [269, NULL, NULL, 137, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 60000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [270, NULL, NULL, 137, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 60000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [271, NULL, NULL, 138, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 60000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [272, NULL, NULL, 138, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 60000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [273, NULL, NULL, 139, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 60000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [274, NULL, NULL, 139, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 60000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [275, NULL, NULL, 140, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 29000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [276, NULL, NULL, 140, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 29000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [277, NULL, NULL, 141, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 24000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [278, NULL, NULL, 141, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 24000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [279, NULL, NULL, 142, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 50000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [280, NULL, NULL, 142, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 50000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [281, NULL, NULL, 143, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 396000.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [282, NULL, NULL, 143, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 396000.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [283, NULL, NULL, 144, 'adjustment', NULL, NULL, NULL, NULL, NULL, 'warehouse', 1, 40, 6800.00, NULL, 'Initial Stock Seeding (Opname Awal)', 1, '2026-01-25 22:04:27', '2026-01-25 22:04:27'],
-            [284, NULL, NULL, 144, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 40, 6800.00, NULL, 'Migrasi awal ke Display Toko', 1, '2026-01-25 22:04:28', '2026-01-25 22:04:27'],
-            [285, 30, NULL, 20, 'warehouse', 1, NULL, NULL, NULL, NULL, 'display', 1, 20, 8533.00, NULL, 'Restock', 1, '2026-01-26 13:30:19', '2026-01-26 13:30:19'],
-        ];
+        // Get all existing product IDs
+        $existingProductIds = Product::pluck('id')->toArray();
 
-        foreach (array_chunk($movements, 50) as $chunk) {
-            $insertData = [];
-            foreach ($chunk as $row) {
-                $insertData[] = [
-                    'id' => $row[0],
-                    'receipt_id' => $row[1],
-                    'purchase_order_id' => $row[2],
-                    'product_id' => $row[3],
-                    'from_type' => $row[4],
-                    'from_id' => $row[5],
-                    'supplier_id' => $row[6],
-                    'invoice_number' => $row[7],
-                    'batch_number' => $row[8],
-                    'expiry_date' => $row[9],
-                    'to_type' => $row[10],
-                    'to_id' => $row[11],
-                    'quantity' => $row[12],
-                    'purchase_price' => $row[13],
-                    'loss_amount' => $row[14],
-                    'note' => $row[15],
-                    'user_id' => $row[16],
-                    'created_at' => $row[17],
-                    'updated_at' => $row[18],
-                ];
-            }
-            DB::table('stock_movements')->insert($insertData);
+        if (empty($existingProductIds)) {
+            $this->command->warn('No products found in database. Skipping stock movement seeding.');
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return;
         }
-        
+
+        $this->command->info('Found ' . count($existingProductIds) . ' products. Creating initial display stocks...');
+
+        // Create display stock for all products with 0 quantity (fresh start)
+        foreach ($existingProductIds as $pid) {
+            DB::table('display_stock')->insert([
+                'display_id' => 1,
+                'product_id' => $pid,
+                'quantity' => 0,
+                'min_stock' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Calculate and Populate Display Stock
-        $this->command->info('Recalculating Display Stock based on movements...');
-        DB::table('display_stock')->truncate();
-        
-        // Sum of all IN movements to display minus OUT movements from display
-        // Assuming to_type='display' adds to display stock
-        // Assuming from_type='display' subtracts from display stock
-        
-        $stock = [];
-
-        foreach ($movements as $mov) {
-            $pid = $mov[3]; // product_id
-            $qty = $mov[12]; // quantity
-            $toType = $mov[10];
-            $fromType = $mov[4];
-
-            if (!isset($stock[$pid])) {
-                $stock[$pid] = 0;
-            }
-
-            if ($toType === 'display') {
-                $stock[$pid] += $qty;
-            }
-
-            if ($fromType === 'display') {
-                $stock[$pid] -= $qty;
-            }
-        }
-
-        foreach ($stock as $pid => $qty) {
-            if ($qty != 0) {
-                 DB::table('display_stock')->insert([
-                    'display_id' => 1, // Correct column for display stock
-                    'product_id' => $pid,
-                    'quantity' => $qty,
-                    'min_stock' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
-        $this->command->info('Display Stock populated.');
+        $this->command->info('Display stock created for all products (quantity: 0, fresh start).');
+        $this->command->info('Stock movements cleared. You can now add stock via the application.');
     }
 }
-
-

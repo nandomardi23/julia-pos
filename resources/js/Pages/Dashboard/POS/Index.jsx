@@ -25,6 +25,7 @@ import {
     IconX,
     IconBrandLaravel,
 } from "@tabler/icons-react";
+import Swal from "sweetalert2";
 
 export default function Index({
     products = { data: [] },
@@ -35,6 +36,7 @@ export default function Index({
     defaultPaymentGateway = "cash",
     activeShift = null,
     filters = {},
+    serviceProducts = [],
 }) {
     const { auth, errors, app_settings: settings = {}, flash = {} } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
@@ -549,24 +551,102 @@ export default function Index({
             return;
         }
 
-        router.post(
-            route("pos.addToCart"),
-            {
-                product_id: product.id,
-                product_variant_id: variantId,
-                qty: qty,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success("Produk ditambahkan");
-                    setQtyModalOpen(false);
-                    setQtyModalProduct(null);
-                    setVariantModalOpen(false);
-                    setVariantModalProduct(null);
+        // Helper function for actual request
+        const executeAddToCart = (prodId, prodVariantId, prodQty, onSuccessCallback) => {
+            router.post(
+                route("pos.addToCart"),
+                {
+                    product_id: prodId,
+                    product_variant_id: prodVariantId,
+                    qty: prodQty,
                 },
-            }
-        );
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        if (onSuccessCallback) onSuccessCallback();
+                        else {
+                            toast.success("Produk ditambahkan");
+                            setQtyModalOpen(false);
+                            setQtyModalProduct(null);
+                            setVariantModalOpen(false);
+                            setVariantModalProduct(null);
+                        }
+                    },
+                }
+            );
+        };
+
+        // SERVICE CHECK LOGIC
+        // Only trigger if:
+        // 1. We have service products
+        // 2. Product is in 'Buah' category (case insensitive check)
+        // 3. User is NOT manually opening the weight modal (recursion check)
+        const isFruit = product.category?.name?.toLowerCase().includes('buah');
+
+        if (serviceProducts.length > 0 && isFruit) {
+            Swal.fire({
+                title: 'Tambah Layanan?',
+                text: `Ingin menambahkan layanan untuk ${product.title}?`,
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Tanpa Layanan',
+                confirmButtonColor: '#6c757d', // Grey
+                cancelButtonText: 'Jasa Potong',
+                cancelButtonColor: '#3085d6', // Blue
+                denyButtonText: 'Jasa Jus',
+                denyButtonColor: '#d33', // Red (or Orange)
+            }).then((result) => {
+                // Confirm = Tanpa Layanan
+                if (result.isConfirmed) {
+                    executeAddToCart(product.id, variantId, qty);
+                }
+                // Cancel = Jasa Potong
+                else if (result.dismiss === Swal.DismissReason.cancel) {
+                    const potongService = serviceProducts.find(p => p.title.toLowerCase().includes('potong'));
+
+                    // Add Main Product
+                    executeAddToCart(product.id, variantId, qty, () => {
+                        // Then Add Service
+                        if (potongService) {
+                            setTimeout(() => {
+                                executeAddToCart(potongService.id, null, 1, () => {
+                                    toast.success("Produk + Jasa Potong ditambahkan");
+                                    setQtyModalOpen(false);
+                                    setVariantModalOpen(false);
+                                });
+                            }, 300);
+                        } else {
+                            toast.error("Layanan Jasa Potong tidak ditemukan di sistem!");
+                        }
+                    });
+                }
+                // Deny = Jasa Jus
+                else if (result.isDenied) {
+                    const jusService = serviceProducts.find(p => p.title.toLowerCase().includes('jus'));
+
+                    // Add Main Product
+                    executeAddToCart(product.id, variantId, qty, () => {
+                        // Then Add Service
+                        if (jusService) {
+                            setTimeout(() => {
+                                executeAddToCart(jusService.id, null, 1, () => {
+                                    toast.success("Produk + Jasa Jus ditambahkan");
+                                    setQtyModalOpen(false);
+                                    setVariantModalOpen(false);
+                                });
+                            }, 300);
+                        } else {
+                            toast.error("Layanan Jasa Jus tidak ditemukan di sistem!");
+                        }
+                    });
+                }
+            });
+            return; // Stop here, waiting for Swal
+        }
+
+        // Default execution if no service check needed
+        executeAddToCart(product.id, variantId, qty);
     };
 
     const handleVariantSelect = () => {

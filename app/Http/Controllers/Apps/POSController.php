@@ -43,7 +43,7 @@ class POSController extends Controller
             ->where(function ($q) {
                 // Get sellable products OR recipe products with sell_price > 0
                 $q->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
-                  ->where('sell_price', '>', 0);
+                    ->where('sell_price', '>', 0);
             })
             ->with(['category', 'variants.ingredients']);
 
@@ -56,7 +56,7 @@ class POSController extends Controller
         if ($searchQuery) {
             $productsQuery->where(function ($q) use ($searchQuery) {
                 $q->where('title', 'like', "%{$searchQuery}%")
-                  ->orWhere('sku', 'like', "%{$searchQuery}%");
+                    ->orWhere('sku', 'like', "%{$searchQuery}%");
             });
         }
 
@@ -67,12 +67,12 @@ class POSController extends Controller
                 // Only products with stock > 0
                 $productIdsWithStock = array_keys(array_filter($displayStockMap, fn($qty) => $qty > 0));
                 $q->whereIn('id', $productIdsWithStock)
-                  ->orWhere('product_type', Product::TYPE_RECIPE);
+                    ->orWhere('product_type', Product::TYPE_RECIPE);
             } else {
                 // All products that are in display (even with 0 stock) or are recipes
                 $productIdsWithStock = array_keys($displayStockMap);
                 $q->whereIn('id', $productIdsWithStock)
-                  ->orWhere('product_type', Product::TYPE_RECIPE);
+                    ->orWhere('product_type', Product::TYPE_RECIPE);
             }
         });
 
@@ -139,6 +139,13 @@ class POSController extends Controller
                 'search' => $searchQuery,
                 'hide_out_of_stock' => $hideOutOfStock,
             ],
+            // Fetch service products (Category name contains 'Service' or 'Jasa')
+            'serviceProducts' => Product::whereHas('category', function ($q) {
+                $q->where('name', 'like', '%Service%')
+                    ->orWhere('name', 'like', '%Jasa%');
+            })
+                ->where('is_active', true)
+                ->get(),
         ]);
     }
 
@@ -148,15 +155,15 @@ class POSController extends Controller
     public function findByBarcode(Request $request)
     {
         $barcode = $request->get('barcode');
-        
+
         if (!$barcode) {
             return response()->json(['found' => false, 'message' => 'Barcode tidak boleh kosong']);
         }
 
         // Find product by exact barcode match (case-insensitive)
         $product = Product::where(function ($q) use ($barcode) {
-                $q->whereRaw('LOWER(barcode) = ?', [strtolower($barcode)]);
-            })
+            $q->whereRaw('LOWER(barcode) = ?', [strtolower($barcode)]);
+        })
             ->where('is_active', true) // Only active products
             ->whereIn('product_type', [Product::TYPE_SELLABLE, Product::TYPE_RECIPE])
             ->where('sell_price', '>', 0)
@@ -211,7 +218,7 @@ class POSController extends Controller
 
         $product = Product::findOrFail($request->product_id);
         $variantId = $request->product_variant_id;
-        
+
         // Determine price based on variant or product
         $price = $product->sell_price;
         if ($variantId) {
@@ -220,7 +227,7 @@ class POSController extends Controller
                 $price = $variant->sell_price;
             }
         }
-        
+
         // Get active display
         $display = Display::active()->first();
         if (!$display) {
@@ -233,7 +240,7 @@ class POSController extends Controller
         // Get display stock for this product (only for non-recipe products)
         $displayStock = null;
         $availableQty = 0;
-        
+
         if (!$isRecipe) {
             $displayStock = DisplayStock::where('display_id', $display->id)
                 ->where('product_id', $request->product_id)
@@ -246,7 +253,7 @@ class POSController extends Controller
             ->where('product_variant_id', $variantId)
             ->where('cashier_id', auth()->user()->id)
             ->first();
-        
+
         $totalQtyNeeded = $request->qty + ($existingCart ? $existingCart->qty : 0);
 
         // Check stock (only for non-recipe products)
@@ -351,7 +358,7 @@ class POSController extends Controller
 
         // Get all variants of the recipe
         $variants = $recipe->variants;
-        
+
         // If recipe has no variants, check if it has any ingredients defined
         if ($variants->isEmpty()) {
             return true; // No variants, assume always available

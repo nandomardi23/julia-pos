@@ -8,12 +8,25 @@ import Textarea from '@/Components/Common/TextArea'
 import toast from 'react-hot-toast'
 import InputSelect from '@/Components/Common/InputSelect'
 import Select from '@/Components/Common/Select'
+import SearchableSelect from '@/Components/Common/SearchableSelect'
 
 export default function Edit({ recipe, categories, ingredients, supplies }) {
     const { errors } = usePage().props
 
+    // Combine ingredients and supplies for selection
+    const ingredientOptions = [
+        {
+            label: 'Bahan Baku',
+            options: ingredients.map(i => ({ value: i.id, label: `${i.title} (${i.unit})` }))
+        },
+        {
+            label: 'Supply',
+            options: supplies.map(s => ({ value: s.id, label: `${s.title} (${s.unit})` }))
+        }
+    ]
+
     // Initialize variants from recipe data
-    const initialVariants = recipe.variants?.length > 0 
+    const initialVariants = recipe.variants?.length > 0
         ? recipe.variants.map(v => ({
             name: v.name,
             buy_price: v.buy_price || '',
@@ -91,7 +104,7 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
 
     const submit = (e) => {
         e.preventDefault()
-        
+
         // Create FormData with variants included
         const formData = new FormData()
         formData.append('_method', 'PUT')
@@ -103,19 +116,19 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
         formData.append('description', data.description || '')
         formData.append('buy_price', data.buy_price || 0)
         formData.append('sell_price', data.sell_price)
-        
+
         // Add variants as JSON
         variants.forEach((variant, vIndex) => {
             formData.append(`variants[${vIndex}][name]`, variant.name)
             formData.append(`variants[${vIndex}][buy_price]`, variant.buy_price || 0)
             formData.append(`variants[${vIndex}][sell_price]`, variant.sell_price)
-            
+
             variant.ingredients.forEach((ing, iIndex) => {
                 formData.append(`variants[${vIndex}][ingredients][${iIndex}][ingredient_id]`, ing.ingredient_id)
                 formData.append(`variants[${vIndex}][ingredients][${iIndex}][quantity]`, ing.quantity)
             })
         })
-        
+
         router.post(route('recipes.update', recipe.id), formData, {
             forceFormData: true,
             onSuccess: () => {
@@ -301,26 +314,12 @@ export default function Edit({ recipe, categories, ingredients, supplies }) {
                                             {variant.ingredients.map((ing, iIndex) => (
                                                 <div key={iIndex} className='flex gap-2 items-center'>
                                                     <div className='flex-1'>
-                                                        <Select
-                                                            value={ing.ingredient_id}
-                                                            onChange={e => updateIngredientInVariant(vIndex, iIndex, 'ingredient_id', e.target.value)}
-                                                        >
-                                                            <option value=''>Pilih bahan...</option>
-                                                            <optgroup label="Bahan Baku">
-                                                                {ingredients.map(i => (
-                                                                    <option key={`ing-${i.id}`} value={i.id}>
-                                                                        {i.title} ({i.unit})
-                                                                    </option>
-                                                                ))}
-                                                            </optgroup>
-                                                            <optgroup label="Supply">
-                                                                {supplies.map(s => (
-                                                                    <option key={`sup-${s.id}`} value={s.id}>
-                                                                        {s.title} ({s.unit})
-                                                                    </option>
-                                                                ))}
-                                                            </optgroup>
-                                                        </Select>
+                                                        <SearchableSelect
+                                                            value={ingredientOptions.flatMap(g => g.options).find(opt => opt.value === ing.ingredient_id)}
+                                                            onChange={selected => updateIngredientInVariant(vIndex, iIndex, 'ingredient_id', selected?.value || '')}
+                                                            options={ingredientOptions}
+                                                            placeholder="Pilih bahan..."
+                                                        />
                                                     </div>
                                                     <div className='w-32'>
                                                         <Input

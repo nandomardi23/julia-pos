@@ -176,9 +176,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
     const selectedStockInProduct = allProductOptions.find(opt => opt.value == stockInForm.data.product_id) || null
     const selectedSupplier = supplierOptions.find(opt => opt.value == stockInForm.data.supplier_id) || null
 
-    const formatCurrency = (value) => {
+const formatCurrency = (value) => {
         if (!value) return ''
-        const num = parseInt(String(value).replace(/\D/g, ''), 10)
+        const num = parseFloat(value)
         if (isNaN(num)) return ''
         return new Intl.NumberFormat('id-ID').format(num)
     }

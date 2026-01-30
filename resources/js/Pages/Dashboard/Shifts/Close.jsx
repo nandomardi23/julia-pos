@@ -130,7 +130,7 @@ const Close = ({ shift, summary }) => {
                             </div>
                         </div>
                         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                            Formula: Modal + Penjualan Tunai - Kembalian + Kas Masuk - Kas Keluar
+                            Formula: Modal + Penjualan Tunai + Kas Masuk - Kas Keluar
                         </p>
                     </div>
 

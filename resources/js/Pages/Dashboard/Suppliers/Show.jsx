@@ -230,4 +230,3 @@ export default function Show({ supplier, purchases, stats, products }) {
 }
 
 Show.layout = page => <DashboardLayout children={page} />
-

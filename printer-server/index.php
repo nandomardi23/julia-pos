@@ -348,12 +348,34 @@ function printHeader($printer, $settings)
     if (!empty($settings['store_logo'])) {
         try {
             $logoPath = $settings['store_logo'];
+
+            // If logo is just a filename, try to find it in common locations
+            if (!file_exists($logoPath)) {
+                // Try relative to project root (storage/app/public/settings/)
+                $possiblePaths = [
+                    __DIR__ . '/../storage/app/public/settings/' . $logoPath,
+                    __DIR__ . '/../public/storage/settings/' . $logoPath,
+                    __DIR__ . '/../storage/settings/' . $logoPath,
+                ];
+
+                foreach ($possiblePaths as $path) {
+                    if (file_exists($path)) {
+                        $logoPath = $path;
+                        break;
+                    }
+                }
+            }
+
             if (file_exists($logoPath)) {
+                echo "  → Loading logo from: $logoPath\n";
                 $image = EscposImage::load($logoPath, false);
                 $printer->bitImage($image, Printer::IMG_DEFAULT);
                 $printer->feed(1);
+            } else {
+                echo "  → Logo not found: {$settings['store_logo']}\n";
             }
         } catch (Exception $e) {
+            echo "  → Logo error: " . $e->getMessage() . "\n";
             // Skip logo if it fails
         }
     }

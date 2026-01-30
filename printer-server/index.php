@@ -405,8 +405,15 @@ function printItems($printer, $details)
         $variantName = $detail['variant_name'] ?? '';
         $name = $productName . ($variantName ? " ($variantName)" : '');
 
-        $qty = (float) $detail['qty'];
-        $price = (int) $detail['price'];
+        // Properly parse qty - handle string values with comma or period as decimal separator
+        $qtyRaw = $detail['qty'] ?? 0;
+        if (is_string($qtyRaw)) {
+            // Replace comma with period for proper float conversion
+            $qtyRaw = str_replace(',', '.', $qtyRaw);
+        }
+        $qty = floatval($qtyRaw);
+
+        $price = (int) ($detail['price'] ?? 0);
         $subtotal = $qty * $price;
 
         // Format qty - show decimals only if needed
@@ -441,7 +448,14 @@ function printTotals($printer, $transaction)
 
     $subtotal = 0;
     foreach ($transaction['details'] as $detail) {
-        $subtotal += $detail['qty'] * $detail['price'];
+        // Properly parse qty - handle string values with comma or period as decimal separator
+        $qtyRaw = $detail['qty'] ?? 0;
+        if (is_string($qtyRaw)) {
+            $qtyRaw = str_replace(',', '.', $qtyRaw);
+        }
+        $qty = floatval($qtyRaw);
+        $price = (int) ($detail['price'] ?? 0);
+        $subtotal += $qty * $price;
     }
 
     $discount = (int) ($transaction['discount'] ?? 0);

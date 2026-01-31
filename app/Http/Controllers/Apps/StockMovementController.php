@@ -441,16 +441,21 @@ class StockMovementController extends Controller
             if (count($errors) > 0) {
                 // If there are errors, we might want to show them.
                 // For now, let's just append first few errors to message or flash them
-                $errorMsg = implode("\n", array_slice($errors, 0, 5));
-                if (count($errors) > 5)
-                    $errorMsg .= "\n...dan " . (count($errors) - 5) . " error lainnya.";
+                $errorMsg = array_slice($errors, 0, 10); // Show max 10 errors
+                if (count($errors) > 10)
+                    $errorMsg[] = "...dan " . (count($errors) - 10) . " error lainnya.";
 
-                return back()->with('warning', $message . "\nError:\n" . $errorMsg);
+                // Return withErrors so Inertia keeps modal open and shows errors
+                // Add a note about partial success
+                array_unshift($errorMsg, "BERHASIL IMPORT {$count} ITEM. Namun ditemukan error berikut:");
+
+                return back()->withErrors(['import_errors' => $errorMsg]);
             }
 
             return back()->with('success', $message);
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+            // Return generic error as validation error
+            return back()->withErrors(['file' => 'Gagal import: ' . $e->getMessage()]);
         }
     }
 

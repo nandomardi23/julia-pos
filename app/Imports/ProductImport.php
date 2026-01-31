@@ -36,6 +36,8 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
                 'unit' => $row['satuan'] ?? 'pcs',
                 'min_stock' => $row['stok_minimal'] ?? 0,
                 'product_type' => 'sellable', // Default type
+                'image' => 'default.jpg', // Default image to satisfy DB constraint
+                'tags' => ['sellable'], // Important: Index filters by tags!
             ];
 
             // Handle SKU: use provided or generate new

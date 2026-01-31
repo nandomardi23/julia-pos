@@ -45,6 +45,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
             supplier_id: importData.supplier_id
         }, {
             forceFormData: true,
+            preserveState: true,
+            preserveScroll: true,
             onSuccess: () => {
                 setShowImport(false);
                 setImporting(false);
@@ -176,7 +178,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
     const selectedStockInProduct = allProductOptions.find(opt => opt.value == stockInForm.data.product_id) || null
     const selectedSupplier = supplierOptions.find(opt => opt.value == stockInForm.data.supplier_id) || null
 
-const formatCurrency = (value) => {
+    const formatCurrency = (value) => {
         if (!value) return ''
         const num = parseFloat(value)
         if (isNaN(num)) return ''

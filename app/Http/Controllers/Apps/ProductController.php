@@ -501,12 +501,15 @@ class ProductController extends Controller
             $failures = $e->failures();
             $messages = [];
             foreach ($failures as $failure) {
+                // Collect detailed error messages with row numbers
                 $messages[] = 'Baris ' . $failure->row() . ': ' . implode(', ', $failure->errors());
             }
-            return back()->with('error', 'Validasi Gagal: ' . implode(' | ', $messages));
+            // Return withErrors so Inertia handles it as a validation failure (keeps modal open)
+            return back()->withErrors(['import_errors' => $messages]);
         } catch (\Exception $e) {
             \Log::error('Import Error: ' . $e->getMessage());
-            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+            // Return generic error as validation error
+            return back()->withErrors(['file' => 'Gagal import: ' . $e->getMessage()]);
         }
     }
 

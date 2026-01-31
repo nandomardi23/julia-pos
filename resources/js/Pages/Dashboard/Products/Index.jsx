@@ -45,6 +45,8 @@ export default function Index({ products, currentType = 'product', typeLabel = '
             file: file
         }, {
             forceFormData: true,
+            preserveState: true,
+            preserveScroll: true,
             onSuccess: () => {
                 setShowImport(false);
                 setImporting(false);
@@ -102,11 +104,10 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                         <Link
                             key={s}
                             href={route('products.index', { type: currentType, status: s || undefined })}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                                (new URLSearchParams(window.location.search).get('status') || '') === s
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${(new URLSearchParams(window.location.search).get('status') || '') === s
                                     ? 'bg-gray-700 text-white border-gray-700 dark:bg-gray-600'
                                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700'
-                            }`}
+                                }`}
                         >
                             {s === '' ? 'Semua Status' : s === 'active' ? '✓ Aktif' : '✗ Tidak Aktif'}
                         </Link>
@@ -115,21 +116,21 @@ export default function Index({ products, currentType = 'product', typeLabel = '
 
                 <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
                     <div className='flex items-center gap-2'>
-                    <Button
-                        type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={`Tambah Data`}
-                        href={route('products.create') + `?type=${currentType === 'all' ? 'sellable' : (currentType === 'product' ? 'sellable' : currentType)}`}
-                    />
-                    <Button
-                        type={'button'}
-                        icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
-                        className={'border bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-700 dark:hover:bg-emerald-700'}
-                        label={`Import`}
-                        onClick={() => setShowImport(true)}
-                    />
-                </div>    
+                        <Button
+                            type={'link'}
+                            icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
+                            className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
+                            label={`Tambah Data`}
+                            href={route('products.create') + `?type=${currentType === 'all' ? 'sellable' : (currentType === 'product' ? 'sellable' : currentType)}`}
+                        />
+                        <Button
+                            type={'button'}
+                            icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
+                            className={'border bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-700 dark:hover:bg-emerald-700'}
+                            label={`Import`}
+                            onClick={() => setShowImport(true)}
+                        />
+                    </div>
                     <div className='w-full sm:w-80'>
                         <Search
                             url={route('products.index') + `?type=${currentType}`}
@@ -224,11 +225,10 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                                         {formatCurrency(product.sell_price)}
                                     </Table.Td>
                                     <Table.Td className='text-center'>
-                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                                            product.is_active 
+                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${product.is_active
                                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                        }`}>
+                                            }`}>
                                             {product.is_active ? 'Aktif' : 'Tidak Aktif'}
                                         </span>
                                     </Table.Td>

@@ -38,10 +38,24 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
                 'product_type' => 'sellable', // Default type
             ];
 
+            // Handle SKU: use provided or generate new
+            $sku = $row['sku'] ?? null;
+            if (empty($sku)) {
+                $sku = Product::generateSku($category, $row['nama_produk']);
+            }
+
+            // Handle Barcode: use provided or null (do not generate)
+            $barcode = $row['barcode'] ?? null;
+
             // Update or Create Product
+            // If SKU existed in file, we try to find by SKU and update.
+            // If SKU was generated, it will be a create
             Product::updateOrCreate(
-                ['sku' => $row['sku']],
-                $productData
+                ['sku' => $sku],
+                array_merge($productData, [
+                    'sku' => $sku,
+                    'barcode' => $barcode // Can be null
+                ])
             );
         }
     }
@@ -49,7 +63,7 @@ class ProductImport implements ToCollection, WithHeadingRow, WithValidation
     public function rules(): array
     {
         return [
-            'sku' => 'required|string',
+            'sku' => 'nullable|string',
             'nama_produk' => 'required|string',
             'harga_beli' => 'numeric|min:0',
             'harga_jual' => 'numeric|min:0',

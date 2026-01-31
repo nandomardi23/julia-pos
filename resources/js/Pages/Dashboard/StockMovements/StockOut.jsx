@@ -52,10 +52,10 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
     // Get available stock when product changes
     useEffect(() => {
         if (data.location_id && data.product_id) {
-            const url = data.location_type === 'warehouse' 
+            const url = data.location_type === 'warehouse'
                 ? route('stock-movements.warehouseStock')
                 : route('stock-movements.displayStock')
-            
+
             const params = data.location_type === 'warehouse'
                 ? { warehouse_id: data.location_id, product_id: data.product_id }
                 : { display_id: data.location_id, product_id: data.product_id }
@@ -73,8 +73,8 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
     // Format products untuk react-select
     const productOptions = filteredProducts.map(product => ({
         value: product.id,
-        label: product.barcode 
-            ? `${product.title} (${product.barcode})` 
+        label: product.barcode
+            ? `${product.title} (${product.barcode})`
             : product.title
     }))
 
@@ -130,6 +130,8 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
                         <IconAlertTriangle size={20} />
                         <p className='text-sm'>
                             Fitur ini untuk mencatat barang keluar selain penjualan (rusak, kadaluarsa, retur, dll).
+                            <br />
+                            Gunakan tanda titik (.) untuk pecahan desimal (contoh: 0.5 atau 1.5).
                         </p>
                     </div>
                 </div>
@@ -143,8 +145,8 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
                                 setData({
                                     ...data,
                                     location_type: e.target.value,
-                                    location_id: e.target.value === 'warehouse' 
-                                        ? (warehouses[0]?.id || '') 
+                                    location_id: e.target.value === 'warehouse'
+                                        ? (warehouses[0]?.id || '')
                                         : (displays[0]?.id || ''),
                                     product_id: ''
                                 })
@@ -176,7 +178,7 @@ export default function StockOut({ warehouses, displays, products, reasons }) {
                             errors={errors.product_id}
                         />
                     </div>
-                    
+
                     {data.product_id && (
                         <div className='col-span-12'>
                             <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>

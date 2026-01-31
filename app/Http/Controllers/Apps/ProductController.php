@@ -497,7 +497,15 @@ class ProductController extends Controller
         try {
             Excel::import(new ProductImport, $request->file('file'));
             return back()->with('success', 'Produk berhasil diimport!');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $messages[] = 'Baris ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+            return back()->with('error', 'Validasi Gagal: ' . implode(' | ', $messages));
         } catch (\Exception $e) {
+            \Log::error('Import Error: ' . $e->getMessage());
             return back()->with('error', 'Gagal import: ' . $e->getMessage());
         }
     }

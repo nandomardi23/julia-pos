@@ -240,17 +240,27 @@ export default function Create({ warehouses = [], products = [], suppliers = [] 
             warehouse_id: formData.warehouse_id,
             supplier_id: formData.supplier_id || null,
             invoice_number: formData.invoice_number || null,
-            items: validItems.map(item => ({
-                product_id: item.product_id,
-                packaging_qty: parseFloat(item.packaging_qty) || 0,
-                packaging_unit: item.packaging_unit || 'pcs',
-                qty_per_package: parseFloat(item.qty_per_package) || 1,
-                quantity: parseFloat(item.quantity) || 0, // Calculated total
-                purchase_price: parseCurrency(item.purchase_price) || null,
-                batch_number: item.batch_number || null,
-                expiry_date: item.expiry_date || null,
-                note: item.note || null,
-            }))
+            items: validItems.map(item => {
+                const quantity = parseFloat(item.quantity) || 0;
+                const totalPrice = parseCurrency(item.purchase_price) || 0;
+                // Calculate unit price if total price and quantity exist
+                // Formula: Unit Price = Total Price / Quantity
+                const unitPrice = (totalPrice > 0 && quantity > 0)
+                    ? totalPrice / quantity
+                    : null;
+
+                return {
+                    product_id: item.product_id,
+                    packaging_qty: parseFloat(item.packaging_qty) || 0,
+                    packaging_unit: item.packaging_unit || 'pcs',
+                    qty_per_package: parseFloat(item.qty_per_package) || 1,
+                    quantity: quantity,
+                    purchase_price: unitPrice, // Send calculated unit price to backend
+                    batch_number: item.batch_number || null,
+                    expiry_date: item.expiry_date || null,
+                    note: item.note || null,
+                };
+            })
         }
 
         try {

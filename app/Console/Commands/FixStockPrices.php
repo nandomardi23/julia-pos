@@ -71,13 +71,31 @@ class FixStockPrices extends Command
         foreach (array_keys($affectedProducts) as $productId) {
             $product = Product::find($productId);
             if ($product) {
+                // This updates the 'average_cost' column on the product
                 $product->updateAverageCost();
+
+                // NEW: Now looking for existing "Stock Out" records for this product
+                // and recalculating their 'loss_amount' with the NEW correct average cost.
+                $outMovements = StockMovement::where('product_id', $productId)
+                    ->where('to_type', StockMovement::TYPE_OUT)
+                    ->get();
+
+                foreach ($outMovements as $out) {
+                    // Loss = Qty * Current Average Cost
+                    // We use the product's NEW average cost
+                    $newLoss = $out->quantity * $product->average_cost;
+
+                    if ($newLoss != $out->loss_amount) {
+                        $out->loss_amount = $newLoss;
+                        $out->save();
+                    }
+                }
             }
             $bar->advance();
         }
         $bar->finish();
 
         $this->newLine();
-        $this->info('Done!');
+        $this->info('Done! Also recalculated losses for associated Stock Outs.');
     }
 }

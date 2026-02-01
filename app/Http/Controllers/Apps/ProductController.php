@@ -13,10 +13,61 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Imports\ProductImport;
 use App\Exports\ProductTemplateExport;
+use App\Exports\ProductsExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
+    /**
+     * Export products to Excel.
+     */
+    public function export(Request $request)
+    {
+        $type = $request->input('type', 'all');
+
+        $products = Product::query()
+            ->when($type === 'product', function ($query) {
+                $query->whereJsonContains('tags', Product::TAG_SELLABLE);
+            })
+            ->when($type === 'ingredient', function ($query) {
+                $query->whereJsonContains('tags', Product::TAG_INGREDIENT);
+            })
+            ->when($type === 'recipe', function ($query) {
+                $query->whereJsonContains('tags', Product::TAG_RECIPE);
+            })
+            ->when($type === 'supply', function ($query) {
+                $query->whereJsonContains('tags', Product::TAG_SUPPLY);
+            })
+            ->when($type === 'all', function ($query) {
+                $query->where(function ($q) {
+                    $q->whereJsonContains('tags', Product::TAG_SELLABLE)
+                        ->orWhereJsonContains('tags', Product::TAG_INGREDIENT);
+                });
+            })
+            ->when($request->search, function ($query, $search) {
+                $query->where('title', 'like', '%' . $search . '%');
+            })
+            ->when($request->has('status'), function ($query) use ($request) {
+                if ($request->status === 'active') {
+                    $query->where('is_active', true);
+                } elseif ($request->status === 'inactive') {
+                    $query->where('is_active', false);
+                }
+            })
+            ->with(['category', 'warehouseStocks', 'displayStocks']) // Eager load relations
+            ->latest()
+            ->get();
+
+        // Calculate total stock for each product
+        $products->each(function ($product) {
+            $warehouseStock = $product->warehouseStocks->sum('quantity');
+            $displayStock = $product->displayStocks->sum('quantity');
+            $product->total_stock = $warehouseStock + $displayStock;
+        });
+
+        return Excel::download(new ProductsExport($products), 'data_produk_' . date('Y-m-d_H-i') . '.xlsx');
+    }
+
     /**
      * Display a listing of the resource.
      *

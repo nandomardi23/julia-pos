@@ -130,6 +130,16 @@ export default function Index({ products, currentType = 'product', typeLabel = '
                             label={`Import`}
                             onClick={() => setShowImport(true)}
                         />
+                        <Button
+                            type={'button'}
+                            icon={<IconFileSpreadsheet size={20} strokeWidth={1.5} />}
+                            className={'border bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:border-green-800 dark:hover:bg-green-800'}
+                            label={`Export`}
+                            onClick={() => {
+                                const params = new URLSearchParams(window.location.search);
+                                window.open(route('products.export') + '?' + params.toString(), '_blank');
+                            }}
+                        />
                     </div>
                     <div className='w-full sm:w-80'>
                         <Search

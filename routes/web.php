@@ -65,6 +65,11 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
         ->middleware('permission:products-access')
         ->name('products.print_barcode');
 
+    // Export Route
+    Route::get('products/export', [ProductController::class, 'export'])
+        ->middleware('permission:products-access')
+        ->name('products.export');
+
     // Product Import Routes
     Route::get('products/template', [ProductController::class, 'templateImport'])
         ->middleware('permission:products-create')

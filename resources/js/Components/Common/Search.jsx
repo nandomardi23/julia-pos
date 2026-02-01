@@ -20,7 +20,8 @@ export default function Search({ url, placeholder, initialValue = '' }) {
         }
 
         const delayDebounceFn = setTimeout(() => {
-            get(`${url}?search=${data.search}`, {
+            const separator = url.includes('?') ? '&' : '?';
+            get(`${url}${separator}search=${data.search}`, {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true

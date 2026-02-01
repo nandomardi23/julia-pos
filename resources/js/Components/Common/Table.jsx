@@ -22,7 +22,7 @@ const Card = ({ icon, title, className, children, links, meta, url, action }) =>
                             <span>{title}</span>
                         </div>
                         {action && (
-                            <div className='w-full md:w-72'>
+                            <div className='w-full md:w-auto min-w-[200px]'>
                                 {action}
                             </div>
                         )}

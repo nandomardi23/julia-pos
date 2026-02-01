@@ -104,6 +104,10 @@ class ProductController extends Controller
                         ->orWhereJsonContains('tags', Product::TAG_INGREDIENT);
                 });
             })
+            // Category filter
+            ->when($request->category_id, function ($query, $categoryId) {
+                $query->where('category_id', $categoryId);
+            })
             // Search filter
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', '%' . $search . '%');
@@ -130,10 +134,15 @@ class ProductController extends Controller
             'supply' => 'Alat Pendukung',
         ];
 
+        // Get all categories for filter
+        $categories = Category::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Dashboard/Products/Index', [
             'products' => $products,
+            'categories' => $categories,
             'currentType' => $type,
             'typeLabel' => $typeLabels[$type] ?? 'Produk',
+            'filters' => $request->only(['search', 'category_id', 'status', 'type']),
         ]);
     }
 

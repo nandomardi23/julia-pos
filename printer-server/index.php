@@ -393,8 +393,14 @@ function resizeLogoForPrinter($imagePath, $maxWidth = 384)
         imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
         // Save as PNG (no transparency, white background)
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pos_logo_' . uniqid() . '.png';
-        imagepng($dstImage, $tempPath, 0); // 0 = no compression for cleaner output
+        // Use local temp folder to avoid permission issues
+        $tempDir = __DIR__ . '/temp';
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $tempPath = $tempDir . DIRECTORY_SEPARATOR . 'pos_logo_' . uniqid() . '.jpg';
+        imagejpeg($dstImage, $tempPath, 100); // 100 = max quality
 
         // Cleanup
         imagedestroy($srcImage);
@@ -443,16 +449,25 @@ function printHeader($printer, $settings)
 
                 // Resize image if too large for thermal printer (max 384px width)
                 $resizedPath = resizeLogoForPrinter($logoPath, 300); // Use smaller width for better compatibility
-                if ($resizedPath && file_exists($resizedPath)) {
-                    try {
-                        // Try loading with GD capability check
-                        $image = EscposImage::load($resizedPath, false);
-                        $printer->bitImage($image, Printer::IMG_DEFAULT);
-                        $printer->feed(1);
-                        echo "  → Logo printed successfully\n";
-                    } catch (Exception $imgEx) {
-                        echo "  → Logo print error: " . $imgEx->getMessage() . "\n";
+
+                if ($resizedPath) {
+                    echo "  → Resized logo saved to: $resizedPath\n";
+
+                    if (file_exists($resizedPath)) {
+                        try {
+                            // Try loading with GD capability check
+                            $image = EscposImage::load($resizedPath, false);
+                            $printer->bitImage($image, Printer::IMG_DEFAULT);
+                            $printer->feed(1);
+                            echo "  → Logo printed successfully\n";
+                        } catch (Exception $imgEx) {
+                            echo "  → Logo print error: " . $imgEx->getMessage() . "\n";
+                            echo "  → Debug: GD Info: " . json_encode(gd_info()) . "\n";
+                        }
+                    } else {
+                        echo "  → Error: Resized file lost at $resizedPath\n";
                     }
+
                     // Clean up temp file
                     if ($resizedPath !== $logoPath) {
                         @unlink($resizedPath);

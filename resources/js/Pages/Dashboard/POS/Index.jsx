@@ -530,6 +530,19 @@ export default function Index({
             return;
         }
 
+
+        // If product is sold by weight and no custom qty, show modal
+        if (isWeightBasedUnit(product.unit) && customQty === null && !variantId) {
+            setQtyModalProduct(product);
+            // Default to max available stock if less than 1, otherwise 1
+            const defaultQty = product.display_qty > 0 && product.display_qty < 1 
+                ? parseFloat(product.display_qty).toString() 
+                : "1";
+            setQtyModalValue(defaultQty);
+            setQtyModalOpen(true);
+            return;
+        }
+
         if (product.display_qty < qty) {
             // Smart Warning: Check if product has warehouse stock
             if (product.warehouse_qty > 0) {
@@ -540,14 +553,6 @@ export default function Index({
             } else {
                 toast.error("Stok produk tidak mencukupi!");
             }
-            return;
-        }
-
-        // If product is sold by weight and no custom qty, show modal
-        if (isWeightBasedUnit(product.unit) && customQty === null && !variantId) {
-            setQtyModalProduct(product);
-            setQtyModalValue("1");
-            setQtyModalOpen(true);
             return;
         }
 

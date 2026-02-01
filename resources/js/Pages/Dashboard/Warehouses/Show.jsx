@@ -89,13 +89,15 @@ export default function Show({ warehouse, stocks, filters }) {
                     <Table.Card
                         title={'Stok di Gudang'}
                         icon={<IconBox size={20} strokeWidth={1.5} />}
-                        action={
-                            <Search
-                                url={route('warehouses.show', warehouse.id)}
-                                placeholder='Cari produk...'
-                                initialValue={filters.search}
-                            />
-                        }
+                action={
+                    <div className='w-full sm:w-72'>
+                        <Search
+                            url={route('warehouses.show', warehouse.id)}
+                            placeholder='Cari produk...'
+                            initialValue={filters.search}
+                        />
+                    </div>
+                }
                         links={stocks.links}
                         meta={{
                             from: stocks.from,

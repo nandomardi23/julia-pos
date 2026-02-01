@@ -43,23 +43,6 @@ export default function Index({ recipes }) {
                 productName={barcodeModal.product?.title || ''}
             />
 
-            <div className='mb-4'>
-                <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
-                    <Button
-                        type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={'Tambah Resep'}
-                        href={route('recipes.create')}
-                    />
-                    <div className='w-full sm:w-80'>
-                        <Search
-                            url={route('recipes.index')}
-                            placeholder={'Cari resep...'}
-                        />
-                    </div>
-                </div>
-            </div>
             <Table.Card 
                 title="Data Resep"
                 links={recipes.links}
@@ -70,6 +53,23 @@ export default function Index({ recipes }) {
                     per_page: recipes.per_page
                 }}
                 url={route('recipes.index')}
+                action={
+                    <div className='flex items-center gap-2 w-full sm:w-auto'>
+                        <Button
+                            type={'link'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap'}
+                            label={'Tambah Data'}
+                            href={route('recipes.create')}
+                        />
+                        <div className='w-full sm:w-64'>
+                            <Search
+                                url={route('recipes.index')}
+                                placeholder={'Cari resep...'}
+                            />
+                        </div>
+                    </div>
+                }
             >
                 <Table>
                     <Table.Thead>

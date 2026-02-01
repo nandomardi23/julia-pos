@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
-import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle, IconFileAnalytics, IconBulb } from '@tabler/icons-react'
+import { IconDatabaseOff, IconArrowsExchange, IconCirclePlus, IconMinus, IconTrash, IconFileSpreadsheet, IconX, IconPencilPlus, IconAlertTriangle, IconFileAnalytics, IconBulb, IconChevronDown, IconFilter } from '@tabler/icons-react'
 import Table from '@/Components/Common/Table'
 import Button from '@/Components/Common/Button'
 import Input from '@/Components/Common/Input'
@@ -496,59 +496,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
                 </div>
             )}
 
-            {/* Filters */}
-            <div className='bg-white dark:bg-gray-900 p-4 rounded-lg border dark:border-gray-800 mb-4'>
-                <div className='flex flex-wrap items-end gap-4'>
-                    <div className='flex-1 min-w-[200px]'>
-                        <Input
-                            name='product'
-                            label='Produk'
-                            type='text'
-                            placeholder='Cari produk...'
-                            value={filterData.product}
-                            onChange={e => setFilterData({ ...filterData, product: e.target.value })}
-                        />
-                    </div>
-                    <div className='w-40'>
-                        <Select
-                            label="Tipe"
-                            value={filterData.type}
-                            onChange={e => setFilterData({ ...filterData, type: e.target.value })}
-                        >
-                            <option value="">Semua</option>
-                            <option value="in">Barang Masuk</option>
-                            <option value="transfer">Transfer</option>
-                            <option value="sale">Penjualan</option>
-                            <option value="stockout">Barang Keluar</option>
-                        </Select>
-                    </div>
-                    <div className='w-40'>
-                        <Input
-                            name='start_date'
-                            label='Dari Tanggal'
-                            type='date'
-                            value={filterData.start_date}
-                            onChange={e => setFilterData({ ...filterData, start_date: e.target.value })}
-                        />
-                    </div>
-                    <div className='w-40'>
-                        <Input
-                            name='end_date'
-                            label='Sampai Tanggal'
-                            type='date'
-                            value={filterData.end_date}
-                            onChange={e => setFilterData({ ...filterData, end_date: e.target.value })}
-                        />
-                    </div>
-                    <Button
-                        type={'button'}
-                        label={'Filter'}
-                        className={'border bg-gray-700 text-white hover:bg-gray-800'}
-                        onClick={handleFilter}
-                    />
-                </div>
-            </div>
-
+            {/* Main Table Card */}
             <Table.Card
                 title={'Riwayat Pergerakan Stok'}
                 links={movements.links}
@@ -559,6 +507,73 @@ export default function Index({ movements, filters, warehouses, displays, transf
                     per_page: movements.per_page
                 }}
                 url={route('stock-movements.index')}
+                action={
+                    <div className='flex flex-col sm:flex-row gap-3 min-w-0 sm:min-w-[800px] justify-end items-center'>
+                        {/* Type Filter */}
+                        <div className='relative w-full sm:w-40'>
+                            <select
+                                value={filterData.type}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFilterData(prev => ({ ...prev, type: val }));
+                                    // Auto trigger filter on change for dropdowns preferably, or keep button?
+                                    // For consistency with Product page, let's trigger on change or Keep "Filter" button?
+                                    // Product page triggers on change. Let's try to trigger on change for Selects.
+                                    router.get(route('stock-movements.index'), { ...filterData, type: val }, { preserveState: true });
+                                }}
+                                className='w-full pl-3 pr-10 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 dark:bg-gray-950 dark:border-gray-900 dark:text-gray-300 appearance-none cursor-pointer transition-colors'
+                            >
+                                <option value="">Semua Tipe</option>
+                                <option value="in">Barang Masuk</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="sale">Penjualan</option>
+                                <option value="stockout">Barang Keluar</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+                                <IconChevronDown size={16} />
+                            </div>
+                        </div>
+
+                        {/* Date Filters */}
+                        <div className='flex gap-2 w-full sm:w-auto'>
+                            <input
+                                type='date'
+                                value={filterData.start_date}
+                                onChange={(e) => setFilterData(prev => ({ ...prev, start_date: e.target.value }))}
+                                className='w-full sm:w-32 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 dark:bg-gray-950 dark:border-gray-900 dark:text-gray-300 transition-colors'
+                                placeholder='Dari'
+                            />
+                            <span className="self-center text-gray-400">-</span>
+                            <input
+                                type='date'
+                                value={filterData.end_date}
+                                onChange={(e) => setFilterData(prev => ({ ...prev, end_date: e.target.value }))}
+                                className='w-full sm:w-32 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 dark:bg-gray-950 dark:border-gray-900 dark:text-gray-300 transition-colors'
+                                placeholder='Sampai'
+                            />
+                        </div>
+
+                        {/* Search Product (Manual Input acting like Search) */}
+                        <div className='flex gap-2 w-full sm:flex-1'>
+                             <div className='relative w-full'>
+                                <input
+                                    type='text'
+                                    value={filterData.product}
+                                    onChange={(e) => setFilterData(prev => ({ ...prev, product: e.target.value }))}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
+                                    className='w-full pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 dark:bg-gray-950 dark:border-gray-900 dark:text-gray-300 transition-colors'
+                                    placeholder='Cari produk...'
+                                />
+                                <button 
+                                    onClick={handleFilter}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-600"
+                                >
+                                    <IconFilter size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
             >
                 <Table>
                     <Table.Thead>

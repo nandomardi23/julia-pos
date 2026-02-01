@@ -48,50 +48,6 @@ export default function Index({ returns, filters, statuses }) {
         <>
             <Head title='Return / Refund' />
 
-            {/* Header Actions */}
-            <div className='mb-4'>
-                <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-3'>
-                    <Button
-                        type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200'}
-                        label={'Buat Return'}
-                        href={route('returns.create')}
-                    />
-                    <div className='w-full md:w-4/12'>
-                        <Search
-                            url={route('returns.index')}
-                            placeholder='Cari nomor return atau invoice...'
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Status Filter Tabs */}
-            <div className='mb-4 flex flex-wrap gap-2'>
-                <button
-                    onClick={() => handleStatusFilter('all')}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${!filters.status || filters.status === 'all'
-                        ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                        }`}
-                >
-                    Semua
-                </button>
-                {Object.entries(statuses).map(([key, label]) => (
-                    <button
-                        key={key}
-                        onClick={() => handleStatusFilter(key)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.status === key
-                            ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                            : `${getStatusColor(key)} hover:opacity-80`
-                            }`}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-
             {/* Table */}
             <Table.Card
                 title={'Daftar Return / Refund'}
@@ -103,7 +59,51 @@ export default function Index({ returns, filters, statuses }) {
                     per_page: returns.per_page
                 }}
                 url={route('returns.index')}
+                action={
+                    <div className='flex items-center gap-2'>
+                        <Button
+                            type={'link'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap'}
+                            label={'Buat Return'}
+                            href={route('returns.create')}
+                        />
+                        <div className='w-full sm:w-64'>
+                            <Search
+                                url={route('returns.index')}
+                                placeholder='Cari nomor return...'
+                            />
+                        </div>
+                    </div>
+                }
             >
+                {/* Status Tabs Sub-header */}
+                <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className='flex flex-wrap gap-1'>
+                        <button
+                            onClick={() => handleStatusFilter('all')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!filters.status || filters.status === 'all'
+                                ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900'
+                                : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            Semua
+                        </button>
+                        {Object.entries(statuses).map(([key, label]) => (
+                            <button
+                                key={key}
+                                onClick={() => handleStatusFilter(key)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filters.status === key
+                                    ? 'bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900'
+                                    : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                                    }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <Table>
                     <Table.Thead>
                         <tr>

@@ -176,78 +176,93 @@ const ProfitReport = ({
                         per_page: transactions?.per_page
                     }}
                     url={route('reports.profits.index')}
-                >
-                    {/* Filter Section */}
-                    <form onSubmit={applyFilters} className="px-5 py-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Input
-                                type="date"
-                                label="Mulai"
-                                value={filterData.start_date}
-                                onChange={(event) =>
-                                    handleChange("start_date", event.target.value)
-                                }
-                            />
-                            <Input
-                                type="date"
-                                label="Selesai"
-                                value={filterData.end_date}
-                                onChange={(event) =>
-                                    handleChange("end_date", event.target.value)
-                                }
-                            />
-                            <Input
-                                type="text"
-                                label="No. Resi"
-                                placeholder="Cari resi"
-                                value={filterData.invoice}
-                                onChange={(event) =>
-                                    handleChange("invoice", event.target.value)
-                                }
-                            />
-                            <InputSelect
-                                label="Kasir"
-                                data={cashiers ?? []}
-                                selected={selectedCashier}
-                                setSelected={(value) => {
-                                    setSelectedCashier(value);
-                                    handleChange(
-                                        "cashier_id",
-                                        value ? String(value.id) : ""
-                                    );
-                                }}
-                                placeholder="Semua kasir"
-                                searchable
-                            />
+                action={
+                    <Button
+                        type="button"
+                        label="Export Excel"
+                        icon={<IconFileSpreadsheet size={18} />}
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 border-transparent shadow-sm"
+                        onClick={() => {
+                            const params = new URLSearchParams(filterData).toString();
+                            window.open(route("reports.profits.export") + "?" + params, "_blank");
+                        }}
+                    />
+                }
+            >
+                {/* Filter Toolbar */}
+                <form onSubmit={applyFilters} className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                    <div className="flex flex-col xl:flex-row gap-4 xl:items-end justify-between">
+                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full xl:w-auto flex-1'>
+                            {/* Date Range */}
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Mulai</label>
+                                <input
+                                    type="date"
+                                    value={filterData.start_date}
+                                    onChange={(e) => handleChange("start_date", e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Selesai</label>
+                                <input
+                                    type="date"
+                                    value={filterData.end_date}
+                                    onChange={(e) => handleChange("end_date", e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                />
+                            </div>
+                            
+                            {/* Invoice Search */}
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">No. Resi</label>
+                                <input
+                                    type="text"
+                                    placeholder="Cari No. Resi..."
+                                    value={filterData.invoice}
+                                    onChange={(e) => handleChange("invoice", e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                />
+                            </div>
+
+                            {/* Cashier Select */}
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Kasir</label>
+                                <select
+                                    value={filterData.cashier_id}
+                                    onChange={(e) => {
+                                        handleChange("cashier_id", e.target.value);
+                                        const selected = cashiers.find(c => String(c.id) === e.target.value);
+                                        setSelectedCashier(selected || null);
+                                    }}
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                >
+                                    <option value="">Semua Kasir</option>
+                                    {cashiers && cashiers.map(cashier => (
+                                        <option key={cashier.id} value={cashier.id}>{cashier.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-4">
+
+                        <div className="flex gap-2 w-full sm:w-auto pt-1">
+                            <Button
+                                type="submit"
+                                label="Terapkan"
+                                icon={<IconArrowDownRight size={18} />}
+                                className="border bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 border-transparent shadow-sm whitespace-nowrap"
+                            />
                             <Button
                                 type="button"
                                 label="Reset"
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 whitespace-nowrap"
                                 onClick={resetFilters}
                             />
-                            <Button
-                                type="submit"
-                                label="Cari"
-                                icon={<IconArrowDownRight size={18} />}
-                                className="border bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
-                            />
-                            <Button
-                                type="button"
-                                label="Export"
-                                icon={<IconFileSpreadsheet size={18} />}
-                                className="border bg-emerald-600 text-white hover:bg-emerald-700"
-                                onClick={() => {
-                                    const params = new URLSearchParams(filterData).toString();
-                                    window.open(route("reports.profits.export") + "?" + params, "_blank");
-                                }}
-                            />
                         </div>
-                    </form>
+                    </div>
+                </form>
 
-                    {/* Table Section */}
-                    <Table className="mt-5">
+                <Table className="mt-5">
                         <Table.Thead>
                             <tr>
                                 <Table.Th className="w-16 text-center">

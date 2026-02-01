@@ -64,75 +64,6 @@ export default function Index({ expenses, categories, totalExpenses }) {
                 </div>
             </div>
 
-            {/* Filter Section */}
-            <Card className="mb-4">
-                <div className="flex flex-col md:flex-row gap-3 items-end">
-                    <div className="flex-1">
-                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Kategori</label>
-                        <select
-                            value={filters.category}
-                            onChange={(e) => setFilters({...filters, category: e.target.value})}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                        >
-                            <option value="">Semua Kategori</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dari Tanggal</label>
-                        <input
-                            type="date"
-                            value={filters.start_date}
-                            onChange={(e) => setFilters({...filters, start_date: e.target.value})}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Sampai Tanggal</label>
-                        <input
-                            type="date"
-                            value={filters.end_date}
-                            onChange={(e) => setFilters({...filters, end_date: e.target.value})}
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handleFilter}
-                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"
-                        >
-                            <IconFilter size={16} /> Filter
-                        </button>
-                        <button
-                            onClick={handleResetFilter}
-                            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                            Reset
-                        </button>
-                    </div>
-                </div>
-            </Card>
-
-            <div className='mb-4'>
-                <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
-                    <Button
-                        type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={'Tambah Pengeluaran'}
-                        href={route('expenses.create')}
-                    />
-                    <div className='w-full sm:w-80'>
-                        <Search
-                            url={route('expenses.index')}
-                            placeholder={'Cari pengeluaran...'}
-                        />
-                    </div>
-                </div>
-            </div>
-
             <Table.Card 
                 title="Data Pengeluaran"
                 links={expenses.links}
@@ -143,7 +74,84 @@ export default function Index({ expenses, categories, totalExpenses }) {
                     per_page: expenses.per_page
                 }}
                 url={route('expenses.index')}
+                action={
+                    <div className='flex items-center gap-2 w-full sm:w-auto'>
+                        <Button
+                            type={'link'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap'}
+                            label={'Tambah'}
+                            href={route('expenses.create')}
+                        />
+                        <div className='w-full sm:w-64'>
+                            <Search
+                                url={route('expenses.index')}
+                                placeholder={'Cari pengeluaran...'}
+                            />
+                        </div>
+                    </div>
+                }
             >
+                {/* Filter Toolbar */}
+                <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                    <div className="flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
+                        <div className='flex flex-col sm:flex-row gap-3 w-full lg:w-auto'>
+                            {/* Category Filter */}
+                            <div className="w-full sm:w-56">
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Kategori</label>
+                                <select
+                                    value={filters.category}
+                                    onChange={(e) => setFilters({...filters, category: e.target.value})}
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                >
+                                    <option value="">Semua Kategori</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Date Range */}
+                            <div className="w-full sm:w-auto">
+                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Rentang Tanggal</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="date"
+                                        value={filters.start_date}
+                                        onChange={(e) => setFilters({...filters, start_date: e.target.value})}
+                                        className="w-full sm:w-36 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                        placeholder="Start Date"
+                                    />
+                                    <span className="self-center text-gray-400">-</span>
+                                    <input
+                                        type="date"
+                                        value={filters.end_date}
+                                        onChange={(e) => setFilters({...filters, end_date: e.target.value})}
+                                        className="w-full sm:w-36 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                        placeholder="End Date"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Filter Actions */}
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <button
+                                onClick={handleFilter}
+                                className="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 shadow-sm font-medium text-sm"
+                            >
+                                <IconFilter size={16} /> Filter
+                            </button>
+                            <button
+                                onClick={handleResetFilter}
+                                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <Table>
                     <Table.Thead>
                         <tr>

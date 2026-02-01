@@ -50,47 +50,41 @@ export default function Index({ purchaseOrders, filters, statuses }) {
             <Head title='Purchase Orders' />
 
             {/* Header Actions */}
-            <div className='mb-4'>
-                <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-3'>
+            <div className='flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6'>
+                 {/* Status Tabs (Segmented Control) */}
+                <div className='bg-gray-100 p-1 rounded-xl inline-flex flex-wrap dark:bg-gray-800 self-start'>
+                    <button
+                        onClick={() => handleStatusFilter('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${!filters.status || filters.status === 'all'
+                            ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        Semua
+                    </button>
+                    {Object.entries(statuses).map(([key, label]) => (
+                        <button
+                            key={key}
+                            onClick={() => handleStatusFilter(key)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${filters.status === key
+                                ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className='flex items-center gap-2 self-end lg:self-auto'>
                     <Button
                         type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200'}
+                        icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                        className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-md dark:bg-blue-600 dark:hover:bg-blue-700'}
                         label={'Buat PO Baru'}
                         href={route('purchase-orders.create')}
                     />
-                    <div className='w-full md:w-4/12'>
-                        <Search
-                            url={route('purchase-orders.index')}
-                            placeholder='Cari PO atau supplier...'
-                        />
-                    </div>
                 </div>
-            </div>
-
-            {/* Status Filter Tabs */}
-            <div className='mb-4 flex flex-wrap gap-2'>
-                <button
-                    onClick={() => handleStatusFilter('all')}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${!filters.status || filters.status === 'all'
-                        ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                        }`}
-                >
-                    Semua
-                </button>
-                {Object.entries(statuses).map(([key, label]) => (
-                    <button
-                        key={key}
-                        onClick={() => handleStatusFilter(key)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.status === key
-                            ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                            : `${getStatusColor(key)} hover:opacity-80`
-                            }`}
-                    >
-                        {label}
-                    </button>
-                ))}
             </div>
 
             {/* Table */}
@@ -104,6 +98,15 @@ export default function Index({ purchaseOrders, filters, statuses }) {
                     per_page: purchaseOrders.per_page
                 }}
                 url={route('purchase-orders.index')}
+                action={
+                    <div className='w-full sm:w-72'>
+                        <Search
+                            url={route('purchase-orders.index')}
+                            placeholder='Cari PO atau supplier...'
+                            initialValue={filters.search} // Ensure Search gets initial value
+                        />
+                    </div>
+                }
             >
                 <Table>
                     <Table.Thead>

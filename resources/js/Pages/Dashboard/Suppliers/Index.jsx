@@ -12,23 +12,6 @@ export default function Index({ suppliers, filters }) {
     return (
         <>
             <Head title='Supplier' />
-            <div className='mb-2'>
-                <div className='flex justify-between items-center gap-2'>
-                    <Button
-                        type={'link'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-white text-gray-700 dark:bg-gray-950 dark:border-gray-800 dark:text-gray-200'}
-                        label={'Tambah Supplier'}
-                        href={route('suppliers.create')}
-                    />
-                    <div className='w-full md:w-4/12'>
-                        <Search
-                            url={route('suppliers.index')}
-                            placeholder='Cari supplier...'
-                        />
-                    </div>
-                </div>
-            </div>
             <Table.Card 
                 title={'Data Supplier'}
                 links={suppliers.links}
@@ -39,6 +22,23 @@ export default function Index({ suppliers, filters }) {
                     per_page: suppliers.per_page
                 }}
                 url={route('suppliers.index')}
+                action={
+                    <div className='flex items-center gap-2 w-full sm:w-auto'>
+                        <Button
+                            type={'link'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap'}
+                            label={'Tambah Data'}
+                            href={route('suppliers.create')}
+                        />
+                        <div className='w-full sm:w-64'>
+                            <Search
+                                url={route('suppliers.index')}
+                                placeholder='Cari supplier...'
+                            />
+                        </div>
+                    </div>
+                }
             >
                 <Table>
                     <Table.Thead>

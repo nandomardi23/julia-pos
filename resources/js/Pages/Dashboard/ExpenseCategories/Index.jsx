@@ -62,24 +62,6 @@ export default function Index({ categories }) {
         <>
             <Head title="Kategori Pengeluaran" />
             
-            <div className='mb-4'>
-                <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
-                    <Button
-                        type={'button'}
-                        icon={<IconCirclePlus size={20} strokeWidth={1.5} />}
-                        className={'border bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:border-blue-700 dark:hover:bg-blue-700'}
-                        label={'Tambah Kategori'}
-                        onClick={openCreateModal}
-                    />
-                    <div className='w-full sm:w-80'>
-                        <Search
-                            url={route('expense-categories.index')}
-                            placeholder={'Cari kategori...'}
-                        />
-                    </div>
-                </div>
-            </div>
-
             <Table.Card 
                 title="Kategori Pengeluaran"
                 links={categories.links}
@@ -90,6 +72,23 @@ export default function Index({ categories }) {
                     per_page: categories.per_page
                 }}
                 url={route('expense-categories.index')}
+                action={
+                    <div className='flex items-center gap-2 w-full sm:w-auto'>
+                         <Button
+                            type={'button'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap'}
+                            label={'Tambah'}
+                            onClick={openCreateModal}
+                        />
+                        <div className='w-full sm:w-64'>
+                            <Search
+                                url={route('expense-categories.index')}
+                                placeholder={'Cari kategori...'}
+                            />
+                        </div>
+                    </div>
+                }
             >
                 <Table>
                     <Table.Thead>

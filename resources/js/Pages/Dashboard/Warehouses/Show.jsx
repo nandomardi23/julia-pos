@@ -38,60 +38,64 @@ export default function Show({ warehouse, stocks, filters }) {
 
             <div className='grid grid-cols-12 gap-4'>
                 {/* Warehouse Info */}
-                <div className='col-span-12 md:col-span-4'>
+                <div className='col-span-12'>
                     <Card title={'Informasi Gudang'} icon={<IconBuildingWarehouse size={20} strokeWidth={1.5} />}>
-                        <div className='space-y-3'>
-                            <div>
-                                <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
-                                <p className='font-medium text-gray-900 dark:text-white'>{warehouse.name}</p>
-                            </div>
-                            {warehouse.location && (
+                        <div className='flex flex-col md:flex-row gap-6 justify-between items-start'>
+                            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 w-full'>
                                 <div>
-                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Lokasi</span>
-                                    <p className='font-medium text-gray-900 dark:text-white'>{warehouse.location}</p>
+                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
+                                    <p className='font-medium text-gray-900 dark:text-white mt-1'>{warehouse.name}</p>
                                 </div>
-                            )}
-                            {warehouse.description && (
+                                {warehouse.location && (
+                                    <div>
+                                        <span className='text-sm text-gray-500 dark:text-gray-400'>Lokasi</span>
+                                        <p className='font-medium text-gray-900 dark:text-white mt-1'>{warehouse.location}</p>
+                                    </div>
+                                )}
                                 <div>
-                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
-                                    <p className='font-medium text-gray-900 dark:text-white'>{warehouse.description}</p>
+                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
+                                    <p className='mt-1'>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${warehouse.is_active
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                            }`}>
+                                            {warehouse.is_active ? 'Aktif' : 'Nonaktif'}
+                                        </span>
+                                    </p>
                                 </div>
-                            )}
-                            <div>
-                                <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
-                                <p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${warehouse.is_active
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                        }`}>
-                                        {warehouse.is_active ? 'Aktif' : 'Nonaktif'}
-                                    </span>
-                                </p>
+                                {warehouse.description && (
+                                    <div className='md:col-span-3'>
+                                        <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
+                                        <p className='font-medium text-gray-900 dark:text-white mt-1'>{warehouse.description}</p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-
-                        <div className='mt-4 pt-4 border-t dark:border-gray-700'>
-                            <Button
-                                type={'link'}
-                                icon={<IconArrowsExchange size={18} strokeWidth={1.5} />}
-                                className={'w-full border bg-blue-500 text-white hover:bg-blue-600'}
-                                label={'Transfer ke Display'}
-                                href={route('stock-movements.transfer')}
-                            />
+                            
+                            <div className='w-full md:w-auto mt-4 md:mt-0'>
+                                <Button
+                                    type={'link'}
+                                    icon={<IconArrowsExchange size={18} strokeWidth={1.5} />}
+                                    className={'w-full md:w-auto border bg-blue-500 text-white hover:bg-blue-600'}
+                                    label={'Transfer ke Display'}
+                                    href={route('stock-movements.transfer')}
+                                />
+                            </div>
                         </div>
                     </Card>
                 </div>
 
                 {/* Stock List */}
-                <div className='col-span-12 md:col-span-8'>
-                    <div className='mb-2'>
-                        <Search
-                            url={route('warehouses.show', warehouse.id)}
-                            placeholder='Cari produk di gudang ini...'
-                        />
-                    </div>
+                <div className='col-span-12'>
                     <Table.Card
                         title={'Stok di Gudang'}
+                        icon={<IconBox size={20} strokeWidth={1.5} />}
+                        action={
+                            <Search
+                                url={route('warehouses.show', warehouse.id)}
+                                placeholder='Cari produk...'
+                                initialValue={filters.search}
+                            />
+                        }
                         links={stocks.links}
                         meta={{
                             from: stocks.from,

@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, router } from '@inertiajs/react'
 import { IconChevronRight, IconChevronLeft } from '@tabler/icons-react'
 
-const Card = ({ icon, title, className, children, links, meta, url }) => {
+const Card = ({ icon, title, className, children, links, meta, url, action }) => {
     const perPageOptions = [10, 25, 50, 75, 100]
 
     const handlePerPageChange = (e) => {
@@ -16,9 +16,16 @@ const Card = ({ icon, title, className, children, links, meta, url }) => {
             {/* Header */}
             {title && (
                 <div className={`px-5 py-4 border-b border-gray-200 dark:border-gray-800 ${className} bg-gray-50/50 dark:bg-gray-900/50`}>
-                    <div className='flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100'>
-                        {icon}
-                        <span>{title}</span>
+                    <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
+                        <div className='flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100'>
+                            {icon}
+                            <span>{title}</span>
+                        </div>
+                        {action && (
+                            <div className='w-full md:w-72'>
+                                {action}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

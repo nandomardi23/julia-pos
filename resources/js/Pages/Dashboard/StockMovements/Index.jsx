@@ -824,9 +824,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
                         <div className='col-span-6'>
                             <Input
                                 name='purchase_price'
-                                label={'Harga Beli Total (Rp)'}
+                                label={'Harga Beli Satuan (Rp)'}
                                 type={'text'}
-                                placeholder={'Total harga beli'}
+                                placeholder={'Harga per item/satuan'}
                                 value={formatCurrency(stockInForm.data.purchase_price)}
                                 errors={stockInForm.errors.purchase_price}
                                 onChange={e => stockInForm.setData('purchase_price', parseCurrency(e.target.value))}
@@ -854,9 +854,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
                         />
                         <Button
                             type={'submit'}
-                            label={stockInForm.processing ? 'Menyimpan...' : 'Simpan'}
-                            icon={<IconPencilPlus size={18} strokeWidth={1.5} />}
-                            className={'border bg-green-500 text-white hover:bg-green-600'}
+                            label={stockInForm.processing ? 'Memproses...' : 'Simpan Stok Masuk'}
+                            icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
+                            className={'border bg-green-600 text-white hover:bg-green-700'}
                             disabled={stockInForm.processing}
                         />
                     </div>
@@ -875,50 +875,46 @@ export default function Index({ movements, filters, warehouses, displays, transf
                     </div>
                 }
             >
-                <form onSubmit={handleEditSubmit}>
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-4">
-                        <div className="flex">
-                            <div className="flex-shrink-0">
-                                <IconAlertTriangle className="h-5 w-5 text-yellow-500" />
-                            </div>
-                            <div className="ml-3">
-                                <p className="text-sm text-yellow-700 dark:text-yellow-200">
-                                    Perhatian: Mengedit stok akan mengembalikan stok sebelumnya dan menerapkan ulang perubahan baru. Pastikan data benar.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div className='mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex gap-3 text-amber-800 dark:text-amber-200'>
+                    <IconAlertTriangle className='w-5 h-5 flex-shrink-0' />
+                    <p className='text-sm'>
+                        Perhatian: Mengedit stok akan mengembalikan stok sebelumnya dan menerapkan ulang perubahan baru. Pastikan data benar.
+                    </p>
+                </div>
 
-                    <div className='grid grid-cols-12 gap-4'>
-                        <div className='col-span-12'>
+                <form onSubmit={handleEditSubmit}>
+                    <div className='space-y-4'>
+                        <div>
                             <Input
                                 name='quantity'
                                 label={'Jumlah (Qty)'}
                                 type={'number'}
-                                min='0.01'
-                                step='any'
-                                placeholder={'Jumlah stok'}
+                                step='0.001'
                                 value={editForm.data.quantity}
                                 errors={editForm.errors.quantity}
                                 onChange={e => editForm.setData('quantity', e.target.value)}
                             />
                         </div>
 
+                        {/* Field Harga Beli only visible for Stock In (warehouse) */}
                         {editForm.data.type === 'warehouse' && (
-                            <div className='col-span-12'>
+                            <div>
                                 <Input
                                     name='purchase_price'
-                                    label={'Harga Beli Total (Rp)'}
+                                    label={'Harga Beli Satuan (Rp)'}
                                     type={'text'}
-                                    placeholder={'Total harga beli'}
+                                    placeholder={'Harga per item'}
                                     value={editForm.data.purchase_price}
                                     errors={editForm.errors.purchase_price}
-                                    onChange={e => editForm.setData('purchase_price', parseCurrency(e.target.value) ? formatCurrency(parseCurrency(e.target.value)) : e.target.value)}
+                                    onChange={e => editForm.setData('purchase_price', parseCurrency(e.target.value))}
                                 />
+                                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                                    Masukkan harga beli per satuan/unit, bukan total harga.
+                                </p>
                             </div>
                         )}
 
-                        <div className="col-span-12">
+                        <div>
                             <Input
                                 name='note'
                                 label={'Catatan'}

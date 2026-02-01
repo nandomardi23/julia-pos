@@ -38,60 +38,64 @@ export default function Show({ display, stocks, filters }) {
 
             <div className='grid grid-cols-12 gap-4'>
                 {/* Display Info */}
-                <div className='col-span-12 md:col-span-4'>
+                <div className='col-span-12'>
                     <Card title={'Informasi Display'} icon={<IconLayoutList size={20} strokeWidth={1.5} />}>
-                        <div className='space-y-3'>
-                            <div>
-                                <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
-                                <p className='font-medium text-gray-900 dark:text-white'>{display.name}</p>
-                            </div>
-                            {display.location && (
+                        <div className='flex flex-col md:flex-row gap-6 justify-between items-start'>
+                            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 w-full'>
                                 <div>
-                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Lokasi</span>
-                                    <p className='font-medium text-gray-900 dark:text-white'>{display.location}</p>
+                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Nama</span>
+                                    <p className='font-medium text-gray-900 dark:text-white mt-1'>{display.name}</p>
                                 </div>
-                            )}
-                            {display.description && (
+                                {display.location && (
+                                    <div>
+                                        <span className='text-sm text-gray-500 dark:text-gray-400'>Lokasi</span>
+                                        <p className='font-medium text-gray-900 dark:text-white mt-1'>{display.location}</p>
+                                    </div>
+                                )}
                                 <div>
-                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
-                                    <p className='font-medium text-gray-900 dark:text-white'>{display.description}</p>
+                                    <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
+                                    <p className='mt-1'>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${display.is_active
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                            }`}>
+                                            {display.is_active ? 'Aktif' : 'Nonaktif'}
+                                        </span>
+                                    </p>
                                 </div>
-                            )}
-                            <div>
-                                <span className='text-sm text-gray-500 dark:text-gray-400'>Status</span>
-                                <p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${display.is_active
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                        }`}>
-                                        {display.is_active ? 'Aktif' : 'Nonaktif'}
-                                    </span>
-                                </p>
+                                {display.description && (
+                                    <div className='md:col-span-3'>
+                                        <span className='text-sm text-gray-500 dark:text-gray-400'>Keterangan</span>
+                                        <p className='font-medium text-gray-900 dark:text-white mt-1'>{display.description}</p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-
-                        <div className='mt-4 pt-4 border-t dark:border-gray-700'>
-                            <Button
-                                type={'link'}
-                                icon={<IconShoppingCart size={18} strokeWidth={1.5} />}
-                                className={'w-full border bg-green-500 text-white hover:bg-green-600'}
-                                label={'Buka POS'}
-                                href={route('pos.index')}
-                            />
+                            
+                            <div className='w-full md:w-auto mt-4 md:mt-0'>
+                                <Button
+                                    type={'link'}
+                                    icon={<IconShoppingCart size={18} strokeWidth={1.5} />}
+                                    className={'w-full md:w-auto border bg-green-500 text-white hover:bg-green-600'}
+                                    label={'Buka POS'}
+                                    href={route('pos.index')}
+                                />
+                            </div>
                         </div>
                     </Card>
                 </div>
 
                 {/* Stock List */}
-                <div className='col-span-12 md:col-span-8'>
-                    <div className='mb-2'>
-                        <Search
-                            url={route('displays.show', display.id)}
-                            placeholder='Cari produk di display ini...'
-                        />
-                    </div>
+                <div className='col-span-12'>
                     <Table.Card
                         title={'Stok di Display (Tersedia untuk Dijual)'}
+                        icon={<IconBox size={20} strokeWidth={1.5} />}
+                        action={
+                            <Search
+                                url={route('displays.show', display.id)}
+                                placeholder='Cari produk...'
+                                initialValue={filters.search}
+                            />
+                        }
                         links={stocks.links}
                         meta={{
                             from: stocks.from,
@@ -127,12 +131,12 @@ export default function Show({ display, stocks, filters }) {
                                             <Table.Td>Rp {parseInt(stock.product?.sell_price || 0).toLocaleString('id-ID')}</Table.Td>
                                             <Table.Td className='text-center'>
                                                 <span className='bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-gray-800 dark:text-gray-300'>
-                                                    {formatQty(stock.product?.warehouse_stocks_sum_quantity || 0, stock.product?.unit)}
+                                                    {formatQty(stock.product?.warehouse_stocks_sum_quantity || 0, stock.product?.unit)} {stock.product?.unit}
                                                 </span>
                                             </Table.Td>
                                             <Table.Td className='text-center'>
                                                 <span className='bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium dark:bg-green-900 dark:text-green-300'>
-                                                    {formatQty(stock.quantity, stock.product?.unit)}
+                                                    {formatQty(stock.quantity, stock.product?.unit)} {stock.product?.unit}
                                                 </span>
                                             </Table.Td>
                                         </tr>

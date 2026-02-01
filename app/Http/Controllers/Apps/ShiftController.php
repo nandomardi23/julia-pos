@@ -108,12 +108,18 @@ class ShiftController extends Controller
     {
         $shift = Shift::with([
             'user:id,name',
-            'cashFlows.user:id,name',
-            'transactions' => function ($query) {
-                $query->select('id', 'shift_id', 'invoice', 'grand_total', 'payment_method', 'created_at')
-                    ->orderBy('created_at', 'desc');
+            'cashFlows' => function ($query) {
+                $query->orderBy('created_at', 'desc');
             },
+            'cashFlows.user:id,name',
         ])->findOrFail($id);
+
+        // Paginate transactions separately
+        $transactions = $shift->transactions()
+            ->select('id', 'shift_id', 'invoice', 'grand_total', 'payment_method', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         // Calculate summary
         $summary = [
@@ -129,6 +135,7 @@ class ShiftController extends Controller
         return Inertia::render('Dashboard/Shifts/Show', [
             'shift' => $shift,
             'summary' => $summary,
+            'transactions' => $transactions,
         ]);
     }
 

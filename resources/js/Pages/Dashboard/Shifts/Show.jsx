@@ -3,6 +3,7 @@ import { Head, Link } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import Card from "@/Components/Common/Card";
 import Table from "@/Components/Common/Table";
+import Pagination from "@/Components/Common/Pagination";
 import {
     IconClock,
     IconReceipt,
@@ -57,7 +58,7 @@ const SummaryCard = ({ icon: Icon, label, value, className = "", valueClass = ""
     </div>
 );
 
-const Show = ({ shift, summary }) => {
+const Show = ({ shift, summary, transactions }) => {
     const isActive = shift.status === "active";
     const hasDifference = shift.difference !== null && shift.difference !== 0;
 
@@ -86,8 +87,8 @@ const Show = ({ shift, summary }) => {
                             <div className="flex items-center gap-2">
                                 <span
                                     className={`px-3 py-1 rounded-full text-sm font-medium ${isActive
-                                            ? "bg-green-500 text-white"
-                                            : "bg-white/20 text-white"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-white/20 text-white"
                                         }`}
                                 >
                                     {isActive ? "Aktif" : "Ditutup"}
@@ -169,10 +170,10 @@ const Show = ({ shift, summary }) => {
                                 </p>
                                 <p
                                     className={`text-xl font-bold flex items-center justify-center gap-1 ${shift.difference === 0
-                                            ? "text-green-600"
-                                            : shift.difference > 0
-                                                ? "text-blue-600"
-                                                : "text-red-600"
+                                        ? "text-green-600"
+                                        : shift.difference > 0
+                                            ? "text-blue-600"
+                                            : "text-red-600"
                                         }`}
                                 >
                                     {shift.difference === 0 ? (
@@ -224,8 +225,8 @@ const Show = ({ shift, summary }) => {
                                         <Table.Td>
                                             <span
                                                 className={`px-2 py-1 rounded-full text-xs font-medium ${cf.type === "in"
-                                                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                                                     }`}
                                             >
                                                 {cf.type === "in" ? "Masuk" : "Keluar"}
@@ -235,8 +236,8 @@ const Show = ({ shift, summary }) => {
                                         <Table.Td>{cf.description || "-"}</Table.Td>
                                         <Table.Td
                                             className={`text-right font-medium ${cf.type === "in"
-                                                    ? "text-green-600"
-                                                    : "text-red-600"
+                                                ? "text-green-600"
+                                                : "text-red-600"
                                                 }`}
                                         >
                                             {cf.type === "in" ? "+" : "-"}
@@ -250,11 +251,11 @@ const Show = ({ shift, summary }) => {
                 )}
 
                 {/* Recent Transactions */}
-                {shift.transactions?.length > 0 && (
+                {transactions?.data?.length > 0 && (
                     <Card>
                         <div className="px-6 py-4 border-b dark:border-gray-800">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Transaksi ({summary.transaction_count})
+                                Transaksi
                             </h3>
                         </div>
                         <Table>
@@ -267,7 +268,7 @@ const Show = ({ shift, summary }) => {
                                 </tr>
                             </Table.Thead>
                             <Table.Tbody>
-                                {shift.transactions.slice(0, 10).map((trx) => (
+                                {transactions.data.map((trx) => (
                                     <tr key={trx.id}>
                                         <Table.Td className="font-medium">
                                             <Link
@@ -290,11 +291,9 @@ const Show = ({ shift, summary }) => {
                                 ))}
                             </Table.Tbody>
                         </Table>
-                        {shift.transactions.length > 10 && (
-                            <div className="p-4 text-center text-sm text-gray-500">
-                                Menampilkan 10 dari {shift.transactions.length} transaksi
-                            </div>
-                        )}
+                        <div className="p-4 border-t dark:border-gray-800">
+                            <Pagination links={transactions.links} />
+                        </div>
                     </Card>
                 )}
 

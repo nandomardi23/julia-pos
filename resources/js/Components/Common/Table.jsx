@@ -36,7 +36,7 @@ const Card = ({ icon, title, className, children, links, meta, url, action }) =>
             </div>
 
             {/* Footer with Pagination */}
-            {links && links.length > 3 && (
+            {(meta || (links && links.length > 3)) && (
                 <div className='px-5 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50'>
                     <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
                         {/* Info & Per Page Selector */}
@@ -68,44 +68,46 @@ const Card = ({ icon, title, className, children, links, meta, url, action }) =>
                         </div>
 
                         {/* Pagination Links */}
-                        <ul className='flex items-center gap-1'>
-                            {links.map((item, i) => {
-                                if (item.url == null) return null;
+                        {links && links.length > 0 && (
+                            <ul className='flex items-center gap-1'>
+                                {links.map((item, i) => {
+                                    if (item.url == null) return null;
 
-                                const baseStyle = 'flex items-center justify-center min-w-[32px] h-8 px-2 text-sm border rounded-lg transition-colors'
-                                const activeStyle = 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
-                                const inactiveStyle = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                    const baseStyle = 'flex items-center justify-center min-w-[32px] h-8 px-2 text-sm border rounded-lg transition-colors'
+                                    const activeStyle = 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
+                                    const inactiveStyle = 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
 
-                                if (item.label.includes('Previous')) {
+                                    if (item.label.includes('Previous')) {
+                                        return (
+                                            <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
+                                                <IconChevronLeft size={16} strokeWidth={2} />
+                                                <span className='hidden sm:inline ml-1'>Prev</span>
+                                            </Link>
+                                        )
+                                    }
+
+                                    if (item.label.includes('Next')) {
+                                        return (
+                                            <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
+                                                <span className='hidden sm:inline mr-1'>Next</span>
+                                                <IconChevronRight size={16} strokeWidth={2} />
+                                            </Link>
+                                        )
+                                    }
+
+                                    // Hide middle page numbers on mobile, show only active
                                     return (
-                                        <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
-                                            <IconChevronLeft size={16} strokeWidth={2} />
-                                            <span className='hidden sm:inline ml-1'>Prev</span>
+                                        <Link
+                                            className={`${baseStyle} ${item.active ? activeStyle : `${inactiveStyle} hidden sm:flex`}`}
+                                            key={i}
+                                            href={item.url}
+                                        >
+                                            {item.label}
                                         </Link>
                                     )
-                                }
-
-                                if (item.label.includes('Next')) {
-                                    return (
-                                        <Link className={`${baseStyle} ${inactiveStyle}`} key={i} href={item.url}>
-                                            <span className='hidden sm:inline mr-1'>Next</span>
-                                            <IconChevronRight size={16} strokeWidth={2} />
-                                        </Link>
-                                    )
-                                }
-
-                                // Hide middle page numbers on mobile, show only active
-                                return (
-                                    <Link
-                                        className={`${baseStyle} ${item.active ? activeStyle : `${inactiveStyle} hidden sm:flex`}`}
-                                        key={i}
-                                        href={item.url}
-                                    >
-                                        {item.label}
-                                    </Link>
-                                )
-                            })}
-                        </ul>
+                                })}
+                            </ul>
+                        )}
                     </div>
                 </div>
             )}

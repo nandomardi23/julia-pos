@@ -30,7 +30,7 @@ const StockOpnameCreate = ({
     warehouses,
     displays,
     products,
-    totalProducts, 
+    totalProducts,
     selectedLocationType,
     selectedLocationId,
 }) => {
@@ -41,6 +41,7 @@ const StockOpnameCreate = ({
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [itemsData, setItemsData] = useState([]);
     const [note, setNote] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -127,11 +128,22 @@ const StockOpnameCreate = ({
         return "text-gray-500";
     };
 
+    // Filter Logic
+    const filteredItems = itemsData.filter((item) => {
+        if (!searchQuery) return true;
+        const lowerQuery = searchQuery.toLowerCase();
+        return (
+            item.title.toLowerCase().includes(lowerQuery) ||
+            (item.sku && item.sku.toLowerCase().includes(lowerQuery)) ||
+            (item.barcode && item.barcode.toLowerCase().includes(lowerQuery))
+        );
+    });
+
     // Pagination Logic
     const indexOfLastItem = currentPage * perPage;
     const indexOfFirstItem = indexOfLastItem - perPage;
-    const currentItems = itemsData.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(itemsData.length / perPage);
+    const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredItems.length / perPage);
 
     const handlePageChange = (page) => {
         if (page >= 1 && page <= totalPages) {
@@ -171,11 +183,10 @@ const StockOpnameCreate = ({
                         key={index}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
                         disabled={typeof page !== 'number'}
-                        className={`min-w-[32px] h-8 rounded-md border text-sm font-medium transition-colors ${
-                            page === currentPage
-                                ? "bg-indigo-600 border-indigo-600 text-white"
-                                : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                        } ${typeof page !== 'number' ? 'border-transparent hover:bg-transparent cursor-default' : ''}`}
+                        className={`min-w-[32px] h-8 rounded-md border text-sm font-medium transition-colors ${page === currentPage
+                            ? "bg-indigo-600 border-indigo-600 text-white"
+                            : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                            } ${typeof page !== 'number' ? 'border-transparent hover:bg-transparent cursor-default' : ''}`}
                     >
                         {page}
                     </button>
@@ -242,6 +253,21 @@ const StockOpnameCreate = ({
                             placeholder="Catatan opname..."
                         />
                     </div>
+
+                    {/* Search Filter */}
+                    {itemsData.length > 0 && (
+                        <div className="mb-4">
+                            <Input
+                                placeholder="Cari produk (Nama / SKU / Barcode)..."
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                icon={<IconSearch size={18} className="text-gray-400" />}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Products Table */}
@@ -299,7 +325,7 @@ const StockOpnameCreate = ({
                             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                                 <div className="flex flex-col sm:flex-row items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                                     <span>
-                                        Menampilkan <span className="font-semibold text-gray-900 dark:text-gray-200">{indexOfFirstItem + 1}</span> - <span className="font-semibold text-gray-900 dark:text-gray-200">{Math.min(indexOfLastItem, itemsData.length)}</span> dari <span className="font-semibold text-gray-900 dark:text-gray-200">{itemsData.length}</span> data
+                                        Menampilkan <span className="font-semibold text-gray-900 dark:text-gray-200">{indexOfFirstItem + 1}</span> - <span className="font-semibold text-gray-900 dark:text-gray-200">{Math.min(indexOfLastItem, filteredItems.length)}</span> dari <span className="font-semibold text-gray-900 dark:text-gray-200">{filteredItems.length}</span> data
                                     </span>
                                     <span className="hidden sm:inline text-gray-300 dark:text-gray-600">|</span>
                                     <div className="flex items-center gap-2">

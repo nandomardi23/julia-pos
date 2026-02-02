@@ -82,35 +82,35 @@ class StockService
         $supplierId = $data['supplier_id'] ?? null;
         $invoiceNumber = $data['invoice_number'] ?? null;
         $items = $data['items'];
-        
+
         // Generate unique receipt ID to group items
         $receiptId = 'RCP-' . date('YmdHis') . '-' . uniqid();
-        
+
         $processedProducts = [];
-        
+
         DB::transaction(function () use ($warehouseId, $supplierId, $invoiceNumber, $items, $receiptId, &$processedProducts) {
             foreach ($items as $item) {
                 $productId = $item['product_id'];
-                
+
                 // Calculate quantity from packaging conversion
                 $packagingQty = $item['packaging_qty'] ?? 1;
                 $qtyPerPackage = $item['qty_per_package'] ?? 1;
                 $quantity = $item['quantity'] ?? ($packagingQty * $qtyPerPackage);
-                
+
                 // Recalculate if quantity is 0 or not set properly
                 if ($quantity <= 0) {
                     $quantity = $packagingQty * $qtyPerPackage;
                 }
-                
+
                 $packagingUnit = $item['packaging_unit'] ?? 'pcs';
                 $purchasePrice = $item['purchase_price'] ?? null;
                 $batchNumber = $item['batch_number'] ?? null;
                 $expiryDate = $item['expiry_date'] ?? null;
-                $noteText = $packagingUnit !== 'pcs' 
+                $noteText = $packagingUnit !== 'pcs'
                     ? "{$packagingQty} {$packagingUnit} @ {$qtyPerPackage}/kemasan = {$quantity} pcs"
                     : "{$quantity} pcs";
                 $note = $item['note'] ?? $noteText;
-                
+
                 // Add or update warehouse stock
                 $warehouseStock = WarehouseStock::firstOrCreate(
                     [
@@ -138,7 +138,7 @@ class StockService
                     'note' => $note,
                     'user_id' => auth()->id(),
                 ]);
-                
+
                 $processedProducts[] = $productId;
             }
         });
@@ -299,7 +299,23 @@ class StockService
             return null;
         }
 
+        // Try average_cost first, then buy_price
         $costPerUnit = $product->average_cost ?: ($product->buy_price ?: 0);
+
+        // If still 0, try to get last purchase price from stock movements
+        if ($costPerUnit <= 0) {
+            $lastPurchaseMovement = StockMovement::where('product_id', $product->id)
+                ->where('to_type', StockMovement::TYPE_WAREHOUSE)
+                ->whereNotNull('purchase_price')
+                ->where('purchase_price', '>', 0)
+                ->latest()
+                ->first();
+
+            if ($lastPurchaseMovement) {
+                $costPerUnit = (float) $lastPurchaseMovement->purchase_price;
+            }
+        }
+
         return $quantity * $costPerUnit;
     }
 
@@ -354,7 +370,7 @@ class StockService
         DB::transaction(function () use ($movement, $data) {
             // 1. Revert previous stock effect
             // Logic mirrors destroy() but keeps the record
-            
+
             if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
                 // Was In: Decrease previously added stock
                 $stock = WarehouseStock::where('warehouse_id', $movement->to_id)
@@ -371,7 +387,7 @@ class StockService
                 if ($warehouseStock) {
                     $warehouseStock->increment('quantity', $movement->quantity);
                 }
-                
+
                 $displayStock = DisplayStock::where('display_id', $movement->to_id)
                     ->where('product_id', $movement->product_id)
                     ->first();
@@ -401,11 +417,11 @@ class StockService
             // Only allow updating safe fields
             $movement->quantity = $data['quantity'] ?? $movement->quantity;
             $movement->note = $data['note'] ?? $movement->note;
-            
+
             if (isset($data['purchase_price'])) {
                 $movement->purchase_price = $data['purchase_price'];
             }
-            
+
             // Recalculate loss if it was a stock out
             if ($movement->to_type === StockMovement::TYPE_OUT) {
                 $product = Product::find($movement->product_id);
@@ -427,52 +443,52 @@ class StockService
                     ['warehouse_id' => $movement->from_id, 'product_id' => $movement->product_id],
                     ['quantity' => 0]
                 );
-                
+
                 // Note: If new Qty > Available (after revert), this might fail. 
                 // But since we are inside transaction, we can just check directly.
                 if ($warehouseStock->quantity < $movement->quantity) {
                     throw new \Exception("Stok gudang tidak mencukupi untuk update transfer (Butuh: {$movement->quantity}, Ada: {$warehouseStock->quantity})");
                 }
-                
+
                 $warehouseStock->decrement('quantity', $movement->quantity);
-                
+
                 $displayStock = DisplayStock::firstOrCreate(
                     ['display_id' => $movement->to_id, 'product_id' => $movement->product_id],
                     ['quantity' => 0]
                 );
                 $displayStock->increment('quantity', $movement->quantity);
-                
+
             } elseif ($movement->to_type === StockMovement::TYPE_OUT) {
                 // Is Out: Remove new quantity
                 if ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
                     $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                        
+
                     if (!$stock || $stock->quantity < $movement->quantity) {
                         throw new \Exception("Stok gudang tidak mencukupi untuk update barang keluar");
                     }
                     $stock->decrement('quantity', $movement->quantity);
-                    
+
                 } elseif ($movement->from_type === StockMovement::TYPE_DISPLAY) {
                     $stock = DisplayStock::where('display_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                        
+
                     if (!$stock || $stock->quantity < $movement->quantity) {
                         throw new \Exception("Stok display tidak mencukupi untuk update barang keluar");
                     }
                     $stock->decrement('quantity', $movement->quantity);
                 }
             }
-            
+
             $movement->save();
         });
 
         // Recalculate average cost if needed
         if ($movement->to_type === StockMovement::TYPE_WAREHOUSE) {
-             $product = Product::find($movement->product_id);
-             $product?->updateAverageCost();
+            $product = Product::find($movement->product_id);
+            $product?->updateAverageCost();
         }
 
         return ['success' => true, 'message' => 'Pergerakan stok berhasil diperbarui!'];

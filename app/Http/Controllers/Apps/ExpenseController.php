@@ -33,7 +33,7 @@ class ExpenseController extends Controller
                 $query->whereDate('expense_date', '<=', $date);
             })
             ->orderBy('expense_date', 'desc')
-            ->paginate($request->input('per_page', 15))
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         $categories = ExpenseCategory::orderBy('name')->get();

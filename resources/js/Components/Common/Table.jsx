@@ -3,11 +3,17 @@ import { Link, router } from '@inertiajs/react'
 import { IconChevronRight, IconChevronLeft } from '@tabler/icons-react'
 
 const Card = ({ icon, title, className, children, links, meta, url, action }) => {
-    const perPageOptions = [10, 25, 50, 75, 100]
+    const perPageOptions = [10, 15, 25, 50, 75, 100]
 
     const handlePerPageChange = (e) => {
         if (url) {
-            router.get(url, { per_page: e.target.value }, { preserveState: true })
+            // Get current URL query parameters and preserve them
+            const currentParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(currentParams.entries());
+            params.per_page = e.target.value;
+            // Reset to page 1 when changing per_page
+            delete params.page;
+            router.get(url, params, { preserveState: true, preserveScroll: true })
         }
     }
 

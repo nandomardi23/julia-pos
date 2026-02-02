@@ -16,16 +16,18 @@ class WarehouseController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        
+
         $warehouses = Warehouse::query()
             ->when($search, function ($query, $search) {
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhere('location', 'like', '%' . $search . '%');
             })
             ->withSum('stocks', 'quantity')
-            ->withCount(['stocks as products_count' => function ($query) {
-                $query->where('quantity', '>', 0);
-            }])
+            ->withCount([
+                'stocks as products_count' => function ($query) {
+                    $query->where('quantity', '>', 0);
+                }
+            ])
             ->latest()
             ->paginate($request->input('per_page', 10))
             ->withQueryString();
@@ -81,7 +83,7 @@ class WarehouseController extends Controller
             })
             ->where('quantity', '>', 0)
             ->latest()
-            ->paginate($request->input('per_page', 15))
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         return Inertia::render('Dashboard/Warehouses/Show', [

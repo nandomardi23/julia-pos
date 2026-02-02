@@ -43,7 +43,7 @@ class ReturnController extends Controller
 
         $query->orderBy('created_at', 'desc');
 
-        $returns = $query->paginate($request->input('per_page', 15))->withQueryString();
+        $returns = $query->paginate($request->input('per_page', 10))->withQueryString();
 
         return Inertia::render('Dashboard/Returns/Index', [
             'returns' => $returns,

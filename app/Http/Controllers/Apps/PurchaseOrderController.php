@@ -53,7 +53,7 @@ class PurchaseOrderController extends Controller
         $sortDir = $request->get('dir', 'desc');
         $query->orderBy($sortField, $sortDir);
 
-        $purchaseOrders = $query->paginate($request->input('per_page', 15))->withQueryString();
+        $purchaseOrders = $query->paginate($request->input('per_page', 10))->withQueryString();
 
         return Inertia::render('Dashboard/PurchaseOrders/Index', [
             'purchaseOrders' => $purchaseOrders,

@@ -67,7 +67,7 @@ class StockMovementController extends Controller
                 $query->whereDate('created_at', '<=', $date);
             })
             ->latest()
-            ->paginate($request->input('per_page', 15))
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         // Data for Transfer Modal

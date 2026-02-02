@@ -45,7 +45,7 @@ class ShiftController extends Controller
 
         $query->orderBy('started_at', 'desc');
 
-        $shifts = $query->paginate($request->input('per_page', 15))->withQueryString();
+        $shifts = $query->paginate($request->input('per_page', 10))->withQueryString();
 
         // Get current active shift for the user
         $activeShift = Shift::getActiveShift();

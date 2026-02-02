@@ -86,7 +86,7 @@ class DisplayController extends Controller
             })
             ->where('quantity', '>', 0)
             ->latest()
-            ->paginate($request->input('per_page', 15))
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         return Inertia::render('Dashboard/Displays/Show', [

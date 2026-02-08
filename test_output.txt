@@ -1,0 +1,7 @@
+
+   PASS  Tests\Feature\Transactions\IngredientStockTest
+  ✓ transactio… 1.14s  
+
+  Tests:    1 passed (3 assertions)
+  Duration: 1.36s
+

@@ -123,6 +123,14 @@ class Product extends Model
     }
 
     /**
+     * Get transaction details for this product.
+     */
+    public function transactionDetails()
+    {
+        return $this->hasMany(TransactionDetail::class);
+    }
+
+    /**
      * Get product variants (sizes).
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

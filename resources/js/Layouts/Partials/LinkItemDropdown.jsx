@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, memo } from 'react'
 import { Link, usePage } from '@inertiajs/react'
 import { IconChevronDown, IconChevronUp, IconCornerDownRight } from '@tabler/icons-react'
-export default function LinkItemDropdown({ icon, title, data, access, sidebarOpen, onNavigate, ...props }) {
+
+const LinkItemDropdown = memo(function LinkItemDropdown({ icon, title, data, access, sidebarOpen, onNavigate, ...props }) {
 
     // destruct url from usepage
     const { url } = usePage();
@@ -121,4 +122,6 @@ export default function LinkItemDropdown({ icon, title, data, access, sidebarOpe
             }
         </>
     )
-}
+});
+
+export default LinkItemDropdown;

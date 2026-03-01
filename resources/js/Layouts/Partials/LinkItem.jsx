@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Link, usePage } from '@inertiajs/react'
-export default function LinkItem({ href, icon, link, access, title, sidebarOpen, onNavigate, ...props }) {
+
+const LinkItem = memo(function LinkItem({ href, icon, link, access, title, sidebarOpen, onNavigate, ...props }) {
     // destruct url from usepage
     const { url } = usePage();
 
@@ -61,4 +62,6 @@ export default function LinkItem({ href, icon, link, access, title, sidebarOpen,
             }
         </>
     )
-}
+});
+
+export default LinkItem;

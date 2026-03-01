@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { usePage, Link } from "@inertiajs/react";
 import { IconBrandLaravel, IconBrandReact, IconX } from "@tabler/icons-react";
 import LinkItem from "@/Layouts/Partials/LinkItem";
@@ -9,16 +9,16 @@ export default function Sidebar({ sidebarOpen, mobileSidebarOpen = false, setMob
     const { auth, app_settings: settings = {} } = usePage().props;
     const menuNavigation = Menu();
 
-    const closeMobileSidebar = () => {
+    const closeMobileSidebar = useCallback(() => {
         if (setMobileSidebarOpen) {
             setMobileSidebarOpen(false);
         }
-    };
+    }, [setMobileSidebarOpen]);
 
     return (
         <>
             {/* Desktop Sidebar */}
-            <div className={`${sidebarOpen ? 'w-[260px]' : 'w-[100px]'} hidden lg:block min-h-screen overflow-y-auto border-r transition-all duration-300 bg-white dark:bg-gray-950 dark:border-gray-900`}>
+            <div className={`${sidebarOpen ? 'w-[260px]' : 'w-[100px]'} hidden lg:block min-h-screen overflow-y-auto border-r transition-[width] duration-300 bg-white dark:bg-gray-950 dark:border-gray-900`}>
                 {sidebarOpen ? (
                     <>
                         <div className="flex items-center gap-3 px-6 py-2 h-16 border-b dark:border-gray-900 bg-gray-50/50 dark:bg-gray-950">

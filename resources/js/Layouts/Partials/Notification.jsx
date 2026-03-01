@@ -41,7 +41,7 @@ export default function Notification() {
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('mousedown', handleClickOutside);
         };
-    })
+    }, [])
 
     return (
         <>
@@ -97,7 +97,7 @@ export default function Notification() {
                         </div>
                         <IconBell strokeWidth={1.5} size={18} className='text-gray-500 dark:text-gray-400' />
                     </button>
-                    <div className={`${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full'} fixed top-0 right-0 z-50 w-[300px] h-full transition-all duration-300 transform border-l bg-white dark:bg-gray-950 dark:border-gray-900`}>
+                    <div className={`${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'} fixed top-0 right-0 z-50 w-[300px] h-full transition-[transform,opacity] duration-300 transform border-l bg-white dark:bg-gray-950 dark:border-gray-900`}>
                         <div className='flex justify-between items-center gap-2 p-4 border-b mt-2 dark:border-gray-900 '>
                             <div className='text-base font-bold text-gray-500 dark:text-gray-400 '>Notifications</div>
                             <IconDots className='text-gray-500 dark:text-gray-400' size={24} />

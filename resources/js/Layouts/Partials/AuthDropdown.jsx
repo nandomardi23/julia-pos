@@ -87,7 +87,7 @@ export default function AuthDropdown({ auth, isMobile }) {
                     <button className="flex items-center group" onClick={() => setIsToggle(!isToggle)}>
                         <img src={auth.user.avatar_url ? auth.user.avatar_url : "https://ui-avatars.com/api/?name=" + auth.user.name} alt={auth.user.name} className='w-10 h-10 rounded-full' />
                     </button>
-                    <div className={`${isToggle ? 'translate-x-0 opacity-100' : '-translate-x-full'} fixed top-0 left-0 z-50 w-[300px] h-full transition-all duration-300 transform border-r bg-white dark:bg-gray-950 dark:border-gray-900`}>
+                    <div className={`${isToggle ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'} fixed top-0 left-0 z-50 w-[300px] h-full transition-[transform,opacity] duration-300 transform border-r bg-white dark:bg-gray-950 dark:border-gray-900`}>
                         <div className="flex justify-center items-center px-6 py-2 h-16">
                             <div className="text-2xl font-bold text-center leading-loose tracking-wider text-gray-900 dark:text-gray-200">
                                 KASIR

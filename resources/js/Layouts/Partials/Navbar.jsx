@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { usePage } from '@inertiajs/react';
 import { IconAlignLeft, IconMoon, IconSun, IconMenu2 } from '@tabler/icons-react'
 import AuthDropdown from '@/Layouts/Partials/AuthDropdown';
@@ -12,15 +12,18 @@ export default function Navbar({ toggleSidebar, toggleMobileSidebar, themeSwitch
     // get menu from utils
     const menuNavigation = Menu();
 
-    // recreate array from menu navigations
-    const links = menuNavigation.flatMap((item) => item.details);
-    const filter_sublinks = links.filter((item) => item.hasOwnProperty('subdetails'));
-    const sublinks = filter_sublinks.flatMap((item) => item.subdetails);
+    // memoize links and sublinks to avoid recalculating on every render
+    const { links, sublinks } = useMemo(() => {
+        const links = menuNavigation.flatMap((item) => item.details);
+        const filter_sublinks = links.filter((item) => item.hasOwnProperty('subdetails'));
+        const sublinks = filter_sublinks.flatMap((item) => item.subdetails);
+        return { links, sublinks };
+    }, [menuNavigation]);
 
     // define state isMobile
     const [isMobile, setIsMobile] = useState(false);
 
-    // define useEffect
+    // define useEffect - FIX: added [] dependency array to prevent event listener stacking
     useEffect(() => {
         // define handle resize window
         const handleResize = () => {
@@ -37,7 +40,7 @@ export default function Navbar({ toggleSidebar, toggleMobileSidebar, themeSwitch
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    })
+    }, []);
 
     return (
         <div className='py-8 px-4 md:px-6 flex justify-between items-center min-w-full sticky top-0 z-20 h-16 border-b bg-white dark:border-gray-900 dark:bg-gray-950'>

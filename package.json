@@ -26,6 +26,7 @@
         "chart.js": "^4.5.1",
         "jsbarcode": "^3.11.6",
         "react-hot-toast": "^2.4.1",
+        "react-scan": "^0.5.3",
         "react-select": "^5.10.2",
         "sweetalert2": "^11.11.1"
     }

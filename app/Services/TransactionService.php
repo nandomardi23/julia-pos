@@ -29,7 +29,7 @@ class TransactionService
         if ($paymentMethod) {
             $paymentMethod = strtolower($paymentMethod);
         }
-        
+
         $isExternalGateway = $paymentMethod && !in_array($paymentMethod, ['cash', 'transfer', 'qris']);
         $paymentSetting = null;
 
@@ -52,7 +52,7 @@ class TransactionService
             if (!empty($insufficientItems)) {
                 $messages = [];
                 foreach ($insufficientItems as $item) {
-                     $messages[] = "{$item['recipe']}: {$item['ingredient']} (butuh {$item['required']} {$item['unit']}, tersedia {$item['available']} {$item['unit']})";
+                    $messages[] = "{$item['recipe']}: {$item['ingredient']} (butuh {$item['required']} {$item['unit']}, tersedia {$item['available']} {$item['unit']})";
                 }
                 throw new \Exception('Stok bahan tidak cukup: ' . implode('; ', $messages));
             }
@@ -72,26 +72,16 @@ class TransactionService
         $activeShift = Shift::getActiveShift();
 
         // 4. DB Transaction
-        $transaction = DB::transaction(function () use (
-            $request,
-            $carts,
-            $invoice,
-            $cashAmount,
-            $changeAmount,
-            $paymentMethod,
-            $isCashPayment,
-            $activeShift,
-            $display
-        ) {
+        $transaction = DB::transaction(function () use ($request, $carts, $invoice, $cashAmount, $changeAmount, $paymentMethod, $isCashPayment, $activeShift, $display) {
             // Recalculate totals
             $subTotal = 0;
             foreach ($carts as $item) {
                 $subTotal += $item->price * $item->qty;
             }
-            
+
             $discountAmount = (float) $request->discount;
             $taxPercent = (float) ($request->ppn ?? 0);
-            
+
             $taxable = max($subTotal - $discountAmount, 0);
             $taxAmount = round($taxable * ($taxPercent / 100));
             $grandTotal = max($subTotal - $discountAmount + $taxAmount, 0);
@@ -114,10 +104,10 @@ class TransactionService
 
             // Create Details & Manage Stock
             foreach ($carts as $cart) {
-                 $currentBuyPrice = $cart->variant 
+                $currentBuyPrice = $cart->variant
                     ? ($cart->variant->buy_price ?? $cart->product->buy_price)
                     : $cart->product->buy_price;
-                
+
                 $transaction->details()->create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $cart->product_id,
@@ -127,10 +117,10 @@ class TransactionService
                     'buy_price' => $currentBuyPrice,
                 ]);
 
-                $currentSellPrice = $cart->variant 
+                $currentSellPrice = $cart->variant
                     ? ($cart->variant->sell_price ?? $cart->product->sell_price)
                     : $cart->product->sell_price;
-                
+
                 $total_buy_price = $currentBuyPrice * $cart->qty;
                 $total_sell_price = $currentSellPrice * $cart->qty;
                 $profits = $total_sell_price - $total_buy_price;
@@ -175,10 +165,10 @@ class TransactionService
             ->where('product_id', $productId)
             ->lockForUpdate()
             ->first();
-        
+
         if ($displayStock) {
             $displayStock->decrement('quantity', (float) $qty);
-            
+
             StockMovement::create([
                 'product_id' => $productId,
                 'from_type' => StockMovement::TYPE_DISPLAY,
@@ -196,7 +186,7 @@ class TransactionService
     {
         $insufficientItems = [];
         $recipeCarts = $carts->filter(fn($c) => $c->product->product_type === Product::TYPE_RECIPE);
-        
+
         if ($recipeCarts->isEmpty()) {
             return [];
         }
@@ -242,11 +232,11 @@ class TransactionService
             $variant = $cart->variant;
             $multiplier = (float) $cart->qty;
             $ingredients = $product->getEffectiveIngredients($variant);
-            
+
             foreach ($ingredients as $ingredientData) {
                 $ingredientId = $ingredientData->ingredient_id;
                 $requiredQty = $ingredientData->quantity * $multiplier;
-                
+
                 $isSupply = $neededIngredients[$ingredientId]['type'] === Product::TYPE_SUPPLY;
                 $isIngredient = $neededIngredients[$ingredientId]['type'] === Product::TYPE_INGREDIENT;
 
@@ -265,7 +255,7 @@ class TransactionService
                     // Let's assume other types follow display only logic for now unless specified
                     $availableStock = $displayQty;
                 }
-                
+
                 if ($availableStock < $requiredQty) {
                     $insufficientItems[] = [
                         'recipe' => $product->title . ($variant ? ' (' . $variant->name . ')' : ''),
@@ -277,7 +267,7 @@ class TransactionService
                 }
             }
         }
-        
+
         return $insufficientItems;
     }
 
@@ -304,8 +294,9 @@ class TransactionService
 
         foreach ($ingredients as $variantIngredient) {
             $ingredient = $variantIngredient->ingredient;
-            if (!$ingredient) continue;
-            
+            if (!$ingredient)
+                continue;
+
             $requiredQty = $variantIngredient->quantity * $multiplier;
 
             if ($ingredient->is_supply || $ingredient->product_type === Product::TYPE_SUPPLY) {
@@ -324,9 +315,9 @@ class TransactionService
                 if ($ingredientDisplayStock && $ingredientDisplayStock->quantity > 0) {
                     $availableInDisplay = $ingredientDisplayStock->quantity;
                     $toDeduct = min($availableInDisplay, $requiredQty);
-                    
+
                     $ingredientDisplayStock->decrement('quantity', $toDeduct);
-                    
+
                     StockMovement::create([
                         'product_id' => $ingredient->id,
                         'from_type' => StockMovement::TYPE_DISPLAY,
@@ -355,7 +346,7 @@ class TransactionService
         // Find warehouse with stock. Ideally specifically selected, but for now grab from first available or main warehouse.
         // Assuming FIFO or just picking one for simplicity as per current logic.
         // Current logic was: `WarehouseStock::where(...)->first()`.
-        
+
         $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)
             ->where('quantity', '>', 0)
             ->orderBy('quantity', 'desc') // Pick from largest stock pile? Or just first?
@@ -365,20 +356,20 @@ class TransactionService
         // If not enough in one pile, might need to split across warehouses? 
         // For now preventing overcomplication: take what we can or error if strictly validated before.
         // validation passed means total is enough.
-        
+
         if (!$warehouseStock) {
-           // Should not happen if validation passed, unless concurrency issue.
-           // Fallback to creating negative stock or error? 
-           // Let's try to find any warehouse stock record to go into negative?
-           $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)->first();
-           if (!$warehouseStock) {
-               // Create if doesn't exist (e.g. Warehouse 1)
-               $warehouseStock = WarehouseStock::create([
-                   'warehouse_id' => 1,
-                   'product_id' => $ingredient->id,
-                   'quantity' => 0
-               ]);
-           }
+            // Should not happen if validation passed, unless concurrency issue.
+            // Fallback to creating negative stock or error? 
+            // Let's try to find any warehouse stock record to go into negative?
+            $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)->first();
+            if (!$warehouseStock) {
+                // Create if doesn't exist (e.g. Warehouse 1)
+                $warehouseStock = WarehouseStock::create([
+                    'warehouse_id' => 1,
+                    'product_id' => $ingredient->id,
+                    'quantity' => 0
+                ]);
+            }
         }
 
         $warehouseStock->decrement('quantity', $qty);
@@ -401,7 +392,8 @@ class TransactionService
             // 1. Revert Stock Logic
             foreach ($transaction->details as $detail) {
                 $product = $detail->product;
-                if (!$product) continue;
+                if (!$product)
+                    continue;
 
                 // Only revert if stock was actually deducted (Sellable/Recipe)
                 // Assuming we track movements, we can look at StockMovement, 
@@ -410,8 +402,8 @@ class TransactionService
                 $display = Display::active()->first();
                 if ($display) {
                     if ($product->product_type === Product::TYPE_RECIPE) {
-                       // Restore Ingredients
-                       $variants = $product->variants;
+                        // Restore Ingredients
+                        $variants = $product->variants;
                         // Determine which variant was sold - transaction_details specific variant?
                         // The detail stores 'variant_name' but not ID directly? 
                         // Wait, TransactionDetail has product_id. Does it have variant_id?
@@ -419,21 +411,21 @@ class TransactionService
                         // Let's check schema again. Schema says: variant_name (string).
                         // Ah, Carts table has product_variant_id, but TransactionDetail might NOT.
                         // Let's check TransactionDetail model/migration again.
-                        
+
                         // If detail doesn't save variant_id, we can't accurately restore variant-specific ingredients!
                         // This is a potential existing bug or limitation.
                         // However, we can try to guess or just restore the *effective* ingredients if simple.
-                        
+
                         // For now, let's look at how existing logic does it? 
                         // Existing logic might rely on StockMovement reversion?
                         // If StockMovement exists, we can just reverse them?
-                        
+
                         // Let's fallback to StockMovement reversal if possible.
                         // StockMovement::where('to_type', 'transaction')->where('to_id', $transaction->id)->get();
-                        
+
                     } else {
                         // Restore Display Stock
-                         $displayStock = DisplayStock::firstOrCreate(
+                        $displayStock = DisplayStock::firstOrCreate(
                             ['display_id' => $display->id, 'product_id' => $product->id],
                             ['quantity' => 0]
                         );
@@ -441,15 +433,16 @@ class TransactionService
                     }
                 }
             }
-            
+
             // Actually, the most robust way is to finding the StockMovements associated with this transaction and reversing them.
             // But 'from_type' varies.
-            
+
             // Let's use the StockMovement to reverse.
             $movements = StockMovement::where('to_type', StockMovement::TYPE_TRANSACTION)
                 ->where('to_id', $transaction->id)
                 ->get();
 
+            /** @var StockMovement $movement */
             foreach ($movements as $movement) {
                 // Reverse: Add back to 'from' source
                 if ($movement->from_type === StockMovement::TYPE_DISPLAY) {
@@ -458,14 +451,16 @@ class TransactionService
                     $stock = DisplayStock::where('display_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                    if ($stock) $stock->increment('quantity', $movement->quantity);
+                    if ($stock)
+                        $stock->increment('quantity', $movement->quantity);
                 } elseif ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
-                     $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
+                    $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                    if ($stock) $stock->increment('quantity', $movement->quantity);
+                    if ($stock)
+                        $stock->increment('quantity', $movement->quantity);
                 }
-                
+
                 // We should also delete the movement or creating a "Correction" movement?
                 // Usually deleting the transaction implies these movements never happened (Hard Delete approach)
                 // OR creating a cancellation movement.

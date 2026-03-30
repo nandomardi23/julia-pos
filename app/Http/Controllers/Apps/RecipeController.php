@@ -40,17 +40,17 @@ class RecipeController extends Controller
     public function create()
     {
         $categories = Category::orderBy('name')->get();
-        
+
         // Use tags to allow 'sellable' items that are also tagged as 'ingredient'
         $ingredients = Product::whereJsonContains('tags', Product::TAG_INGREDIENT)
             ->orderBy('title')
             ->get(['id', 'title', 'unit', 'buy_price']);
-        
+
         // Use tags for supplies
         $supplies = Product::whereJsonContains('tags', Product::TAG_SUPPLY)
             ->orderBy('title')
             ->get(['id', 'title', 'unit', 'buy_price']);
-        
+
         return Inertia::render('Dashboard/Recipes/Create', [
             'categories' => $categories,
             'ingredients' => $ingredients,
@@ -90,7 +90,7 @@ class RecipeController extends Controller
 
             // Get category for SKU generation
             $category = Category::find($validated['category_id']);
-            
+
             // Generate SKU if not provided
             $sku = $request->sku;
             if (empty($sku)) {
@@ -145,13 +145,13 @@ class RecipeController extends Controller
     public function edit(Product $recipe)
     {
         $recipe->load(['variants.ingredients.ingredient']);
-        
+
         $categories = Category::orderBy('name')->get();
-        
+
         $ingredients = Product::whereJsonContains('tags', Product::TAG_INGREDIENT)
             ->orderBy('title')
             ->get(['id', 'title', 'unit']);
-        
+
         $supplies = Product::whereJsonContains('tags', Product::TAG_SUPPLY)
             ->orderBy('title')
             ->get(['id', 'title', 'unit']);
@@ -247,6 +247,16 @@ class RecipeController extends Controller
      */
     public function destroy(Product $recipe)
     {
+        // Check if recipe has transaction history
+        if ($recipe->transactionDetails()->count() > 0) {
+            return redirect()->back()->with('error', 'Resep tidak bisa dihapus karena masih memiliki riwayat transaksi!');
+        }
+
+        // Check if recipe has remaining stock
+        if ($recipe->warehouseStocks()->where('quantity', '>', 0)->count() > 0 || $recipe->displayStocks()->where('quantity', '>', 0)->count() > 0) {
+            return redirect()->back()->with('error', 'Resep tidak bisa dihapus karena masih memiliki stok!');
+        }
+
         DB::transaction(function () use ($recipe) {
             if ($recipe->getRawOriginal('image')) {
                 Storage::disk('local')->delete('public/products/' . $recipe->getRawOriginal('image'));

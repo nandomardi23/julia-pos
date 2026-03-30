@@ -79,4 +79,12 @@ class User extends Authenticatable
     {
         return $this->hasRole('super-admin');
     }
+
+    /**
+     * Get shifts for this user.
+     */
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
 }

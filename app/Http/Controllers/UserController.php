@@ -118,10 +118,20 @@ class UserController extends Controller
     {
         $ids = explode(',', $id);
 
-        if (count($ids) > 0)
-            User::whereIn('id', $ids)->delete();
-        else
-            User::findOrFail($id)->delete();
+        // Prevent deleting yourself
+        if (in_array(auth()->id(), $ids)) {
+            return back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+        }
+
+        // Check relationships for each user
+        $users = User::whereIn('id', $ids)->get();
+        foreach ($users as $user) {
+            if ($user->shifts()->count() > 0) {
+                return back()->with('error', "User '{$user->name}' tidak bisa dihapus karena masih memiliki riwayat shift!");
+            }
+        }
+
+        User::whereIn('id', $ids)->delete();
 
         // render view
         return back();

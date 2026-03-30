@@ -514,6 +514,21 @@ class ProductController extends Controller
         //find by ID
         $product = Product::findOrFail($id);
 
+        // Check if product has transaction history
+        if ($product->transactionDetails()->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki riwayat transaksi!');
+        }
+
+        // Check if product has stock movements
+        if ($product->stockMovements()->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki riwayat pergerakan stok!');
+        }
+
+        // Check if product has remaining stock
+        if ($product->warehouseStocks()->where('quantity', '>', 0)->count() > 0 || $product->displayStocks()->where('quantity', '>', 0)->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok!');
+        }
+
         //remove image using raw filename
         Storage::disk('local')->delete('public/products/' . $product->getRawOriginal('image'));
 

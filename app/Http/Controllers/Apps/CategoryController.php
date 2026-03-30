@@ -175,6 +175,6 @@ class CategoryController extends Controller
         $category->delete();
 
         //redirect
-        return to_route('categories.index');
+        return to_route('categories.index')->with('success', 'Kategori berhasil dihapus!');
     }
 }

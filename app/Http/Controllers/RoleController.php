@@ -82,6 +82,6 @@ class RoleController extends Controller
         $role->delete();
 
         // render view
-        return back();
+        return back()->with('success', 'Role berhasil dihapus!');
     }
 }

@@ -189,7 +189,9 @@ class ProductController extends Controller
         ]);
         //upload image
         $image = $request->file('image');
-        $image->storeAs('public/products', $image->hashName());
+        if ($image) {
+            $image->storeAs('public/products', $image->hashName());
+        }
 
         // Get category for SKU generation
         $category = Category::find($request->category_id);
@@ -214,7 +216,7 @@ class ProductController extends Controller
 
         //create product
         $product = Product::create([
-            'image' => $image->hashName(),
+            'image' => $image ? $image->hashName() : null,
             'sku' => $sku,
             'barcode' => $request->barcode ?: null,
             'title' => $request->title,
@@ -536,7 +538,7 @@ class ProductController extends Controller
         $product->delete();
 
         //redirect
-        return back();
+        return back()->with('success', 'Produk berhasil dihapus!');
     }
     /**
      * Print barcodes for a specific product.

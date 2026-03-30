@@ -134,6 +134,6 @@ class UserController extends Controller
         User::whereIn('id', $ids)->delete();
 
         // render view
-        return back();
+        return back()->with('success', 'User berhasil dihapus!');
     }
 }

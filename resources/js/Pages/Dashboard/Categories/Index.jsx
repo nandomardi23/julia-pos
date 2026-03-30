@@ -138,7 +138,6 @@ export default function Index({ categories }) {
         router.delete(route('categories.destroy', deleteId), {
             onSuccess: () => {
                 setShowDeleteConfirm(false);
-                toast.success('Kategori berhasil dihapus!');
             },
             onError: () => {
                 setShowDeleteConfirm(false);

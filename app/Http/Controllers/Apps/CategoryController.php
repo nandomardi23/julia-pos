@@ -163,6 +163,11 @@ class CategoryController extends Controller
         //find by ID
         $category = Category::findOrFail($id);
 
+        // Check if category still has products
+        if ($category->products()->count() > 0) {
+            return redirect()->back()->with('error', 'Kategori tidak bisa dihapus karena masih memiliki produk!');
+        }
+
         //remove image
         Storage::disk('local')->delete('public/category/' . basename($category->image));
 
@@ -170,6 +175,6 @@ class CategoryController extends Controller
         $category->delete();
 
         //redirect
-        return to_route('categories.index');
+        return to_route('categories.index')->with('success', 'Kategori berhasil dihapus!');
     }
 }

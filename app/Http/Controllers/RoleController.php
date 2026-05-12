@@ -73,10 +73,15 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        // Check if role is still used by users
+        if ($role->users()->count() > 0) {
+            return back()->with('error', 'Role tidak bisa dihapus karena masih digunakan oleh user!');
+        }
+
         // delete role data
         $role->delete();
 
         // render view
-        return back();
+        return back()->with('success', 'Role berhasil dihapus!');
     }
 }

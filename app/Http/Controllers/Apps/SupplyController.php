@@ -37,7 +37,7 @@ class SupplyController extends Controller
     public function create()
     {
         $categories = Category::orderBy('name')->get();
-        
+
         return Inertia::render('Dashboard/Supplies/Create', [
             'categories' => $categories,
         ]);
@@ -143,6 +143,16 @@ class SupplyController extends Controller
      */
     public function destroy(Product $supply)
     {
+        // Check if supply has stock movements
+        if ($supply->stockMovements()->count() > 0) {
+            return redirect()->back()->with('error', 'Supply tidak bisa dihapus karena masih memiliki riwayat pergerakan stok!');
+        }
+
+        // Check if supply has remaining stock
+        if ($supply->warehouseStocks()->where('quantity', '>', 0)->count() > 0 || $supply->displayStocks()->where('quantity', '>', 0)->count() > 0) {
+            return redirect()->back()->with('error', 'Supply tidak bisa dihapus karena masih memiliki stok!');
+        }
+
         if ($supply->getRawOriginal('image')) {
             Storage::disk('local')->delete('public/products/' . $supply->getRawOriginal('image'));
         }

@@ -3,9 +3,36 @@ import Sidebar from '@/Layouts/Partials/Sidebar'
 import Navbar from '@/Layouts/Partials/Navbar'
 import Footer from '@/Layouts/Partials/Footer'
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useTheme } from '@/Context/ThemeSwitcherContext';
+import { usePage } from '@inertiajs/react';
 
 export default function AppLayout({ children }) {
+
+    // Global flash message handler
+    const { flash } = usePage().props;
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success, {
+                style: {
+                    borderRadius: '10px',
+                    background: '#1C1F29',
+                    color: '#fff',
+                },
+            });
+        }
+        if (flash?.error) {
+            toast.error(flash.error, {
+                duration: 5000,
+                style: {
+                    borderRadius: '10px',
+                    background: '#EF4444',
+                    color: '#fff',
+                },
+            });
+        }
+    }, [flash?.success, flash?.error]);
 
     // destruct darkMode and themeSwitcher from context
     const { darkMode, themeSwitcher } = useTheme();
@@ -42,17 +69,17 @@ export default function AppLayout({ children }) {
 
     return (
         <div className='min-h-screen flex'>
-            <Sidebar 
-                sidebarOpen={sidebarOpen} 
+            <Sidebar
+                sidebarOpen={sidebarOpen}
                 mobileSidebarOpen={mobileSidebarOpen}
                 setMobileSidebarOpen={setMobileSidebarOpen}
             />
             <div className='flex-1 flex flex-col min-h-screen overflow-hidden'>
-                <Navbar 
-                    toggleSidebar={toggleSidebar} 
+                <Navbar
+                    toggleSidebar={toggleSidebar}
                     toggleMobileSidebar={toggleMobileSidebar}
-                    themeSwitcher={themeSwitcher} 
-                    darkMode={darkMode} 
+                    themeSwitcher={themeSwitcher}
+                    darkMode={darkMode}
                 />
                 <div className='flex-1 overflow-y-auto'>
                     <div className='w-full py-8 px-4 md:px-6'>

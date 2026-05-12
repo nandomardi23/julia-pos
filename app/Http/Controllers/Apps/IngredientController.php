@@ -37,7 +37,7 @@ class IngredientController extends Controller
     public function create()
     {
         $categories = Category::orderBy('name')->get();
-        
+
         return Inertia::render('Dashboard/Ingredients/Create', [
             'categories' => $categories,
         ]);
@@ -142,11 +142,11 @@ class IngredientController extends Controller
 
         $validated['sell_price'] = $newSellPrice;
         $validated['product_type'] = Product::TYPE_INGREDIENT; // Ensure type remains ingredient
-        
+
         // Ensure ingredient tag is present (merge with existing if needed, but for now simple)
         $existingTags = $ingredient->tags ?? [];
         if (!in_array(Product::TAG_INGREDIENT, $existingTags)) {
-             $existingTags[] = Product::TAG_INGREDIENT;
+            $existingTags[] = Product::TAG_INGREDIENT;
         }
         $validated['tags'] = $existingTags;
 
@@ -160,6 +160,21 @@ class IngredientController extends Controller
      */
     public function destroy(Product $ingredient)
     {
+        // Check if ingredient is used in any recipe
+        if (\App\Models\ProductIngredient::where('ingredient_id', $ingredient->id)->count() > 0) {
+            return redirect()->back()->with('error', 'Bahan baku tidak bisa dihapus karena masih digunakan di resep!');
+        }
+
+        // Check if ingredient has stock movements
+        if ($ingredient->stockMovements()->count() > 0) {
+            return redirect()->back()->with('error', 'Bahan baku tidak bisa dihapus karena masih memiliki riwayat pergerakan stok!');
+        }
+
+        // Check if ingredient has remaining stock
+        if ($ingredient->warehouseStocks()->where('quantity', '>', 0)->count() > 0 || $ingredient->displayStocks()->where('quantity', '>', 0)->count() > 0) {
+            return redirect()->back()->with('error', 'Bahan baku tidak bisa dihapus karena masih memiliki stok!');
+        }
+
         if ($ingredient->getRawOriginal('image')) {
             Storage::disk('local')->delete('public/products/' . $ingredient->getRawOriginal('image'));
         }

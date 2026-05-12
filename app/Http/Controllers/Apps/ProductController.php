@@ -189,7 +189,9 @@ class ProductController extends Controller
         ]);
         //upload image
         $image = $request->file('image');
-        $image->storeAs('public/products', $image->hashName());
+        if ($image) {
+            $image->storeAs('public/products', $image->hashName());
+        }
 
         // Get category for SKU generation
         $category = Category::find($request->category_id);
@@ -214,7 +216,7 @@ class ProductController extends Controller
 
         //create product
         $product = Product::create([
-            'image' => $image->hashName(),
+            'image' => $image ? $image->hashName() : null,
             'sku' => $sku,
             'barcode' => $request->barcode ?: null,
             'title' => $request->title,
@@ -514,6 +516,21 @@ class ProductController extends Controller
         //find by ID
         $product = Product::findOrFail($id);
 
+        // Check if product has transaction history
+        if ($product->transactionDetails()->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki riwayat transaksi!');
+        }
+
+        // Check if product has stock movements
+        if ($product->stockMovements()->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki riwayat pergerakan stok!');
+        }
+
+        // Check if product has remaining stock
+        if ($product->warehouseStocks()->where('quantity', '>', 0)->count() > 0 || $product->displayStocks()->where('quantity', '>', 0)->count() > 0) {
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok!');
+        }
+
         //remove image using raw filename
         Storage::disk('local')->delete('public/products/' . $product->getRawOriginal('image'));
 
@@ -521,7 +538,7 @@ class ProductController extends Controller
         $product->delete();
 
         //redirect
-        return back();
+        return back()->with('success', 'Produk berhasil dihapus!');
     }
     /**
      * Print barcodes for a specific product.

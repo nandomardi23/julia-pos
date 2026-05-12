@@ -274,6 +274,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth']], function () {
     Route::post('/returns/{id}/reject', [\App\Http\Controllers\Apps\ReturnController::class, 'reject'])
         ->middleware('permission:transactions-access')
         ->name('returns.reject');
+    Route::delete('/returns/{id}/cancel', [\App\Http\Controllers\Apps\ReturnController::class, 'cancel'])
+        ->middleware('permission:transactions-access')
+        ->name('returns.cancel');
 
     // Shift Management Routes
     Route::get('/shifts', [\App\Http\Controllers\Apps\ShiftController::class, 'index'])

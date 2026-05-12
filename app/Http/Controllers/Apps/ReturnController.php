@@ -191,6 +191,37 @@ class ReturnController extends Controller
     }
 
     /**
+     * Cancel a pending return (delete return and its items).
+     */
+    public function cancel($id)
+    {
+        $return = ProductReturn::findOrFail($id);
+
+        if (!$return->canBeCancelled()) {
+            return back()->with('error', 'Hanya return dengan status pending yang dapat dibatalkan.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Delete return items first
+            $return->items()->delete();
+
+            // Delete the return record
+            $return->delete();
+
+            DB::commit();
+
+            return redirect()->route('returns.index')
+                ->with('success', 'Return ' . $return->return_number . ' berhasil dibatalkan dan dihapus.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal membatalkan return: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Search transaction by invoice.
      */
     public function searchTransaction(Request $request)

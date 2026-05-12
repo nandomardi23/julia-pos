@@ -3,7 +3,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout'
 import { Head, useForm, usePage, router } from '@inertiajs/react'
 import Card from '@/Components/Common/Card'
 import Button from '@/Components/Common/Button'
-import { IconArrowLeft, IconSearch, IconPackageOff, IconCheck } from '@tabler/icons-react'
+import { IconArrowLeft, IconSearch, IconPackageOff, IconCheck, IconX } from '@tabler/icons-react'
 import Input from '@/Components/Common/Input'
 import Textarea from '@/Components/Common/TextArea'
 import Select from '@/Components/Common/Select'
@@ -46,6 +46,20 @@ export default function Create({ transaction: initialTransaction, returnTypes })
         } finally {
             setSearching(false)
         }
+    }
+
+    // Reset form - clear transaction and all selections
+    const resetForm = () => {
+        setTransaction(null)
+        setInvoiceSearch('')
+        setSelectedItems([])
+        setData({
+            transaction_id: '',
+            return_type: 'refund',
+            reason: '',
+            items: []
+        })
+        toast.success('Form berhasil direset')
     }
 
     // Toggle item selection
@@ -146,7 +160,21 @@ export default function Create({ transaction: initialTransaction, returnTypes })
                         onClick={searchTransaction}
                         disabled={searching}
                     />
+                    {transaction && (
+                        <Button
+                            type="button"
+                            label="Reset"
+                            icon={<IconX size={18} />}
+                            className="border bg-red-500 text-white hover:bg-red-600"
+                            onClick={resetForm}
+                        />
+                    )}
                 </div>
+                {transaction && (
+                    <p className="text-xs text-gray-500 mt-2">
+                        Salah transaksi? Klik tombol <strong>Reset</strong> untuk mengosongkan form dan mencari ulang.
+                    </p>
+                )}
             </Card>
 
             {/* Transaction Details */}

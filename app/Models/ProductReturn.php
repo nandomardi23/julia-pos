@@ -21,6 +21,7 @@ class ProductReturn extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'return_number',
@@ -130,7 +131,16 @@ class ProductReturn extends Model
             self::STATUS_APPROVED => 'Disetujui',
             self::STATUS_REJECTED => 'Ditolak',
             self::STATUS_COMPLETED => 'Selesai',
+            self::STATUS_CANCELLED => 'Dibatalkan',
         ];
+    }
+
+    /**
+     * Check if return can be cancelled
+     */
+    public function canBeCancelled(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
     }
 
     /**

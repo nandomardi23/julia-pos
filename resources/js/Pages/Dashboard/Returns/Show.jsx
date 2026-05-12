@@ -4,7 +4,7 @@ import { Head, router, usePage } from '@inertiajs/react'
 import Card from '@/Components/Common/Card'
 import Button from '@/Components/Common/Button'
 import Table from '@/Components/Common/Table'
-import { IconArrowLeft, IconCheck, IconX, IconReceipt, IconUser, IconCalendar } from '@tabler/icons-react'
+import { IconArrowLeft, IconCheck, IconX, IconReceipt, IconUser, IconCalendar, IconTrash } from '@tabler/icons-react'
 import Textarea from '@/Components/Common/TextArea'
 import toast from 'react-hot-toast'
 
@@ -45,6 +45,7 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
             approved: 'bg-blue-100 text-blue-700 border-blue-300',
             rejected: 'bg-red-100 text-red-700 border-red-300',
             completed: 'bg-green-100 text-green-700 border-green-300',
+            cancelled: 'bg-gray-100 text-gray-700 border-gray-300',
         }
         return colors[status] || colors.pending
     }
@@ -89,6 +90,23 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
         })
     }
 
+    // Handle cancel (batalkan return yang salah)
+    const handleCancel = () => {
+        if (!confirm('Yakin ingin membatalkan dan menghapus return ini? Data return akan dihapus permanen.')) return
+
+        setProcessing(true)
+        router.delete(route('returns.cancel', returnData.id), {
+            onSuccess: () => {
+                toast.success('Return berhasil dibatalkan')
+                setProcessing(false)
+            },
+            onError: () => {
+                toast.error('Gagal membatalkan return')
+                setProcessing(false)
+            }
+        })
+    }
+
     return (
         <>
             <Head title={`Return ${returnData.return_number}`} />
@@ -105,6 +123,14 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
 
                 {canApprove && (
                     <div className="flex gap-2">
+                        <Button
+                            type='button'
+                            label='Batalkan'
+                            icon={<IconTrash size={18} strokeWidth={1.5} />}
+                            className='border bg-gray-500 text-white hover:bg-gray-600'
+                            onClick={handleCancel}
+                            disabled={processing}
+                        />
                         <Button
                             type='button'
                             label='Tolak'

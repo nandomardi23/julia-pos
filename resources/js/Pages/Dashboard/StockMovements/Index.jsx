@@ -8,7 +8,6 @@ import Input from '@/Components/Common/Input'
 import Select from '@/Components/Common/Select'
 import SearchableSelect from '@/Components/Common/SearchableSelect'
 import Modal from '@/Components/Common/Modal'
-import toast from 'react-hot-toast'
 import axios from 'axios'
 import ImportModal from '@/Components/ImportModal'
 
@@ -51,12 +50,10 @@ export default function Index({ movements, filters, warehouses, displays, transf
                 setShowImport(false);
                 setImporting(false);
                 setImportErrors({});
-                toast.success('Stok berhasil diimport!');
             },
             onError: (err) => {
                 setImporting(false);
                 setImportErrors(err);
-                toast.error('Gagal Import Stok');
             },
             onFinish: () => setImporting(false)
         });
@@ -133,18 +130,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
         e.preventDefault()
         transferForm.post(route('stock-movements.storeTransfer'), {
             onSuccess: () => {
-                toast('Stok berhasil ditransfer ke display', {
-                    icon: '👏',
-                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
-                })
                 setShowTransferModal(false)
                 transferForm.reset()
                 setTransferAvailableStock(0)
-            },
-            onError: () => {
-                toast('Terjadi kesalahan', {
-                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
-                })
             },
         })
     }
@@ -203,17 +191,8 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
         router.post(route('stock-movements.store'), payload, {
             onSuccess: () => {
-                toast('Stok berhasil ditambahkan ke gudang', {
-                    icon: '👏',
-                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
-                })
                 setShowStockInModal(false)
                 stockInForm.reset()
-            },
-            onError: () => {
-                toast('Terjadi kesalahan', {
-                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
-                })
             },
         })
     }
@@ -266,13 +245,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
         editForm.put(route('stock-movements.update', editForm.data.id), {
             onSuccess: () => {
-                toast.success('Pergerakan stok berhasil diperbarui')
                 setShowEditModal(false)
                 editForm.reset()
             },
-            onError: () => {
-                toast.error('Gagal memperbarui pergerakan stok')
-            }
         })
     }
 
@@ -329,18 +304,9 @@ export default function Index({ movements, filters, warehouses, displays, transf
         e.preventDefault()
         stockOutForm.post(route('stock-movements.storeStockOut'), {
             onSuccess: () => {
-                toast('Barang keluar berhasil dicatat', {
-                    icon: '✅',
-                    style: { borderRadius: '10px', background: '#1C1F29', color: '#fff' },
-                })
                 setShowStockOutModal(false)
                 stockOutForm.reset()
                 setStockOutAvailableStock(0)
-            },
-            onError: () => {
-                toast('Terjadi kesalahan', {
-                    style: { borderRadius: '10px', background: '#FF0000', color: '#fff' },
-                })
             },
         })
     }
@@ -394,14 +360,7 @@ export default function Index({ movements, filters, warehouses, displays, transf
 
     const handleDelete = (id) => {
         if (confirm('Apakah Anda yakin ingin menghapus pergerakan stok ini? Stok akan dikembalikan ke posisi sebelumnya.')) {
-            router.delete(route('stock-movements.destroy', id), {
-                onSuccess: () => {
-                    toast.success('Pergerakan stok berhasil dihapus')
-                },
-                onError: () => {
-                    toast.error('Gagal menghapus pergerakan stok')
-                }
-            })
+            router.delete(route('stock-movements.destroy', id))
         }
     }
 

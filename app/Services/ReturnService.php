@@ -290,4 +290,178 @@ class ReturnService
             'created_at' => now(),
         ]);
     }
+
+    /**
+     * Reverse a completed/approved return.
+     * Undoes all stock changes, negative transactions, and customer credit.
+     * 
+     * @param int $returnId
+     * @return void
+     * @throws \Exception
+     */
+    public function reverseReturn(int $returnId): void
+    {
+        $return = ProductReturn::with(['items', 'transaction'])->findOrFail($returnId);
+
+        if (!in_array($return->status, [ProductReturn::STATUS_APPROVED, ProductReturn::STATUS_COMPLETED])) {
+            throw new \Exception('Hanya return yang sudah disetujui/selesai yang dapat di-reverse.');
+        }
+
+        DB::transaction(function () use ($return) {
+            // 1. Reverse stock changes (kebalikan dari restoreStock)
+            $this->reverseStockRestore($return);
+
+            // 2. Handle specific reversal based on return type
+            switch ($return->return_type) {
+                case ProductReturn::TYPE_EXCHANGE:
+                    $this->reverseExchange($return);
+                    break;
+                case ProductReturn::TYPE_REFUND:
+                    $this->reverseRefund($return);
+                    break;
+                case ProductReturn::TYPE_CREDIT:
+                    $this->reverseCredit($return);
+                    break;
+            }
+
+            // 3. Delete stock movements related to this return
+            StockMovement::where('note', 'like', '%' . $return->return_number . '%')->delete();
+
+            // 4. Delete return items
+            $return->items()->delete();
+
+            // 5. Delete the return record
+            $return->delete();
+        });
+    }
+
+    /**
+     * Reverse the stock restore (decrement what was incremented during approval).
+     */
+    protected function reverseStockRestore(ProductReturn $return): void
+    {
+        $display = Display::active()->first();
+        if (!$display) return;
+
+        foreach ($return->items as $item) {
+            $product = Product::find($item->product_id);
+            if (!$product) continue;
+
+            if ($product->product_type === Product::TYPE_RECIPE) {
+                $effectiveIngredients = $product->getEffectiveIngredients();
+                
+                foreach ($effectiveIngredients as $ingredientData) {
+                    $ingredient = $ingredientData->ingredient;
+                    if (!$ingredient) continue;
+                    
+                    $ingredientQty = $ingredientData->quantity * $item->qty;
+                    
+                    if ($ingredient->product_type === Product::TYPE_SUPPLY) {
+                        // Reverse: decrement warehouse stock
+                        $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)->first();
+                        if ($warehouseStock) {
+                            $warehouseStock->decrement('quantity', $ingredientQty);
+                        }
+                    } else {
+                        // Reverse: decrement display stock
+                        $displayStock = DisplayStock::where('display_id', $display->id)
+                            ->where('product_id', $ingredient->id)
+                            ->first();
+                        if ($displayStock) {
+                            $displayStock->decrement('quantity', $ingredientQty);
+                        }
+                    }
+                }
+            } else {
+                // Reverse regular product: decrement display stock
+                $displayStock = DisplayStock::where('display_id', $display->id)
+                    ->where('product_id', $item->product_id)
+                    ->first();
+                if ($displayStock) {
+                    $displayStock->decrement('quantity', $item->qty);
+                }
+            }
+        }
+    }
+
+    /**
+     * Reverse exchange: re-increment the stock that was decremented for the replacement.
+     */
+    protected function reverseExchange(ProductReturn $return): void
+    {
+        $display = Display::active()->first();
+        if (!$display) return;
+
+        foreach ($return->items as $item) {
+            $product = Product::find($item->product_id);
+            if (!$product) continue;
+
+            if ($product->product_type === Product::TYPE_RECIPE) {
+                $effectiveIngredients = $product->getEffectiveIngredients();
+                foreach ($effectiveIngredients as $ingredientData) {
+                    $ingredient = $ingredientData->ingredient;
+                    if (!$ingredient) continue;
+                    
+                    $ingredientQty = $ingredientData->quantity * $item->qty;
+                    
+                    if ($ingredient->product_type === Product::TYPE_SUPPLY) {
+                        $warehouseStock = WarehouseStock::where('product_id', $ingredient->id)->first();
+                        if ($warehouseStock) {
+                            $warehouseStock->increment('quantity', $ingredientQty);
+                        }
+                    } else {
+                        $displayStock = DisplayStock::firstOrCreate(
+                            ['display_id' => $display->id, 'product_id' => $ingredient->id],
+                            ['quantity' => 0]
+                        );
+                        $displayStock->increment('quantity', $ingredientQty);
+                    }
+                }
+            } else {
+                $displayStock = DisplayStock::firstOrCreate(
+                    ['display_id' => $display->id, 'product_id' => $item->product_id],
+                    ['quantity' => 0]
+                );
+                $displayStock->increment('quantity', $item->qty);
+            }
+        }
+    }
+
+    /**
+     * Reverse refund: delete the negative refund transaction.
+     */
+    protected function reverseRefund(ProductReturn $return): void
+    {
+        $refundInvoice = 'REF-' . $return->return_number;
+        $refundTransaction = Transaction::where('invoice', $refundInvoice)->first();
+        if ($refundTransaction) {
+            $refundTransaction->details()->delete();
+            $refundTransaction->delete();
+        }
+    }
+
+    /**
+     * Reverse credit: deduct balance from customer and delete credit transaction.
+     */
+    protected function reverseCredit(ProductReturn $return): void
+    {
+        $transaction = $return->transaction;
+        
+        // Reverse customer balance
+        if ($transaction && $transaction->customer_id) {
+            $creditAmount = abs((float) $return->return_amount);
+            $customer = $transaction->customer;
+            if ($customer) {
+                $customer->decrement('balance', min($creditAmount, $customer->balance));
+            }
+        }
+
+        // Delete credit transaction
+        $creditInvoice = 'CRD-' . $return->return_number;
+        $creditTransaction = Transaction::where('invoice', $creditInvoice)->first();
+        if ($creditTransaction) {
+            $creditTransaction->details()->delete();
+            $creditTransaction->delete();
+        }
+    }
 }

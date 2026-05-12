@@ -16,6 +16,9 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
 
     // Check if user can approve (you might want to check for manager role)
     const canApprove = returnData.status === 'pending'
+    
+    // Check if return can be cancelled (pending, approved, or completed)
+    const canCancel = ['pending', 'approved', 'completed'].includes(returnData.status)
 
     // Format currency
     const formatCurrency = (value) => {
@@ -92,7 +95,12 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
 
     // Handle cancel (batalkan return yang salah)
     const handleCancel = () => {
-        if (!confirm('Yakin ingin membatalkan dan menghapus return ini? Data return akan dihapus permanen.')) return
+        const isCompleted = ['approved', 'completed'].includes(returnData.status)
+        const message = isCompleted
+            ? 'PERHATIAN: Return ini sudah diproses! Membatalkan akan:\n\n• Membalikkan semua perubahan stok\n• Menghapus transaksi refund/credit terkait\n• Menghapus data return secara permanen\n\nYakin ingin melanjutkan?'
+            : 'Yakin ingin membatalkan dan menghapus return ini? Data return akan dihapus permanen.'
+        
+        if (!confirm(message)) return
 
         setProcessing(true)
         router.delete(route('returns.cancel', returnData.id), {
@@ -121,33 +129,37 @@ export default function Show({ return: returnData, statuses, returnTypes }) {
                     href={route('returns.index')}
                 />
 
-                {canApprove && (
-                    <div className="flex gap-2">
+                <div className="flex gap-2">
+                    {canCancel && (
                         <Button
                             type='button'
-                            label='Batalkan'
+                            label={returnData.status === 'pending' ? 'Batalkan' : 'Batalkan & Reverse Stok'}
                             icon={<IconTrash size={18} strokeWidth={1.5} />}
-                            className='border bg-gray-500 text-white hover:bg-gray-600'
+                            className={`border ${returnData.status === 'pending' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-orange-500 hover:bg-orange-600'} text-white`}
                             onClick={handleCancel}
                             disabled={processing}
                         />
-                        <Button
-                            type='button'
-                            label='Tolak'
-                            icon={<IconX size={18} strokeWidth={1.5} />}
-                            className='border bg-red-500 text-white hover:bg-red-600'
-                            onClick={() => setShowRejectModal(true)}
-                        />
-                        <Button
-                            type='button'
-                            label={processing ? 'Memproses...' : 'Setujui & Kembalikan Stok'}
-                            icon={<IconCheck size={18} strokeWidth={1.5} />}
-                            className='border bg-green-500 text-white hover:bg-green-600'
-                            onClick={handleApprove}
-                            disabled={processing}
-                        />
-                    </div>
-                )}
+                    )}
+                    {canApprove && (
+                        <>
+                            <Button
+                                type='button'
+                                label='Tolak'
+                                icon={<IconX size={18} strokeWidth={1.5} />}
+                                className='border bg-red-500 text-white hover:bg-red-600'
+                                onClick={() => setShowRejectModal(true)}
+                            />
+                            <Button
+                                type='button'
+                                label={processing ? 'Memproses...' : 'Setujui & Kembalikan Stok'}
+                                icon={<IconCheck size={18} strokeWidth={1.5} />}
+                                className='border bg-green-500 text-white hover:bg-green-600'
+                                onClick={handleApprove}
+                                disabled={processing}
+                            />
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Status Banner */}

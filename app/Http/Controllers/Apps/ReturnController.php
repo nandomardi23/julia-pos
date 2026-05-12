@@ -191,29 +191,32 @@ class ReturnController extends Controller
     }
 
     /**
-     * Cancel a pending return (delete return and its items).
+     * Cancel a return (pending: delete directly, approved/completed: reverse stock changes).
      */
-    public function cancel($id)
+    public function cancel($id, \App\Services\ReturnService $returnService)
     {
         $return = ProductReturn::findOrFail($id);
+        $returnNumber = $return->return_number;
 
-        if (!$return->canBeCancelled()) {
-            return back()->with('error', 'Hanya return dengan status pending yang dapat dibatalkan.');
+        // Only pending, approved, and completed can be cancelled
+        if (in_array($return->status, [ProductReturn::STATUS_REJECTED, ProductReturn::STATUS_CANCELLED])) {
+            return back()->with('error', 'Return ini tidak dapat dibatalkan.');
         }
 
         try {
-            DB::beginTransaction();
-
-            // Delete return items first
-            $return->items()->delete();
-
-            // Delete the return record
-            $return->delete();
-
-            DB::commit();
+            if ($return->status === ProductReturn::STATUS_PENDING) {
+                // Pending: simply delete, no stock changes to reverse
+                DB::beginTransaction();
+                $return->items()->delete();
+                $return->delete();
+                DB::commit();
+            } else {
+                // Approved/Completed: reverse all stock changes via service
+                $returnService->reverseReturn($id);
+            }
 
             return redirect()->route('returns.index')
-                ->with('success', 'Return ' . $return->return_number . ' berhasil dibatalkan dan dihapus.');
+                ->with('success', 'Return ' . $returnNumber . ' berhasil dibatalkan dan dihapus. Semua perubahan telah dikembalikan.');
 
         } catch (\Exception $e) {
             DB::rollBack();

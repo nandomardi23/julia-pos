@@ -389,55 +389,9 @@ class TransactionService
     public function deleteTransaction(Transaction $transaction)
     {
         return DB::transaction(function () use ($transaction) {
-            // 1. Revert Stock Logic
-            foreach ($transaction->details as $detail) {
-                $product = $detail->product;
-                if (!$product)
-                    continue;
-
-                // Only revert if stock was actually deducted (Sellable/Recipe)
-                // Assuming we track movements, we can look at StockMovement, 
-                // but simpler to reverse the logic based on product type.
-
-                $display = Display::active()->first();
-                if ($display) {
-                    if ($product->product_type === Product::TYPE_RECIPE) {
-                        // Restore Ingredients
-                        $variants = $product->variants;
-                        // Determine which variant was sold - transaction_details specific variant?
-                        // The detail stores 'variant_name' but not ID directly? 
-                        // Wait, TransactionDetail has product_id. Does it have variant_id?
-                        // Migration showed: variant_name. It didn't show variant_id foreign key in 2024_01_01_000004_create_transaction_tables.php?
-                        // Let's check schema again. Schema says: variant_name (string).
-                        // Ah, Carts table has product_variant_id, but TransactionDetail might NOT.
-                        // Let's check TransactionDetail model/migration again.
-
-                        // If detail doesn't save variant_id, we can't accurately restore variant-specific ingredients!
-                        // This is a potential existing bug or limitation.
-                        // However, we can try to guess or just restore the *effective* ingredients if simple.
-
-                        // For now, let's look at how existing logic does it? 
-                        // Existing logic might rely on StockMovement reversion?
-                        // If StockMovement exists, we can just reverse them?
-
-                        // Let's fallback to StockMovement reversal if possible.
-                        // StockMovement::where('to_type', 'transaction')->where('to_id', $transaction->id)->get();
-
-                    } else {
-                        // Restore Display Stock
-                        $displayStock = DisplayStock::firstOrCreate(
-                            ['display_id' => $display->id, 'product_id' => $product->id],
-                            ['quantity' => 0]
-                        );
-                        $displayStock->increment('quantity', $detail->qty);
-                    }
-                }
-            }
-
-            // Actually, the most robust way is to finding the StockMovements associated with this transaction and reversing them.
-            // But 'from_type' varies.
-
-            // Let's use the StockMovement to reverse.
+            // Revert stock by reversing all StockMovements linked to this transaction.
+            // This is the single source of truth — it handles regular products,
+            // recipe ingredients from display, and supplies from warehouse.
             $movements = StockMovement::where('to_type', StockMovement::TYPE_TRANSACTION)
                 ->where('to_id', $transaction->id)
                 ->get();
@@ -446,33 +400,29 @@ class TransactionService
             foreach ($movements as $movement) {
                 // Reverse: Add back to 'from' source
                 if ($movement->from_type === StockMovement::TYPE_DISPLAY) {
-                    $stock = DisplayStock::find($movement->from_id); // This assumes from_id IS the DisplayStock ID? No, from_id is display_id.
-                    // We need to find the stock record for (display_id, product_id)
                     $stock = DisplayStock::where('display_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                    if ($stock)
+                    if ($stock) {
                         $stock->increment('quantity', $movement->quantity);
+                    }
                 } elseif ($movement->from_type === StockMovement::TYPE_WAREHOUSE) {
                     $stock = WarehouseStock::where('warehouse_id', $movement->from_id)
                         ->where('product_id', $movement->product_id)
                         ->first();
-                    if ($stock)
+                    if ($stock) {
                         $stock->increment('quantity', $movement->quantity);
+                    }
                 }
 
-                // We should also delete the movement or creating a "Correction" movement?
-                // Usually deleting the transaction implies these movements never happened (Hard Delete approach)
-                // OR creating a cancellation movement.
-                // Given the method is Delete, likely we hard delete the movement logic?
                 $movement->delete();
             }
 
-            // 2. Delete Details & Profits
+            // Delete Details & Profits
             $transaction->details()->delete();
             $transaction->profits()->delete();
 
-            // 3. Delete Transaction
+            // Delete Transaction
             $transaction->delete();
 
             return ['status' => 'success', 'message' => 'Transaksi berhasil dihapus dan stok dikembalikan.'];
